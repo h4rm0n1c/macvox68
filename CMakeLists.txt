@@ -24,6 +24,22 @@
 cmake_minimum_required(VERSION 3.16)
 project(MacVox68 C)
 
+# Ensure Rez can find the classic Mac interface headers from the MPW Interfaces
+# & Libraries bundle when building in the expected host environment. The
+# primary path reflects the user's build machine layout; the cached /opt copy is
+# only a secondary fallback for reference in this container.
+set(MPW_INTERFACES_RINCLUDES_CANDIDATES
+    "/home/harri/OldMacStuff/B2/Shared/Interfaces&Libraries/Interfaces/RIncludes"
+    "/opt/Interfaces&Libraries/Interfaces&Libraries/Interfaces/RIncludes"
+)
+
+foreach(candidate IN LISTS MPW_INTERFACES_RINCLUDES_CANDIDATES)
+    if(EXISTS "${candidate}")
+        list(APPEND REZ_INCLUDE_PATH "${candidate}")
+        break()
+    endif()
+endforeach()
+
 add_application(MacVox68
     dialog.c
     dialog.r
