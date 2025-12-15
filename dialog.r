@@ -108,24 +108,22 @@ resource 'FREF' (128, purgeable) {
 };
 
 resource 'ICN#' (128, purgeable) {
-        {   /* Icon data (placeholder) */
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
-                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
-        },
-        {   /* Mask data (opaque placeholder) */
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
-                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF
-        }
+        /* Icon (all transparent) followed by an opaque mask */
+        $
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "0000 0000 0000 0000 0000 0000 0000 0000"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
+        "FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF"
 };

@@ -21,6 +21,9 @@
 # cmake .. -DCMAKE_TOOLCHAIN_FILE=path/to/Retro68-build/toolchain/m68k-apple-macos/cmake/retro68.toolchain.cmake
 # make
 
+cmake_minimum_required(VERSION 3.16)
+project(MacVox68 C)
+
 add_application(MacVox68
     dialog.c
     dialog.r
