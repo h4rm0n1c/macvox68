@@ -45,8 +45,8 @@ foreach(candidate IN LISTS MPW_INTERFACES_RINCLUDES_CANDIDATES)
 endforeach()
 
 add_application(MacVox68
-    dialog.c
-    dialog.r
+    main.c
+    window_ui.c
     TYPE APPL
     CREATOR MV68
     )
