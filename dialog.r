@@ -1,3 +1,5 @@
+// NOTE: Retro68 Rez is sensitive to DITL formatting.
+// DO NOT REFORMAT the DITL block (keep rect line + item line + semicolons).
 #include "Types.r"
 #include "Dialogs.r"
 
