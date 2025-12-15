@@ -34,12 +34,12 @@ resource 'DLOG' (128) {
 };
 
 resource 'DITL' (128) {
-	{
-		{ 190-10-20, 320-10-80, 190-10, 320-10 },
-		Button { enabled, "Quit" };
+        {
+                { 160, 230, 180, 310 },
+                Button { enabled, "Quit" };
 
-		{ 190-10-20-5, 320-10-80-5, 190-10+5, 320-10+5 },
-		UserItem { enabled };
+                { 155, 225, 185, 315 },
+                UserItem { enabled };
 
 		{ 10, 10, 30, 310 },
 		StaticText { enabled, "Static Text Item" };
