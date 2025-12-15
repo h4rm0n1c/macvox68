@@ -17,7 +17,9 @@
 	along with Retro68.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Types.r"
 #include "Dialogs.r"
+#include "Finder.r"
 
 resource 'DLOG' (128) {
         { 50, 100, 240, 420 },

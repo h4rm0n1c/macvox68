@@ -29,6 +29,8 @@
   - `ninja`
 - Disk image output:
   - Expect `MacVox68.dsk` (project-named `.dsk`) in the build directory.
+- Note for Codex environment:
+  - Do not attempt to run the Retro68 CMake/Ninja toolchain builds here; use the commands above only as documentation/reference.
 
 ## Repo conventions (required)
 - Source directory layout is whatever the Dialog sample uses.
