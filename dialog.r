@@ -20,6 +20,7 @@
 #include "Types.r"
 #include "Dialogs.r"
 #include "Finder.r"
+#include "Icons.r"
 
 resource 'DLOG' (128) {
         { 50, 100, 240, 420 },
