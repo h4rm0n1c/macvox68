@@ -35,7 +35,11 @@ set(MPW_INTERFACES_RINCLUDES_CANDIDATES
 
 foreach(candidate IN LISTS MPW_INTERFACES_RINCLUDES_CANDIDATES)
     if(EXISTS "${candidate}")
-        list(APPEND REZ_INCLUDE_PATH "${candidate}")
+        # Rez is launched through the shell, so paths containing special
+        # characters such as '&' must be a single token. Quote the include path
+        # so the generated -I argument remains intact in the ninja rule.
+        string(REPLACE "\"" "\\\"" rez_include "${candidate}")
+        list(APPEND REZ_INCLUDE_PATH "\"${rez_include}\"")
         break()
     endif()
 endforeach()
