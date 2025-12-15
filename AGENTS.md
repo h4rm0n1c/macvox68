@@ -113,6 +113,7 @@ The container setup script pre-populates several directories under `/opt` to spe
 - `/opt/Retro68`: Cached Retro68 toolchain installation used by the build toolchain file.
 - `/opt/Interfaces&Libraries`: Apple Universal Interfaces and Libraries (MPW 3.6 era) used by Retro68; referenced by the toolchain during compilation.
 - `/opt/Latest Notes From Apple`: Documentation/reference set shipped with the toolchain; useful for API lookups.
+- `/opt/MPW/MPW`: Local copy of MPW with Tools, Scripts, Help, and the classic MPW Shell/ToolServer artifacts. Use it as reference material for Toolbox/API behavior and MPW-era utilities; **do not** copy its contents into the repo.
 
 If any environment variables or scripts point at the toolchain, they are expected to resolve to the cached installation (e.g., a `CMAKE_TOOLCHAIN_FILE` under `/opt/Retro68/m68k-apple-macos/cmake/retro68.toolchain.cmake`). Avoid copying or committing files from these paths—treat them as read-only shared caches.
 
