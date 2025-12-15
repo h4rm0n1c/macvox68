@@ -1,11 +1,16 @@
 #include <Types.h>
-#include <QuickDraw.h>
+#include <Quickdraw.h>
 #include <Windows.h>
+#include <Dialogs.h>
 #include <Controls.h>
 #include <Events.h>
 #include <Menus.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
+
+#ifndef kClassicPushButtonProc
+    #define kClassicPushButtonProc 0
+#endif
 
 enum
 {
@@ -82,7 +87,7 @@ static void ui_create_main_window(void)
             0,
             0,
             1,
-            pushButProc,
+            kClassicPushButtonProc,
             kQuitButtonID
         );
     }
@@ -173,7 +178,7 @@ static Boolean ui_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     {
                         /* Control reference holds our ID */
                         long ref = 0;
-                        GetControlReference(c, &ref);
+                        ref = GetControlReference(c);
                         if ((short)ref == kQuitButtonID)
                             *outQuit = true;
                     }

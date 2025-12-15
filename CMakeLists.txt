@@ -29,9 +29,19 @@ project(MacVox68 C)
 # primary path reflects the user's build machine layout; the cached /opt copy is
 # only a secondary fallback for reference in this container.
 set(MPW_INTERFACES_RINCLUDES_CANDIDATES
-    "/home/harri/OldMacStuff/B2/Shared/Interfaces&Libraries/Interfaces/RIncludes"
-    "/opt/Interfaces&Libraries/Interfaces&Libraries/Interfaces/RIncludes"
+    "/home/harri/OldMacStuff/B2/Shared/InterfacesAndLibraries/Interfaces/RIncludes"
+    "/opt/Interfaces&Libraries/InterfacesAndLibraries/Interfaces/RIncludes"
 )
+
+set(MPW_CINCLUDES "")
+foreach(candidate IN LISTS MPW_INTERFACES_CINCLUDES_CANDIDATES)
+    if(EXISTS "${candidate}")
+        set(MPW_CINCLUDES "${candidate}")
+        break()
+    endif()
+endforeach()
+
+
 
 foreach(candidate IN LISTS MPW_INTERFACES_RINCLUDES_CANDIDATES)
     if(EXISTS "${candidate}")
@@ -50,6 +60,7 @@ add_application(MacVox68
     TYPE APPL
     CREATOR MV68
     )
+
 
 # Enable -ffunction-sections and -gc-sections to make the app as small as possible
 # On 68K, also enable --mac-single to build it as a single-segment app (so that this code path doesn't rot)
