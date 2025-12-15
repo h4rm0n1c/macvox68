@@ -20,14 +20,14 @@
 #include "Dialogs.r"
 
 resource 'DLOG' (128) {
-	{ 50, 100, 240, 420 },
-	dBoxProc,
-	visible,
-	noGoAway,
-	0,
-	128,
-	"",
-	centerMainScreen
+        { 50, 100, 240, 420 },
+        dBoxProc,
+        visible,
+        noGoAway,
+        0,
+        128,
+        "MacVox68",
+        centerMainScreen
 };
 
 resource 'DITL' (128) {
@@ -82,7 +82,47 @@ resource 'SIZE' (-1) {
 	500 * 1024,	// Carbon apparently needs additional memory.
 	500 * 1024
 #else
-	100 * 1024,
-	100 * 1024
+        100 * 1024,
+        100 * 1024
 #endif
+};
+
+/*
+    Bundle resources to pin the Finder signature to Type 'APPL' and Creator 'MV68'.
+    Icons are intentionally blank placeholders for now.
+*/
+resource 'BNDL' (128, purgeable) {
+        'MV68', 0, {
+                'FREF', { 0, 128 },
+                'ICN#', { 0, 128 }
+        }
+};
+
+resource 'FREF' (128, purgeable) {
+        'APPL',
+        0,
+        "MacVox68"
+};
+
+resource 'ICN#' (128, purgeable) {
+        {   /* Icon data (placeholder) */
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000,
+                $0000,$0000,$0000,$0000,$0000,$0000,$0000,$0000
+        },
+        {   /* Mask data (opaque placeholder) */
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,
+                $FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF,$FFFF
+        }
 };

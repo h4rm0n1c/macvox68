@@ -21,17 +21,19 @@
 # cmake .. -DCMAKE_TOOLCHAIN_FILE=path/to/Retro68-build/toolchain/m68k-apple-macos/cmake/retro68.toolchain.cmake
 # make
 
-add_application(Dialog
+add_application(MacVox68
     dialog.c
     dialog.r
+    TYPE APPL
+    CREATOR MV68
     )
 
 # Enable -ffunction-sections and -gc-sections to make the app as small as possible
 # On 68K, also enable --mac-single to build it as a single-segment app (so that this code path doesn't rot)
-set_target_properties(Dialog PROPERTIES COMPILE_OPTIONS -ffunction-sections)
+set_target_properties(MacVox68 PROPERTIES COMPILE_OPTIONS -ffunction-sections)
 if(CMAKE_SYSTEM_NAME MATCHES Retro68)
-    set_target_properties(Dialog PROPERTIES LINK_FLAGS "-Wl,-gc-sections -Wl,--mac-single")
+    set_target_properties(MacVox68 PROPERTIES LINK_FLAGS "-Wl,-gc-sections -Wl,--mac-single")
 
 else()
-    set_target_properties(Dialog PROPERTIES LINK_FLAGS "-Wl,-gc-sections")
+    set_target_properties(MacVox68 PROPERTIES LINK_FLAGS "-Wl,-gc-sections")
 endif()
