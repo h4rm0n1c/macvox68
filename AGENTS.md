@@ -10,9 +10,12 @@ This file exists to keep Codex from:
 
 Keep changes small and reversible.
 
+**If the human operator gives explicit instructions that differ from this file, follow the operator.  
+Otherwise, treat this file as the default guide.**
+
 ---
 
-## Environments (don’t mix them up)
+## Environments
 
 ### Codex container
 - Used to **edit repo files**.
@@ -55,9 +58,9 @@ Keep changes small and reversible.
 
 ---
 
-## `/opt` reference caches (reference only)
+## `/opt` reference caches
 
-Populated by setup script. Use for reading/lookup. Do not commit contents.
+Populated by the setup script. Use for reading/lookup. Do not commit contents.
 
 Typical locations:
 - `/opt/Retro68` — Retro68 repo checkout (reference).
@@ -66,11 +69,25 @@ Typical locations:
 - `/opt/MPW` — MPW tools/docs (reference).
 - `/opt/MacDevDocs` — Inside Macintosh, Tech Notes, HIG.
 
-Additional curated code/resource examples (extracted from Classic-era archives; reference only):
+Curated Classic-era examples (extracted from `.sea` / `.hqx` archives; reference only):
 - `/opt/MacExamples` — extracted examples including `.rsrc` sidecar files (resource forks flattened).
 - `/opt/MacExamples_TextOnly` — text-only subset (fast grep/search; `.c/.h/.r` etc).
 
-Prefer these over web searches for API truth and for Rez/resource idioms.
+### Note: extracted examples may look “split” on Unix
+
+Some Classic Mac samples were extracted on Linux, where one original file/project can appear as multiple entries, for example:
+- `name` plus `name.rsrc`
+- `name.c` plus `name.c.rsrc`
+- non-ASCII / odd-suffix variants like `name.µ`, `name.µ.rsrc`, `name.π.rsrc`, `name.π.rsrc.rsrc`
+- sidecars for headers, e.g. `screen buffering.c`, `screen buffering.c.rsrc`, `screen buffering.h`, `screen buffering.h.rsrc`
+
+Interpretation rule:
+- Treat each group of related files as **one original Classic Mac file/project**, not as duplicates or garbage.
+- The `.rsrc` and suffix companions may contain essential build/runtime data (resources, metadata, templates, etc.).
+- Do **not** delete, rename, “dedupe”, or reformat these examples as a cleanup pass.
+- Use them as reference for how Classic-era projects are structured (source + resources + metadata), even if they are not built with Retro68 here.
+
+Prefer `/opt` caches over web searches for API truth and for Rez/resource idioms.
 
 ---
 
@@ -105,7 +122,7 @@ Host build commands (run on host, from build dir):
     cmake -G Ninja ../MacVox68 -DCMAKE_TOOLCHAIN_FILE="$HOME/OldMacStuff/Retro68/toolchain-full/m68k-apple-macos/cmake/retro68.toolchain.cmake"
     ninja
 
-Do not run host build steps in the container unless explicitly asked.
+Do not run these host build steps in the container unless explicitly asked by the operator.
 
 ---
 
@@ -132,22 +149,22 @@ These may be unused now.
 Codex cleanup expectations:
 - Determine whether `dialog.c` / `dialog.r` are referenced by the build (CMake) or by any source includes.
 - If unused:
-  - remove them from the build inputs,
-  - either delete them or move them into a clearly named “legacy/sample” area (do not break licensing headers),
-  - ensure no Rez step still tries to compile `dialog.r`.
+    - remove them from the build inputs, and
+    - either delete them, or move them into a clearly named `legacy/` or `samples/` area (keep licensing headers intact), and
+    - ensure no Rez step still tries to compile `dialog.r`.
 - If still used somewhere:
-  - do not “fix formatting” inside Rez DITL blocks; Retro68 Rez is sensitive.
-  - prefer removing the dependency over editing Rez resources unless resources are explicitly required.
+    - do not “fix formatting” inside Rez DITL blocks; Retro68 Rez is sensitive.
+    - prefer removing the dependency over editing Rez resources unless resources are explicitly required.
 
-Do not reformat Rez resource blocks as a “style cleanup”.
+Do not reformat Rez resource blocks just for style.
 
 ---
 
 ## Notes for Codex: classic UI code patterns
 
-- Use `WaitNextEvent` and handle `updateEvt`, `mouseDown`, and Cmd-Q (if menu item exists).
+- Use `WaitNextEvent` and handle `updateEvt`, `mouseDown`, and Cmd-Q (if a matching menu item exists).
 - For controls:
   - `NewControl` + `FindControl` + `TrackControl` are expected patterns.
-  - If using control IDs, be explicit about where that ID is stored (reference vs control value).
+  - If using control IDs, be explicit about where that ID is stored (control reference vs control value).
 
-Keep the codebase consistent: prefer the existing `window_ui.c` approach unless told to revert to dialogs.
+Keep the codebase consistent: prefer the existing `window_ui.c` approach unless the operator explicitly asks to change direction.
