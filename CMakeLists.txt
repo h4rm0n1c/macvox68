@@ -24,43 +24,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(MacVox68 C)
 
-# Ensure Rez can find the classic Mac interface headers from the MPW Interfaces
-# & Libraries bundle when building in the expected host environment. The
-# primary path reflects the user's build machine layout; the cached /opt copy is
-# only a secondary fallback for reference in this container.
-set(MPW_INTERFACES_RINCLUDES_CANDIDATES
-    "/home/harri/OldMacStuff/B2/Shared/InterfacesAndLibraries/Interfaces/RIncludes"
-    "/opt/Interfaces&Libraries/InterfacesAndLibraries/Interfaces/RIncludes"
-)
-
-set(MPW_CINCLUDES "")
-foreach(candidate IN LISTS MPW_INTERFACES_CINCLUDES_CANDIDATES)
-    if(EXISTS "${candidate}")
-        set(MPW_CINCLUDES "${candidate}")
-        break()
-    endif()
-endforeach()
-
-
-
-foreach(candidate IN LISTS MPW_INTERFACES_RINCLUDES_CANDIDATES)
-    if(EXISTS "${candidate}")
-        # Rez is launched through the shell, so paths containing special
-        # characters such as '&' must be a single token. Quote the include path
-        # so the generated -I argument remains intact in the ninja rule.
-        string(REPLACE "\"" "\\\"" rez_include "${candidate}")
-        list(APPEND REZ_INCLUDE_PATH "\"${rez_include}\"")
-        break()
-    endif()
-endforeach()
-
 add_application(MacVox68
     main.c
     window_ui.c
     TYPE APPL
     CREATOR MV68
     )
-
 
 # Enable -ffunction-sections and -gc-sections to make the app as small as possible
 # On 68K, also enable --mac-single to build it as a single-segment app (so that this code path doesn't rot)
