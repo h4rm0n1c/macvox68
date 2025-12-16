@@ -16,7 +16,8 @@
 #endif
 
 #ifndef kControlEditTextProc
-    #define kControlEditTextProc 16
+    /* Appearance Manager edit text control proc ID (fallback for classic headers). */
+    #define kControlEditTextProc 272
 #endif
 
 enum
@@ -73,21 +74,21 @@ static UILayout       gLayout;
 static void main_window_plan_layout(void)
 {
     Rect content;
-    short margin        = 12;
-    short gutter        = 10;
-    short buttonW       = 80;
+    short margin        = 14;
+    short gutter        = 12;
+    short buttonW       = 88;
     short buttonH       = 22;
-    short popupW        = 130;
-    short sectionGutter = 12;
+    short popupW        = 140;
+    short sectionGutter = 14;
     short textAreaH     = 160;
-    short soundH        = 44;
-    short prosodyH      = 50;
-    short settingsH     = 80;
-    short tcpH          = 48;
+    short soundH        = 56;
+    short prosodyH      = 60;
+    short settingsH     = 108;
+    short tcpH          = 62;
     short sliderH       = 16;
-    short sliderW       = 180;
+    short sliderW       = 200;
     short fieldH        = 18;
-    short fieldW        = 110;
+    short fieldW        = 126;
 
     if (!gMainWin)
         return;
@@ -125,15 +126,15 @@ static void main_window_plan_layout(void)
 
     SetRect(&gLayout.soundPopup,
             gLayout.soundGroup.left + 90,
-            gLayout.soundGroup.top + 14,
+            gLayout.soundGroup.top + 18,
             gLayout.soundGroup.left + 90 + popupW,
-            gLayout.soundGroup.top + 14 + buttonH);
+            gLayout.soundGroup.top + 18 + buttonH);
 
     SetRect(&gLayout.applyButton,
-            gLayout.soundGroup.right - 90,
-            gLayout.soundGroup.top + 14,
-            gLayout.soundGroup.right - 90 + 60,
-            gLayout.soundGroup.top + 14 + buttonH);
+            gLayout.soundGroup.right - 96,
+            gLayout.soundGroup.top + 18,
+            gLayout.soundGroup.right - 96 + 74,
+            gLayout.soundGroup.top + 18 + buttonH);
 
     y = gLayout.soundGroup.bottom + sectionGutter - 2;
 
@@ -145,21 +146,21 @@ static void main_window_plan_layout(void)
 
     SetRect(&gLayout.prosodyClean,
             gLayout.prosodyGroup.left + 90,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyGroup.left + 150,
-            gLayout.prosodyGroup.top + 28);
+            gLayout.prosodyGroup.top + 16,
+            gLayout.prosodyGroup.left + 180,
+            gLayout.prosodyGroup.top + 32);
 
     SetRect(&gLayout.prosodyLQ,
-            gLayout.prosodyClean.right + 18,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyClean.right + 78,
-            gLayout.prosodyGroup.top + 28);
+            gLayout.prosodyClean.right + 14,
+            gLayout.prosodyGroup.top + 16,
+            gLayout.prosodyClean.right + 112,
+            gLayout.prosodyGroup.top + 32);
 
     SetRect(&gLayout.prosodyHQ,
-            gLayout.prosodyLQ.right + 18,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyLQ.right + 100,
-            gLayout.prosodyGroup.top + 28);
+            gLayout.prosodyLQ.right + 14,
+            gLayout.prosodyGroup.top + 16,
+            gLayout.prosodyLQ.right + 134,
+            gLayout.prosodyGroup.top + 32);
 
     y = gLayout.prosodyGroup.bottom + sectionGutter - 2;
 
@@ -170,22 +171,22 @@ static void main_window_plan_layout(void)
             y + settingsH);
 
     SetRect(&gLayout.volumeSlider,
-            gLayout.settingsGroup.left + 90,
-            gLayout.settingsGroup.top + 14,
-            gLayout.settingsGroup.left + 90 + sliderW,
-            gLayout.settingsGroup.top + 14 + sliderH);
+            gLayout.settingsGroup.left + 96,
+            gLayout.settingsGroup.top + 18,
+            gLayout.settingsGroup.left + 96 + sliderW,
+            gLayout.settingsGroup.top + 18 + sliderH);
 
     SetRect(&gLayout.rateSlider,
             gLayout.volumeSlider.left,
-            gLayout.volumeSlider.bottom + 14,
+            gLayout.volumeSlider.bottom + 16,
             gLayout.volumeSlider.right,
-            gLayout.volumeSlider.bottom + 14 + sliderH);
+            gLayout.volumeSlider.bottom + 16 + sliderH);
 
     SetRect(&gLayout.pitchSlider,
             gLayout.rateSlider.left,
-            gLayout.rateSlider.bottom + 14,
+            gLayout.rateSlider.bottom + 16,
             gLayout.rateSlider.right,
-            gLayout.rateSlider.bottom + 14 + sliderH);
+            gLayout.rateSlider.bottom + 16 + sliderH);
 
     y = gLayout.settingsGroup.bottom + sectionGutter - 2;
 
@@ -196,22 +197,22 @@ static void main_window_plan_layout(void)
             y + tcpH);
 
     SetRect(&gLayout.hostField,
-            gLayout.tcpGroup.left + 80,
-            gLayout.tcpGroup.top + 14,
-            gLayout.tcpGroup.left + 80 + fieldW,
-            gLayout.tcpGroup.top + 14 + fieldH);
+            gLayout.tcpGroup.left + 86,
+            gLayout.tcpGroup.top + 18,
+            gLayout.tcpGroup.left + 86 + fieldW,
+            gLayout.tcpGroup.top + 18 + fieldH);
 
     SetRect(&gLayout.portField,
-            gLayout.hostField.right + 16,
-            gLayout.tcpGroup.top + 14,
-            gLayout.hostField.right + 16 + 46,
-            gLayout.tcpGroup.top + 14 + fieldH);
+            gLayout.hostField.right + 20,
+            gLayout.tcpGroup.top + 18,
+            gLayout.hostField.right + 20 + 56,
+            gLayout.tcpGroup.top + 18 + fieldH);
 
     SetRect(&gLayout.startButton,
-            gLayout.tcpGroup.right - 90,
-            gLayout.tcpGroup.top + 10,
-            gLayout.tcpGroup.right - 90 + 74,
-            gLayout.tcpGroup.top + 10 + buttonH);
+            gLayout.tcpGroup.right - 102,
+            gLayout.tcpGroup.top + 16,
+            gLayout.tcpGroup.right - 102 + 88,
+            gLayout.tcpGroup.top + 16 + buttonH);
 }
 
 static void main_window_update_control_enabling(SpeechUIState state)
@@ -386,7 +387,7 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 void main_window_create(void)
 {
     Rect r;
-    SetRect(&r, 40, 40, 560, 520);
+    SetRect(&r, 36, 36, 640, 580);
 
     gMainWin = NewWindow(
         NULL,
