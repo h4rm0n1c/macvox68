@@ -26,6 +26,7 @@ project(MacVox68 C)
 
 add_application(MacVox68
     main.c
+    main_window.c
     window_ui.c
     TYPE APPL
     CREATOR MV68
