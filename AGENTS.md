@@ -21,6 +21,7 @@ Otherwise, treat this file as the default guide.**
 - Used to **edit repo files**.
 - Has **reference caches** under `/opt/` for lookup.
 - Might not have a working Retro68 toolchain.
+- Includes Poppler utilities (`pdfinfo`, `pdftotext`, etc.) installed (poppler 24.02.0) for inspecting reference PDFs.
 
 ### User host machine (build truth)
 - Builds the project and produces the `.dsk` used by BasiliskII.
@@ -72,6 +73,8 @@ Typical locations:
 Curated Classic-era examples (extracted from `.sea` / `.hqx` archives; reference only):
 - `/opt/MacExamples` — extracted examples including `.rsrc` sidecar files (resource forks flattened).
 - `/opt/MacExamples_TextOnly` — text-only subset (fast grep/search; `.c/.h/.r` etc).
+
+Some reference PDFs and text documents in `/opt` may not have file extensions (a quirk of the extracted archives); check contents before assuming type.
 
 ### Note: extracted examples may look “split” on Unix
 
