@@ -1,7 +1,6 @@
 #include <Types.h>
 
-extern void ui_app_init(void);
-extern Boolean ui_app_pump_events(void);
+#include "ui_app.h"
 
 int main(void)
 {
