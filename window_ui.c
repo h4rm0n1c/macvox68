@@ -14,11 +14,30 @@
 
 enum
 {
-    kQuitButtonID = 1
+    kTextEditID       = 1,
+    kVoicePopupID     = 2,
+    kSpeakStopBtnID   = 3
 };
 
 static WindowPtr      gMainWin  = NULL;
-static ControlHandle  gQuitBtn  = NULL;
+static ControlHandle  gTextEdit = NULL;
+static ControlHandle  gVoicePop = NULL;
+static ControlHandle  gSpeakBtn = NULL;
+
+typedef struct UILayout
+{
+    Rect editText;
+    Rect voicePopup;
+    Rect speakStopButton;
+} UILayout;
+
+static UILayout gLayout;
+
+typedef enum
+{
+    kSpeechIdleState,
+    kSpeechSpeakingState
+} SpeechUIState;
 
 static void ui_init_toolbox(void)
 {
@@ -53,6 +72,67 @@ static void ui_init_menus_codeonly(void)
     DrawMenuBar();
 }
 
+static void ui_plan_layout(void)
+{
+    Rect content;
+    short margin      = 14;
+    short gutter      = 10;
+    short buttonW     = 70;
+    short buttonH     = 22;
+    short popupW      = 120;
+
+    if (!gMainWin)
+        return;
+
+    content = gMainWin->portRect;
+
+    /* Top row: Speak/Stop (left) and Voice popup (right). This mirrors the
+       Windows NetTTS layout while leaving the File>Quit menu as the primary
+       exit path. */
+    SetRect(&gLayout.speakStopButton,
+            content.left + margin,
+            content.top + margin,
+            content.left + margin + buttonW,
+            content.top + margin + buttonH);
+
+    SetRect(&gLayout.voicePopup,
+            content.right - margin - popupW,
+            content.top + margin,
+            content.right - margin,
+            content.top + margin + buttonH);
+
+    /* Text area sits beneath the control row, filling the remaining height. */
+    SetRect(&gLayout.editText,
+            content.left + margin,
+            gLayout.speakStopButton.bottom + gutter,
+            content.right - margin,
+            content.bottom - margin);
+}
+
+static void ui_update_control_enabling(SpeechUIState state)
+{
+    /* Controls respond to speech activity. Menu-based Quit remains available. */
+    if (gTextEdit)
+        HiliteControl(gTextEdit, (state == kSpeechSpeakingState) ? 255 : 0);
+
+    if (gVoicePop)
+        HiliteControl(gVoicePop, (state == kSpeechSpeakingState) ? 255 : 0);
+
+    if (gSpeakBtn)
+    {
+        if (state == kSpeechSpeakingState)
+        {
+            SetControlTitle(gSpeakBtn, "\pStop");
+            HiliteControl(gSpeakBtn, 0);
+        }
+        else
+        {
+            SetControlTitle(gSpeakBtn, "\pSpeak");
+            HiliteControl(gSpeakBtn, 0);
+        }
+    }
+}
+
 static void ui_create_main_window(void)
 {
     Rect r;
@@ -74,25 +154,11 @@ static void ui_create_main_window(void)
 
     SetPort(gMainWin);
 
-    /* Quit button */
-    {
-        Rect br;
+    ui_plan_layout();
 
-        /* SetRect(left, top, right, bottom) */
-        SetRect(&br, 14, 12, 84, 34); /* width ~70, height ~22 */
-
-        gQuitBtn = NewControl(
-            gMainWin,
-            &br,
-            "\pQuit",
-            true,
-            0,
-            0,
-            1,
-            kClassicPushButtonProc,
-            kQuitButtonID
-        );
-    }
+    /* Speech-related controls will be created later using gLayout. Keep them
+       disabled/hidden until the speech engine arrives. */
+    ui_update_control_enabling(kSpeechIdleState);
 
     ShowWindow(gMainWin);
 }
@@ -117,7 +183,21 @@ static void ui_draw_contents(WindowPtr w)
     MoveTo(x, y);
     DrawString("\pTCP + TTS will be pumped from the event loop.");
 
-    /* Draw controls after the background/text so the Quit button renders immediately. */
+    /* Sketch planned controls so layout remains visible during updates. */
+    FrameRect(&gLayout.editText);
+    MoveTo(gLayout.editText.left + 4, gLayout.editText.top + 14);
+    DrawString("\pText input (TEHandle to come)");
+
+    FrameRect(&gLayout.speakStopButton);
+    MoveTo(gLayout.speakStopButton.left + 8, gLayout.speakStopButton.top + 14);
+    DrawString("\pSpeak/Stop");
+
+    FrameRect(&gLayout.voicePopup);
+    MoveTo(gLayout.voicePopup.left + 8, gLayout.voicePopup.top + 14);
+    DrawString("\pVoice");
+
+    /* Draw controls after the background/text so planned UI chrome paints over
+       the placeholder framing. */
     DrawControls(w);
 }
 
@@ -191,14 +271,7 @@ static Boolean ui_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                 cpart = FindControl(local, w, &c);
                 if (cpart)
                 {
-                    if (TrackControl(c, local, NULL))
-                    {
-                        /* Control reference holds our ID */
-                        long ref = 0;
-                        ref = GetControlReference(c);
-                        if ((short)ref == kQuitButtonID)
-                            *outQuit = true;
-                    }
+                    (void)TrackControl(c, local, NULL);
                     return true;
                 }
             }
