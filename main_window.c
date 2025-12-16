@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <Dialogs.h>
 #include <Controls.h>
+#include <ControlDefinitions.h>
 #include <Events.h>
 #include <Menus.h>
 #include <TextEdit.h>
