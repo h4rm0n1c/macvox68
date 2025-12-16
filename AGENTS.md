@@ -66,7 +66,11 @@ Typical locations:
 - `/opt/MPW` — MPW tools/docs (reference).
 - `/opt/MacDevDocs` — Inside Macintosh, Tech Notes, HIG.
 
-Prefer these over web searches for API truth.
+Additional curated code/resource examples (extracted from Classic-era archives; reference only):
+- `/opt/MacExamples` — extracted examples including `.rsrc` sidecar files (resource forks flattened).
+- `/opt/MacExamples_TextOnly` — text-only subset (fast grep/search; `.c/.h/.r` etc).
+
+Prefer these over web searches for API truth and for Rez/resource idioms.
 
 ---
 
@@ -147,5 +151,3 @@ Do not reformat Rez resource blocks as a “style cleanup”.
   - If using control IDs, be explicit about where that ID is stored (reference vs control value).
 
 Keep the codebase consistent: prefer the existing `window_ui.c` approach unless told to revert to dialogs.
-
----
