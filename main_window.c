@@ -15,6 +15,10 @@
     #define kClassicPushButtonProc 0
 #endif
 
+#ifndef kControlEditTextProc
+    #define kControlEditTextProc 16
+#endif
+
 enum
 {
     kTextEditID       = 1,
@@ -293,10 +297,10 @@ static void main_window_create_controls(void)
                               0, -10, 10, scrollBarProc, 0);
 
     gHostField = NewControl(gMainWin, &gLayout.hostField, "\p127.0.0.1", true,
-                            0, 0, 0, editTextProc, 0);
+                            0, 0, 0, kControlEditTextProc, 0);
 
     gPortField = NewControl(gMainWin, &gLayout.portField, "\p5555", true,
-                            0, 0, 0, editTextProc, 0);
+                            0, 0, 0, kControlEditTextProc, 0);
 
     gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
                            0, 0, 0, pushButProc, 0);
