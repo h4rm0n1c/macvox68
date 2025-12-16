@@ -27,6 +27,8 @@ enum
     kSpeakStopBtnID   = 3
 };
 
+static const short kVoiceMenuID = 200;
+
 static WindowPtr      gMainWin  = NULL;
 static ControlHandle  gTextEdit = NULL;
 static ControlHandle  gVoicePop = NULL;
@@ -145,7 +147,7 @@ static void ui_build_controls(void)
 
     if (!gVoiceMenu)
     {
-        gVoiceMenu = NewMenu(200, "\pVoices");
+        gVoiceMenu = NewMenu(kVoiceMenuID, "\pVoices");
         if (gVoiceMenu)
         {
             AppendMenu(gVoiceMenu, "\pDefault");
@@ -163,7 +165,7 @@ static void ui_build_controls(void)
             "\pVoice",
             (gVoiceMenu != NULL),
             1,
-            (gVoiceMenu != NULL) ? GetMenuID(gVoiceMenu) : 0,
+            (gVoiceMenu != NULL) ? kVoiceMenuID : 0,
             0,
             popupMenuProc,
             kVoicePopupID
