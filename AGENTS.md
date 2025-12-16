@@ -171,3 +171,32 @@ Do not reformat Rez resource blocks just for style.
   - If using control IDs, be explicit about where that ID is stored (control reference vs control value).
 
 Keep the codebase consistent: prefer the existing `window_ui.c` approach unless the operator explicitly asks to change direction.
+
+# Retro68 reference projects (structure + idioms)
+
+When unsure how to structure a Classic Mac app under Retro68 (Rez resources, build layout, event loop, window/control patterns),
+prefer copying patterns from these known-good references rather than inventing new frameworks:
+
+1) Retro68 upstream samples / TestApps (canonical)
+   - Repo: https://github.com/autc04/Retro68
+   - Use for: CMake patterns, Rez (.r) layout, minimal HelloWorld + toolbox usage, LaunchAAPL flow.
+   - Note: treat Retro68 Samples/TestApps as the “ground truth” for how Retro68 expects projects to be assembled.
+
+2) nuklear-quickdraw (practical app skeleton)
+   - Repo: https://github.com/CamHenlin/nuklear-quickdraw
+   - Use for: a realistic project base targeting Classic Mac; shows working scaffolding and app structure.
+   - Even if Nuklear is not used, the skeleton (build/resources/event loop/window setup) is useful.
+
+3) clapkit (optional higher-level wrapper)
+   - Repo: https://github.com/macinlink/clapkit
+   - Use for: seeing a C++ OOP wrapper around Toolbox calls and some “app framework” conventions.
+   - This is optional; do not add extra abstraction unless it helps this project.
+
+Out of scope / avoid for this project:
+- Rust/PPC experiments (e.g. Ferris Weather): interesting, but this repo targets 68k + System 7.5.3 style Toolbox apps.
+- Nim or “compile-to-C” languages: adds complexity and is not historically representative; do not use.
+
+Rule of thumb:
+- If you’re about to create a new app architecture, stop and check Retro68 Samples/TestApps first.
+- Keep it Classic: Toolbox APIs, Rez resources, small reversible changes.
+

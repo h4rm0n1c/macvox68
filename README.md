@@ -14,11 +14,12 @@ MacVox68 is built with Retro68 and depends on the MPW Interfaces & Libraries hea
 Retro68 Rez is invoked through the shell, so include paths that contain special characters must be quoted to avoid being split. In particular, MPW's `Interfaces&Libraries` path must be passed as a single token (or replaced with a symlink that avoids `&`). The `CMakeLists.txt` uses a quoted `-I` argument to keep the path intact when generating Ninja rules, following the safety guidance from `docs/rez_gotchas.md`.
 
 ## Current UI
-All UI is currently code-driven from [`window_ui.c`](window_ui.c):
-- Initializes the Toolbox (`InitGraf`, `InitWindows`, menus, dialogs, cursor).
-- Builds a code-only menu bar (Apple + File with Cmd–Q Quit) and creates the main document window.
-- Adds a Quit push button and renders placeholder text indicating the window UI is active and will host TCP/TTS integration later.
-- Runs an event loop via `ui_app_pump_events()` that handles `mouseDown`, `updateEvt`, and Cmd–Q to quit.
+All UI is currently code-driven from the `ui_app` and `main_window` pair:
+- [`window_ui.c`](window_ui.c) initializes the Toolbox (`InitGraf`, `InitWindows`, menus, dialogs, cursor) and runs the main event pump.
+- [`main_window.c`](main_window.c) owns the main document window, draws its placeholder chrome, and builds all controls/pop-up menus in code.
+- [`ui_app.h`](ui_app.h) and [`main_window.h`](main_window.h) keep the declarations together so each window can live in its own source file as the project grows.
+
+Because the project ships **no Toolbox resources** (no Rez `.r` menus, DITLs, etc.), every menu and control is created programmatically. Avoid adding references to resource IDs that are not constructed in code; if a control or menu is needed, define and build it explicitly at runtime.
 
 ## Legacy dialog resources
-The Retro68 sample dialog files now live in [`legacy/dialog.c`](legacy/dialog.c) and [`legacy/dialog.r`](legacy/dialog.r). They are not referenced by the CMake target (which only builds `main.c` and `window_ui.c`) and remain in the tree purely for historical reference.
+The Retro68 sample dialog files now live in [`legacy/dialog.c`](legacy/dialog.c) and [`legacy/dialog.r`](legacy/dialog.r). They are not referenced by the CMake target (which only builds `main.c`, `window_ui.c`, and `main_window.c`) and remain in the tree purely for historical reference.
