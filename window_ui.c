@@ -116,6 +116,9 @@ static void ui_draw_contents(WindowPtr w)
     y += 16;
     MoveTo(x, y);
     DrawString("\pTCP + TTS will be pumped from the event loop.");
+
+    /* Draw controls after the background/text so the Quit button renders immediately. */
+    DrawControls(w);
 }
 
 static void ui_handle_update(WindowPtr w)
