@@ -21,4 +21,4 @@ All UI is currently code-driven from [`window_ui.c`](window_ui.c):
 - Runs an event loop via `ui_app_pump_events()` that handles `mouseDown`, `updateEvt`, and Cmd–Q to quit.
 
 ## Legacy dialog resources
-The repository still includes Retro68 sample dialog files (`dialog.c`, `dialog.r`), but the CMake target only builds `main.c` and `window_ui.c`. The dialog resources are effectively legacy/unreferenced and remain present for reference only.
+The Retro68 sample dialog files now live in [`legacy/dialog.c`](legacy/dialog.c) and [`legacy/dialog.r`](legacy/dialog.r). They are not referenced by the CMake target (which only builds `main.c` and `window_ui.c`) and remain in the tree purely for historical reference.
