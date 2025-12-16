@@ -85,21 +85,21 @@ static UILayout       gLayout;
 static void main_window_plan_layout(void)
 {
     Rect content;
-    short margin        = 28;
-    short gutter        = 18;
+    short margin        = 16;
+    short gutter        = 10;
     short buttonW       = 116;
     short buttonH       = 24;
-    short popupW        = 260;
-    short sectionGutter = 30;
-    short textAreaH     = 188;
-    short voiceH        = 94;
-    short prosodyH      = 104;
-    short settingsH     = 162;
-    short tcpH          = 122;
+    short popupW        = 300;
+    short sectionGutter = 18;
+    short textAreaH     = 140;
+    short voiceH        = 72;
+    short prosodyH      = 86;
+    short settingsH     = 128;
+    short tcpH          = 96;
     short sliderH       = 22;
-    short sliderW       = 290;
+    short sliderW       = 260;
     short fieldH        = 20;
-    short fieldW        = 176;
+    short fieldW        = 168;
 
     if (!gMainWin)
         return;
@@ -151,22 +151,22 @@ static void main_window_plan_layout(void)
             y + prosodyH);
 
     SetRect(&gLayout.prosodyClean,
-            gLayout.prosodyGroup.left + 118,
-            gLayout.prosodyGroup.top + 46,
-            gLayout.prosodyGroup.left + 214,
-            gLayout.prosodyGroup.top + 62);
+            gLayout.prosodyGroup.left + 110,
+            gLayout.prosodyGroup.top + 40,
+            gLayout.prosodyGroup.left + 202,
+            gLayout.prosodyGroup.top + 58);
 
     SetRect(&gLayout.prosodyLQ,
-            gLayout.prosodyClean.right + 30,
-            gLayout.prosodyGroup.top + 46,
-            gLayout.prosodyClean.right + 164,
-            gLayout.prosodyGroup.top + 62);
+            gLayout.prosodyClean.right + 26,
+            gLayout.prosodyGroup.top + 40,
+            gLayout.prosodyClean.right + 190,
+            gLayout.prosodyGroup.top + 58);
 
     SetRect(&gLayout.prosodyHQ,
-            gLayout.prosodyLQ.right + 30,
-            gLayout.prosodyGroup.top + 46,
-            gLayout.prosodyLQ.right + 196,
-            gLayout.prosodyGroup.top + 62);
+            gLayout.prosodyLQ.right + 26,
+            gLayout.prosodyGroup.top + 40,
+            gLayout.prosodyLQ.right + 214,
+            gLayout.prosodyGroup.top + 58);
 
     y = gLayout.prosodyGroup.bottom + sectionGutter;
 
@@ -177,22 +177,22 @@ static void main_window_plan_layout(void)
             y + settingsH);
 
     SetRect(&gLayout.volumeSlider,
-            gLayout.settingsGroup.left + 150,
-            gLayout.settingsGroup.top + 52,
-            gLayout.settingsGroup.left + 150 + sliderW,
-            gLayout.settingsGroup.top + 52 + sliderH);
+            gLayout.settingsGroup.left + 144,
+            gLayout.settingsGroup.top + 44,
+            gLayout.settingsGroup.left + 144 + sliderW,
+            gLayout.settingsGroup.top + 44 + sliderH);
 
     SetRect(&gLayout.rateSlider,
             gLayout.volumeSlider.left,
-            gLayout.volumeSlider.bottom + 30,
+            gLayout.volumeSlider.bottom + 26,
             gLayout.volumeSlider.right,
-            gLayout.volumeSlider.bottom + 30 + sliderH);
+            gLayout.volumeSlider.bottom + 26 + sliderH);
 
     SetRect(&gLayout.pitchSlider,
             gLayout.rateSlider.left,
-            gLayout.rateSlider.bottom + 30,
+            gLayout.rateSlider.bottom + 26,
             gLayout.rateSlider.right,
-            gLayout.rateSlider.bottom + 30 + sliderH);
+            gLayout.rateSlider.bottom + 26 + sliderH);
 
     y = gLayout.settingsGroup.bottom + sectionGutter;
 
@@ -203,35 +203,27 @@ static void main_window_plan_layout(void)
             y + tcpH);
 
     SetRect(&gLayout.hostField,
-            gLayout.tcpGroup.left + 128,
-            gLayout.tcpGroup.top + 66,
-            gLayout.tcpGroup.left + 128 + fieldW,
-            gLayout.tcpGroup.top + 66 + fieldH);
+            gLayout.tcpGroup.left + 116,
+            gLayout.tcpGroup.top + 46,
+            gLayout.tcpGroup.left + 116 + fieldW,
+            gLayout.tcpGroup.top + 46 + fieldH);
 
     SetRect(&gLayout.portField,
-            gLayout.hostField.right + 38,
-            gLayout.tcpGroup.top + 66,
-            gLayout.hostField.right + 38 + 82,
-            gLayout.tcpGroup.top + 66 + fieldH);
+            gLayout.hostField.right + 32,
+            gLayout.tcpGroup.top + 46,
+            gLayout.hostField.right + 32 + 90,
+            gLayout.tcpGroup.top + 46 + fieldH);
 
     SetRect(&gLayout.startButton,
-            gLayout.tcpGroup.right - 156,
-            gLayout.tcpGroup.top + 62,
-            gLayout.tcpGroup.right - 156 + 126,
-            gLayout.tcpGroup.top + 62 + buttonH);
+            gLayout.tcpGroup.right - 152,
+            gLayout.tcpGroup.top + 42,
+            gLayout.tcpGroup.right - 152 + 132,
+            gLayout.tcpGroup.top + 42 + buttonH);
 }
 
 static short main_window_choose_slider_proc(void)
 {
-    long appearanceAttrs = 0;
-
-    if (Gestalt(gestaltAppearanceAttr, &appearanceAttrs) == noErr &&
-        (appearanceAttrs & (1 << gestaltAppearanceExists)))
-    {
-        return kControlSliderProc;
-    }
-
-    return scrollBarProc;
+    return kControlSliderProc;
 }
 
 static void main_window_update_control_enabling(SpeechUIState state)
@@ -261,6 +253,7 @@ static void main_window_create_controls(void)
     short voiceMenuID = 200;
     short voiceCount = 0;
     short sliderProc = main_window_choose_slider_proc();
+    short editProc = kControlEditTextProc;
 
     if (!gMainWin)
         return;
@@ -307,10 +300,10 @@ static void main_window_create_controls(void)
                               0, -10, 10, sliderProc, 0);
 
     gHostField = NewControl(gMainWin, &gLayout.hostField, "\p127.0.0.1", true,
-                            0, 0, 0, editTextProc, 0);
+                            0, 0, 0, editProc, 0);
 
     gPortField = NewControl(gMainWin, &gLayout.portField, "\p5555", true,
-                            0, 0, 0, editTextProc, 0);
+                            0, 0, 0, editProc, 0);
 
     gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
                            0, 0, 0, pushButProc, 0);
@@ -343,6 +336,9 @@ static void main_window_draw_contents(WindowPtr w)
 
     EraseRect(&content);
 
+    /* Text area frame */
+    FrameRect(&gLayout.editText);
+
     /* Voice selection group */
     FrameRect(&gLayout.voiceGroup);
     MoveTo(gLayout.voiceGroup.left + 10, gLayout.voiceGroup.top + 22);
@@ -370,9 +366,9 @@ static void main_window_draw_contents(WindowPtr w)
     FrameRect(&gLayout.tcpGroup);
     MoveTo(gLayout.tcpGroup.left + 10, gLayout.tcpGroup.top + 26);
     DrawString("\pNetCat Receiver/TCP Server");
-    MoveTo(gLayout.tcpGroup.left + 24, gLayout.tcpGroup.top + 78);
+    MoveTo(gLayout.tcpGroup.left + 24, gLayout.tcpGroup.top + 60);
     DrawString("\pHost:");
-    MoveTo(gLayout.portField.left - 34, gLayout.tcpGroup.top + 78);
+    MoveTo(gLayout.portField.left - 34, gLayout.tcpGroup.top + 60);
     DrawString("\pPort:");
 
     /* Draw controls after the background/text so chrome paints over the framing. */
@@ -380,6 +376,12 @@ static void main_window_draw_contents(WindowPtr w)
 
     if (gTextTE)
         TEUpdate(&gLayout.editText, gTextTE);
+}
+
+void main_window_idle(void)
+{
+    if (gTextActive && gTextTE)
+        TEIdle(gTextTE);
 }
 
 static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)

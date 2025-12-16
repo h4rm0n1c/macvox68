@@ -85,6 +85,13 @@ Boolean ui_app_pump_events(void)
                 break;
         }
     }
+    else
+    {
+        main_window_idle();
+    }
+
+    /* Keep the caret blinking even when events are delivered. */
+    main_window_idle();
 
     /* Integration point:
        Later, call tcp_poll() and speech_pump() here (nonblocking), while the loop stays responsive. */

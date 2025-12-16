@@ -9,6 +9,7 @@ void main_window_create(void);
 void main_window_handle_update(WindowPtr w);
 Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit);
 Boolean main_window_handle_key(EventRecord *ev);
+void main_window_idle(void);
 WindowPtr main_window_get(void);
 
 #endif /* MAIN_WINDOW_H */
