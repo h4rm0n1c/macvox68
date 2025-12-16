@@ -56,7 +56,7 @@ static void ui_init_menus_codeonly(void)
 static void ui_create_main_window(void)
 {
     Rect r;
-    SetRect(&r, 60, 60, 300, 500);
+    SetRect(&r, 60, 60, 420, 240);
 
     gMainWin = NewWindow(
         NULL,
@@ -77,7 +77,9 @@ static void ui_create_main_window(void)
     /* Quit button */
     {
         Rect br;
-        SetRect(&br, 20, 20, 100, 90);
+
+        /* SetRect(left, top, right, bottom) */
+        SetRect(&br, 14, 12, 84, 34); /* width ~70, height ~22 */
 
         gQuitBtn = NewControl(
             gMainWin,
@@ -97,10 +99,22 @@ static void ui_create_main_window(void)
 
 static void ui_draw_contents(WindowPtr w)
 {
-    MoveTo(20, 130);
-    DrawString("\pWindow UI is live.");
+    Rect content;
+    short x, y;
 
-    MoveTo(20, 150);
+    SetPort(w);
+    content = w->portRect;
+
+    EraseRect(&content);
+
+    x = content.left + 14;
+    y = content.top + 12 + 22 + 16; /* button top + button height + padding */
+
+    MoveTo(x, y);
+    DrawString("\pMacVox68 is live.");
+
+    y += 16;
+    MoveTo(x, y);
     DrawString("\pTCP + TTS will be pumped from the event loop.");
 }
 
