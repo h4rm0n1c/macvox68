@@ -282,7 +282,7 @@ static void main_window_create_controls(void)
                            0, 0, 0, pushButProc, 0);
 }
 
-static Boolean main_window_handle_key(EventRecord *ev)
+Boolean main_window_handle_key(EventRecord *ev)
 {
     if (!gActiveControl)
         return false;
