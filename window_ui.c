@@ -76,6 +76,9 @@ Boolean ui_app_pump_events(void)
                     if (c == 'q' || c == 'Q')
                         quit = true;
                 }
+
+                if (!quit)
+                    (void)main_window_handle_key(&ev);
                 break;
 
             default:
