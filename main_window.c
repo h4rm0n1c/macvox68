@@ -438,9 +438,9 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* TCP group */
     main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
-    MoveTo(gLayout.tcpGroup.left + 16, gLayout.tcpGroup.top + 32);
+    MoveTo(gLayout.tcpGroup.left + 26, gLayout.tcpGroup.top + 32);
     DrawString("\pHost:");
-    MoveTo(gLayout.portField.left - 26, gLayout.tcpGroup.top + 32);
+    MoveTo(gLayout.portField.left - 31, gLayout.tcpGroup.top + 32);
     DrawString("\pPort:");
 
     hostFrame = gLayout.hostField;
