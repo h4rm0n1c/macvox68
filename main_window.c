@@ -19,14 +19,12 @@
 enum
 {
     kTextEditID       = 1,
-    kVoicePopupID     = 2,
     kSpeakStopBtnID   = 3
 };
 
 typedef struct UILayout
 {
     Rect editText;
-    Rect voicePopup;
     Rect speakStopButton;
     Rect soundGroup;
     Rect soundPopup;
@@ -52,7 +50,6 @@ typedef enum
 } SpeechUIState;
 
 static WindowPtr      gMainWin  = NULL;
-static ControlHandle  gVoicePop = NULL;
 static ControlHandle  gSpeakBtn = NULL;
 static ControlHandle  gSoundPop = NULL;
 static ControlHandle  gApplyBtn = NULL;
@@ -90,7 +87,6 @@ static void main_window_plan_layout(void)
     short gutter        = 12;
     short buttonW       = 86;
     short buttonH       = 22;
-    short voicePopupW   = 230;
     short soundPopupW   = 214;
     short sectionGutter = 14;
     short textAreaH     = 170;
@@ -109,17 +105,11 @@ static void main_window_plan_layout(void)
 
     content = gMainWin->portRect;
 
-    /* Top row: Speak/Stop (left) and Voice popup (right). */
+    /* Top row: Speak/Stop (left). */
     SetRect(&gLayout.speakStopButton,
             content.left + margin,
             content.top + margin,
             content.left + margin + buttonW,
-            content.top + margin + buttonH);
-
-    SetRect(&gLayout.voicePopup,
-            content.right - margin - voicePopupW,
-            content.top + margin,
-            content.right - margin,
             content.top + margin + buttonH);
 
     /* Text area sits beneath the control row. */
@@ -226,9 +216,9 @@ static void main_window_plan_layout(void)
             gLayout.tcpGroup.top + 19 + fieldH);
 
     SetRect(&gLayout.portField,
-            gLayout.hostField.right + 36,
+            gLayout.hostField.right + 56,
             gLayout.tcpGroup.top + 19,
-            gLayout.hostField.right + 36 + portFieldW,
+            gLayout.hostField.right + 56 + portFieldW,
             gLayout.tcpGroup.top + 19 + fieldH);
 
     SetRect(&gLayout.startButton,
@@ -241,9 +231,6 @@ static void main_window_plan_layout(void)
 static void main_window_update_control_enabling(SpeechUIState state)
 {
     /* Controls respond to speech activity. Menu-based Quit remains available. */
-    if (gVoicePop)
-        HiliteControl(gVoicePop, (state == kSpeechSpeakingState) ? 255 : 0);
-
     if (gSpeakBtn)
     {
         if (state == kSpeechSpeakingState)
@@ -305,25 +292,14 @@ static void main_window_create_text_edit(void)
 
 static void main_window_create_controls(void)
 {
-    MenuHandle voiceMenu = NULL;
     MenuHandle soundMenu = NULL;
-    short voiceMenuID = 200;
     short soundMenuID = 201;
-    short voiceCount = 0;
     short soundCount = 0;
 
     if (!gMainWin)
         return;
 
     /* Build runtime menus so we do not rely on absent Toolbox resources. */
-    voiceMenu = NewMenu(voiceMenuID, "\pVoices");
-    if (voiceMenu)
-    {
-        AppendMenu(voiceMenu, "\pDefault\xA5Prose\xA5Narrator");
-        InsertMenu(voiceMenu, -1);
-        voiceCount = CountMItems(voiceMenu);
-    }
-
     soundMenu = NewMenu(soundMenuID, "\pSound");
     if (soundMenu)
     {
@@ -334,12 +310,6 @@ static void main_window_create_controls(void)
 
     gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
                            0, 0, 0, pushButProc, kSpeakStopBtnID);
-
-    if (voiceMenu && voiceCount > 0)
-    {
-        gVoicePop = NewControl(gMainWin, &gLayout.voicePopup, "\pVoice", true,
-                               1, voiceMenuID, voiceCount, popupMenuProc, kVoicePopupID);
-    }
 
     if (soundMenu && soundCount > 0)
     {
@@ -423,11 +393,7 @@ static void main_window_draw_contents(WindowPtr w)
     content = w->portRect;
 
     main_window_set_light_background();
-    FillRect(&content, &qd.white);
-
-    /* Header row accents */
-    MoveTo(gLayout.voicePopup.left - 124, gLayout.voicePopup.top + 16);
-    DrawString("\pVoice Selection:");
+    FillRect(&content, &qd.gray);
 
     PenPat(&qd.gray);
     MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
@@ -457,24 +423,24 @@ static void main_window_draw_contents(WindowPtr w)
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
     MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 30);
     DrawString("\pVolume");
-    MoveTo(gLayout.settingsGroup.right - 40, gLayout.settingsGroup.top + 30);
+    MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
     DrawString("\p100%");
 
     MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 60);
     DrawString("\pRate");
-    MoveTo(gLayout.settingsGroup.right - 40, gLayout.settingsGroup.top + 60);
+    MoveTo(gLayout.rateSlider.right + 10, gLayout.settingsGroup.top + 60);
     DrawString("\p1.00");
 
     MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 90);
     DrawString("\pPitch");
-    MoveTo(gLayout.settingsGroup.right - 40, gLayout.settingsGroup.top + 90);
+    MoveTo(gLayout.pitchSlider.right + 10, gLayout.settingsGroup.top + 90);
     DrawString("\p1.00");
 
     /* TCP group */
     main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
     MoveTo(gLayout.tcpGroup.left + 16, gLayout.tcpGroup.top + 32);
     DrawString("\pHost:");
-    MoveTo(gLayout.portField.left - 22, gLayout.tcpGroup.top + 32);
+    MoveTo(gLayout.portField.left - 26, gLayout.tcpGroup.top + 32);
     DrawString("\pPort:");
 
     hostFrame = gLayout.hostField;
