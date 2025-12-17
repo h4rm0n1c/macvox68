@@ -90,7 +90,8 @@ static void main_window_plan_layout(void)
     short gutter        = 12;
     short buttonW       = 86;
     short buttonH       = 22;
-    short popupW        = 160;
+    short voicePopupW   = 210;
+    short soundPopupW   = 200;
     short sectionGutter = 14;
     short textAreaH     = 170;
     short soundH        = 52;
@@ -99,8 +100,9 @@ static void main_window_plan_layout(void)
     short tcpH          = 52;
     short sliderH       = 16;
     short sliderW       = 200;
-    short fieldH        = 18;
-    short fieldW        = 120;
+    short fieldH        = 24;
+    short fieldW        = 136;
+    short portFieldW    = 64;
 
     if (!gMainWin)
         return;
@@ -115,7 +117,7 @@ static void main_window_plan_layout(void)
             content.top + margin + buttonH);
 
     SetRect(&gLayout.voicePopup,
-            content.right - margin - popupW,
+            content.right - margin - voicePopupW,
             content.top + margin,
             content.right - margin,
             content.top + margin + buttonH);
@@ -139,7 +141,7 @@ static void main_window_plan_layout(void)
     SetRect(&gLayout.soundPopup,
             gLayout.soundGroup.left + 96,
             gLayout.soundGroup.top + 16,
-            gLayout.soundGroup.left + 96 + popupW,
+            gLayout.soundGroup.left + 96 + soundPopupW,
             gLayout.soundGroup.top + 16 + buttonH);
 
     SetRect(&gLayout.applyButton,
@@ -156,23 +158,32 @@ static void main_window_plan_layout(void)
             content.right - margin,
             y + prosodyH);
 
-    SetRect(&gLayout.prosodyClean,
-            gLayout.prosodyGroup.left + 90,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyGroup.left + 150,
-            gLayout.prosodyGroup.top + 28);
+    {
+        short radioTop   = gLayout.prosodyGroup.top + 12;
+        short radioLeft  = gLayout.prosodyGroup.left + 72;
+        short radioGap   = 22;
+        short radioWidth = 140;
 
-    SetRect(&gLayout.prosodyLQ,
-            gLayout.prosodyClean.right + 18,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyClean.right + 78,
-            gLayout.prosodyGroup.top + 28);
+        SetRect(&gLayout.prosodyClean,
+                radioLeft,
+                radioTop,
+                radioLeft + radioWidth,
+                radioTop + 18);
 
-    SetRect(&gLayout.prosodyHQ,
-            gLayout.prosodyLQ.right + 18,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyLQ.right + 100,
-            gLayout.prosodyGroup.top + 28);
+        radioLeft = gLayout.prosodyClean.right + radioGap;
+        SetRect(&gLayout.prosodyLQ,
+                radioLeft,
+                radioTop,
+                radioLeft + radioWidth,
+                radioTop + 18);
+
+        radioLeft = gLayout.prosodyLQ.right + radioGap;
+        SetRect(&gLayout.prosodyHQ,
+                radioLeft,
+                radioTop,
+                radioLeft + radioWidth,
+                radioTop + 18);
+    }
 
     y = gLayout.prosodyGroup.bottom + sectionGutter - 2;
 
@@ -217,14 +228,14 @@ static void main_window_plan_layout(void)
     SetRect(&gLayout.portField,
             gLayout.hostField.right + 16,
             gLayout.tcpGroup.top + 14,
-            gLayout.hostField.right + 16 + 46,
+            gLayout.hostField.right + 16 + portFieldW,
             gLayout.tcpGroup.top + 14 + fieldH);
 
     SetRect(&gLayout.startButton,
-            gLayout.tcpGroup.right - 90,
-            gLayout.tcpGroup.top + 10,
-            gLayout.tcpGroup.right - 90 + 74,
-            gLayout.tcpGroup.top + 10 + buttonH);
+            gLayout.tcpGroup.right - 118,
+            gLayout.tcpGroup.top + 12,
+            gLayout.tcpGroup.right - 118 + 104,
+            gLayout.tcpGroup.top + 12 + buttonH);
 }
 
 static void main_window_update_control_enabling(SpeechUIState state)
@@ -359,9 +370,7 @@ static void main_window_create_controls(void)
 
 static void main_window_set_light_background(void)
 {
-    RGBColor lightGray = {0xB000, 0xB000, 0xB000};
-
-    RGBBackColor(&lightGray);
+    BackPat(&qd.gray);
     ForeColor(blackColor);
 }
 
@@ -369,8 +378,7 @@ static void main_window_draw_text_field(const Rect *frame)
 {
     Rect inner = *frame;
 
-    BackColor(whiteColor);
-    PaintRect(frame);
+    FillRect(frame, &qd.white);
 
     PenPat(&qd.gray);
     FrameRect(frame);
@@ -385,7 +393,7 @@ static void main_window_draw_group(const Rect *r, ConstStr255Param title)
     Rect shade = *r;
 
     main_window_set_light_background();
-    PaintRect(&shade);
+    FillRect(&shade, &qd.white);
 
     PenPat(&qd.gray);
     FrameRect(&shade);
@@ -409,10 +417,10 @@ static void main_window_draw_contents(WindowPtr w)
     content = w->portRect;
 
     main_window_set_light_background();
-    EraseRect(&content);
+    FillRect(&content, &qd.gray);
 
     /* Header row accents */
-    MoveTo(gLayout.voicePopup.left - 94, gLayout.voicePopup.top + 15);
+    MoveTo(gLayout.voicePopup.left - 120, gLayout.voicePopup.top + 6);
     DrawString("\pVoice Selection:");
 
     PenPat(&qd.gray);
