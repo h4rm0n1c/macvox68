@@ -1,5 +1,6 @@
 #include <Types.h>
 #include <Quickdraw.h>
+#include <QDColors.h>
 #include <Windows.h>
 #include <Dialogs.h>
 #include <Controls.h>
@@ -62,11 +63,26 @@ static ControlHandle  gProsodyHQ    = NULL;
 static ControlHandle  gVolumeSlider = NULL;
 static ControlHandle  gRateSlider   = NULL;
 static ControlHandle  gPitchSlider  = NULL;
-static ControlHandle  gHostField    = NULL;
-static ControlHandle  gPortField    = NULL;
 static ControlHandle  gStartBtn     = NULL;
 static TEHandle       gTextEdit     = NULL;
+static TEHandle       gHostEdit     = NULL;
+static TEHandle       gPortEdit     = NULL;
+static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
+
+static void main_window_switch_active_edit(TEHandle h)
+{
+    if (gActiveEdit == h)
+        return;
+
+    if (gActiveEdit)
+        TEDeactivate(gActiveEdit);
+
+    gActiveEdit = h;
+
+    if (gActiveEdit)
+        TEActivate(gActiveEdit);
+}
 
 static void main_window_plan_layout(void)
 {
@@ -233,16 +249,14 @@ static void main_window_update_control_enabling(SpeechUIState state)
     }
 }
 
-static void main_window_create_text_edit(void)
+static TEHandle main_window_create_text_field(const Rect *frame, const char *text)
 {
     Rect viewRect;
     Rect destRect;
+    TEHandle handle = NULL;
 
-    if (!gMainWin)
-        return;
-
-    viewRect = gLayout.editText;
-    InsetRect(&viewRect, 10, 10);
+    viewRect = *frame;
+    InsetRect(&viewRect, 6, 4);
 
     destRect = viewRect;
     destRect.bottom += 2000; /* Allow scrolling room for pasted content. */
@@ -251,17 +265,32 @@ static void main_window_create_text_edit(void)
     BackColor(whiteColor);
     ForeColor(blackColor);
 
-    gTextEdit = TENew(&destRect, &viewRect);
-    if (gTextEdit)
+    handle = TENew(&destRect, &viewRect);
+    if (handle)
     {
-        static const char kInitialText[] =
-            "MacVox68 is live.\r"
-            "TCP + TTS will be pumped from the event loop.\r"
-            "Voice requests will appear here.";
-
-        TEInsert(kInitialText, strlen(kInitialText), gTextEdit);
-        TEActivate(gTextEdit);
+        if (text)
+            TEInsert(text, strlen(text), handle);
     }
+
+    return handle;
+}
+
+static void main_window_create_text_edit(void)
+{
+    static const char kInitialText[] =
+        "MacVox68 is live.\r"
+        "TCP + TTS will be pumped from the event loop.\r"
+        "Voice requests will appear here.";
+
+    if (!gMainWin)
+        return;
+
+    gTextEdit = main_window_create_text_field(&gLayout.editText, kInitialText);
+    gHostEdit = main_window_create_text_field(&gLayout.hostField, "127.0.0.1");
+    gPortEdit = main_window_create_text_field(&gLayout.portField, "5555");
+
+    if (gTextEdit)
+        main_window_switch_active_edit(gTextEdit);
 }
 
 static void main_window_create_controls(void)
@@ -325,22 +354,38 @@ static void main_window_create_controls(void)
     gPitchSlider = NewControl(gMainWin, &gLayout.pitchSlider, "\p", true,
                               0, -10, 10, scrollBarProc, 0);
 
-    gHostField = NewControl(gMainWin, &gLayout.hostField, "\p127.0.0.1", true,
-                            0, 0, 0, editTextProc, 0);
-
-    gPortField = NewControl(gMainWin, &gLayout.portField, "\p5555", true,
-                            0, 0, 0, editTextProc, 0);
-
     gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
                            0, 0, 0, pushButProc, 0);
+}
+
+static void main_window_set_light_background(void)
+{
+    RGBColor lightGray = {0xB000, 0xB000, 0xB000};
+
+    RGBBackColor(&lightGray);
+    ForeColor(blackColor);
+}
+
+static void main_window_draw_text_field(const Rect *frame)
+{
+    Rect inner = *frame;
+
+    BackColor(whiteColor);
+    PaintRect(frame);
+
+    PenPat(&qd.gray);
+    FrameRect(frame);
+
+    InsetRect(&inner, 1, 1);
+    PenNormal();
+    FrameRect(&inner);
 }
 
 static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 {
     Rect shade = *r;
 
-    BackColor(ltGrayColor);
-    ForeColor(blackColor);
+    main_window_set_light_background();
     PaintRect(&shade);
 
     PenPat(&qd.gray);
@@ -358,12 +403,13 @@ static void main_window_draw_contents(WindowPtr w)
 {
     Rect content;
     Rect textFrame;
+    Rect hostFrame;
+    Rect portFrame;
 
     SetPort(w);
     content = w->portRect;
 
-    BackColor(ltGrayColor);
-    ForeColor(blackColor);
+    main_window_set_light_background();
     EraseRect(&content);
 
     /* Header row accents */
@@ -377,17 +423,11 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* Text entry area with a soft border. */
     textFrame = gLayout.editText;
-    BackColor(whiteColor);
-    PaintRect(&textFrame);
-    PenPat(&qd.gray);
-    FrameRect(&textFrame);
-    InsetRect(&textFrame, 1, 1);
-    PenNormal();
-    FrameRect(&textFrame);
+    main_window_draw_text_field(&textFrame);
 
     if (gTextEdit)
     {
-        TEUpdate(w->visRgn, gTextEdit);
+        TEUpdate(&textFrame, gTextEdit);
     }
 
     /* Sound group */
@@ -423,6 +463,18 @@ static void main_window_draw_contents(WindowPtr w)
     DrawString("\pHost:");
     MoveTo(gLayout.portField.left - 22, gLayout.tcpGroup.top + 32);
     DrawString("\pPort:");
+
+    hostFrame = gLayout.hostField;
+    portFrame = gLayout.portField;
+
+    main_window_draw_text_field(&hostFrame);
+    main_window_draw_text_field(&portFrame);
+
+    if (gHostEdit)
+        TEUpdate(&hostFrame, gHostEdit);
+
+    if (gPortEdit)
+        TEUpdate(&portFrame, gPortEdit);
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
@@ -539,7 +591,32 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
 
                     if (PtInRect(local, &textRect))
                     {
+                        main_window_switch_active_edit(gTextEdit);
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
+                        return true;
+                    }
+                }
+
+                if (gHostEdit)
+                {
+                    Rect hostRect = gLayout.hostField;
+
+                    if (PtInRect(local, &hostRect))
+                    {
+                        main_window_switch_active_edit(gHostEdit);
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gHostEdit);
+                        return true;
+                    }
+                }
+
+                if (gPortEdit)
+                {
+                    Rect portRect = gLayout.portField;
+
+                    if (PtInRect(local, &portRect))
+                    {
+                        main_window_switch_active_edit(gPortEdit);
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gPortEdit);
                         return true;
                     }
                 }
@@ -560,8 +637,15 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
     if ((ev->modifiers & cmdKey) != 0)
         return false;
 
+    if (gActiveEdit)
+    {
+        TEKey(c, gActiveEdit);
+        return true;
+    }
+
     if (gTextEdit)
     {
+        main_window_switch_active_edit(gTextEdit);
         TEKey(c, gTextEdit);
         return true;
     }
@@ -571,12 +655,14 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 
 void main_window_idle(void)
 {
-    if (gTextEdit)
+    TEHandle target = gActiveEdit ? gActiveEdit : gTextEdit;
+
+    if (target)
     {
         GrafPtr savePort;
         GetPort(&savePort);
         SetPort(gMainWin);
-        TEIdle(gTextEdit);
+        TEIdle(target);
         SetPort(savePort);
     }
 }
