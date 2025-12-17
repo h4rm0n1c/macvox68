@@ -6,8 +6,10 @@
 #include <ControlDefinitions.h>
 #include <Events.h>
 #include <Menus.h>
+#include <Memory.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
+#include <string.h>
 
 #include "main_window.h"
 
@@ -18,14 +20,12 @@
 enum
 {
     kTextEditID       = 1,
-    kVoicePopupID     = 2,
     kSpeakStopBtnID   = 3
 };
 
 typedef struct UILayout
 {
     Rect editText;
-    Rect voicePopup;
     Rect speakStopButton;
     Rect soundGroup;
     Rect soundPopup;
@@ -51,7 +51,6 @@ typedef enum
 } SpeechUIState;
 
 static WindowPtr      gMainWin  = NULL;
-static ControlHandle  gVoicePop = NULL;
 static ControlHandle  gSpeakBtn = NULL;
 static ControlHandle  gSoundPop = NULL;
 static ControlHandle  gApplyBtn = NULL;
@@ -61,46 +60,57 @@ static ControlHandle  gProsodyHQ    = NULL;
 static ControlHandle  gVolumeSlider = NULL;
 static ControlHandle  gRateSlider   = NULL;
 static ControlHandle  gPitchSlider  = NULL;
-static ControlHandle  gHostField    = NULL;
-static ControlHandle  gPortField    = NULL;
 static ControlHandle  gStartBtn     = NULL;
+static TEHandle       gTextEdit     = NULL;
+static TEHandle       gHostEdit     = NULL;
+static TEHandle       gPortEdit     = NULL;
+static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
+
+static void main_window_switch_active_edit(TEHandle h)
+{
+    if (gActiveEdit == h)
+        return;
+
+    if (gActiveEdit)
+        TEDeactivate(gActiveEdit);
+
+    gActiveEdit = h;
+
+    if (gActiveEdit)
+        TEActivate(gActiveEdit);
+}
 
 static void main_window_plan_layout(void)
 {
     Rect content;
-    short margin        = 12;
-    short gutter        = 10;
-    short buttonW       = 80;
+    short margin        = 16;
+    short gutter        = 12;
+    short buttonW       = 86;
     short buttonH       = 22;
-    short popupW        = 130;
-    short sectionGutter = 12;
-    short textAreaH     = 160;
-    short soundH        = 44;
-    short prosodyH      = 50;
-    short settingsH     = 80;
-    short tcpH          = 48;
+    short soundPopupW   = 214;
+    short sectionGutter = 14;
+    short textAreaH     = 170;
+    short soundH        = 60;
+    short prosodyH      = 76;
+    short settingsH     = 108;
+    short tcpH          = 60;
     short sliderH       = 16;
-    short sliderW       = 180;
-    short fieldH        = 18;
-    short fieldW        = 110;
+    short sliderW       = 210;
+    short fieldH        = 26;
+    short fieldW        = 152;
+    short portFieldW    = 64;
 
     if (!gMainWin)
         return;
 
     content = gMainWin->portRect;
 
-    /* Top row: Speak/Stop (left) and Voice popup (right). */
+    /* Top row: Speak/Stop (left). */
     SetRect(&gLayout.speakStopButton,
             content.left + margin,
             content.top + margin,
             content.left + margin + buttonW,
-            content.top + margin + buttonH);
-
-    SetRect(&gLayout.voicePopup,
-            content.right - margin - popupW,
-            content.top + margin,
-            content.right - margin,
             content.top + margin + buttonH);
 
     /* Text area sits beneath the control row. */
@@ -120,15 +130,15 @@ static void main_window_plan_layout(void)
             y + soundH);
 
     SetRect(&gLayout.soundPopup,
-            gLayout.soundGroup.left + 90,
-            gLayout.soundGroup.top + 14,
-            gLayout.soundGroup.left + 90 + popupW,
-            gLayout.soundGroup.top + 14 + buttonH);
+            gLayout.soundGroup.left + 96,
+            gLayout.soundGroup.top + 16,
+            gLayout.soundGroup.left + 96 + soundPopupW,
+            gLayout.soundGroup.top + 16 + buttonH);
 
     SetRect(&gLayout.applyButton,
-            gLayout.soundGroup.right - 90,
+            gLayout.soundGroup.right - margin - 86,
             gLayout.soundGroup.top + 14,
-            gLayout.soundGroup.right - 90 + 60,
+            gLayout.soundGroup.right - margin,
             gLayout.soundGroup.top + 14 + buttonH);
 
     y = gLayout.soundGroup.bottom + sectionGutter - 2;
@@ -139,23 +149,32 @@ static void main_window_plan_layout(void)
             content.right - margin,
             y + prosodyH);
 
-    SetRect(&gLayout.prosodyClean,
-            gLayout.prosodyGroup.left + 90,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyGroup.left + 150,
-            gLayout.prosodyGroup.top + 28);
+    {
+        short radioTop   = gLayout.prosodyGroup.top + 44;
+        short radioLeft  = gLayout.prosodyGroup.left + 72;
+        short radioGap   = 22;
+        short radioWidth = 140;
 
-    SetRect(&gLayout.prosodyLQ,
-            gLayout.prosodyClean.right + 18,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyClean.right + 78,
-            gLayout.prosodyGroup.top + 28);
+        SetRect(&gLayout.prosodyClean,
+                radioLeft,
+                radioTop,
+                radioLeft + radioWidth,
+                radioTop + 18);
 
-    SetRect(&gLayout.prosodyHQ,
-            gLayout.prosodyLQ.right + 18,
-            gLayout.prosodyGroup.top + 12,
-            gLayout.prosodyLQ.right + 100,
-            gLayout.prosodyGroup.top + 28);
+        radioLeft = gLayout.prosodyClean.right + radioGap;
+        SetRect(&gLayout.prosodyLQ,
+                radioLeft,
+                radioTop,
+                radioLeft + radioWidth,
+                radioTop + 18);
+
+        radioLeft = gLayout.prosodyLQ.right + radioGap;
+        SetRect(&gLayout.prosodyHQ,
+                radioLeft,
+                radioTop,
+                radioLeft + radioWidth,
+                radioTop + 18);
+    }
 
     y = gLayout.prosodyGroup.bottom + sectionGutter - 2;
 
@@ -166,9 +185,9 @@ static void main_window_plan_layout(void)
             y + settingsH);
 
     SetRect(&gLayout.volumeSlider,
-            gLayout.settingsGroup.left + 90,
+            gLayout.settingsGroup.left + 124,
             gLayout.settingsGroup.top + 14,
-            gLayout.settingsGroup.left + 90 + sliderW,
+            gLayout.settingsGroup.left + 124 + sliderW,
             gLayout.settingsGroup.top + 14 + sliderH);
 
     SetRect(&gLayout.rateSlider,
@@ -193,29 +212,26 @@ static void main_window_plan_layout(void)
 
     SetRect(&gLayout.hostField,
             gLayout.tcpGroup.left + 80,
-            gLayout.tcpGroup.top + 14,
+            gLayout.tcpGroup.top + 19,
             gLayout.tcpGroup.left + 80 + fieldW,
-            gLayout.tcpGroup.top + 14 + fieldH);
+            gLayout.tcpGroup.top + 19 + fieldH);
 
     SetRect(&gLayout.portField,
-            gLayout.hostField.right + 16,
-            gLayout.tcpGroup.top + 14,
-            gLayout.hostField.right + 16 + 46,
-            gLayout.tcpGroup.top + 14 + fieldH);
+            gLayout.hostField.right + 56,
+            gLayout.tcpGroup.top + 19,
+            gLayout.hostField.right + 56 + portFieldW,
+            gLayout.tcpGroup.top + 19 + fieldH);
 
     SetRect(&gLayout.startButton,
-            gLayout.tcpGroup.right - 90,
-            gLayout.tcpGroup.top + 10,
-            gLayout.tcpGroup.right - 90 + 74,
-            gLayout.tcpGroup.top + 10 + buttonH);
+            gLayout.tcpGroup.right - 118,
+            gLayout.tcpGroup.top + 18,
+            gLayout.tcpGroup.right - 118 + 104,
+            gLayout.tcpGroup.top + 18 + buttonH);
 }
 
 static void main_window_update_control_enabling(SpeechUIState state)
 {
     /* Controls respond to speech activity. Menu-based Quit remains available. */
-    if (gVoicePop)
-        HiliteControl(gVoicePop, (state == kSpeechSpeakingState) ? 255 : 0);
-
     if (gSpeakBtn)
     {
         if (state == kSpeechSpeakingState)
@@ -231,27 +247,268 @@ static void main_window_update_control_enabling(SpeechUIState state)
     }
 }
 
+static TEHandle main_window_create_text_field(const Rect *frame, const char *text, Boolean singleLine)
+{
+    Rect viewRect;
+    Rect destRect;
+    TEHandle handle = NULL;
+    short maxLines = 0;
+
+    viewRect = *frame;
+    InsetRect(&viewRect, 6, 4);
+
+    destRect = viewRect;
+    /* Keep the caret constrained to the visible box. */
+    destRect.bottom = viewRect.bottom;
+
+    SetPort(gMainWin);
+    BackColor(whiteColor);
+    ForeColor(blackColor);
+
+    handle = TENew(&destRect, &viewRect);
+    if (handle)
+    {
+        (**handle).viewRect = viewRect;
+
+        if (singleLine)
+        {
+            Rect singleRect = viewRect;
+            short lineH    = (**handle).lineHeight;
+            short slack    = (singleRect.bottom - singleRect.top) - lineH;
+
+            if (slack > 0)
+            {
+                singleRect.top += slack / 2;
+                singleRect.bottom = singleRect.top + lineH;
+            }
+            else
+            {
+                singleRect.bottom = singleRect.top + lineH;
+            }
+
+            (**handle).destRect = singleRect;
+            (**handle).viewRect = singleRect;
+            (**handle).crOnly   = true;
+        }
+        else
+        {
+            short lineH = (**handle).lineHeight;
+
+            if (lineH > 0)
+            {
+                maxLines = (short)((viewRect.bottom - viewRect.top) / lineH);
+                if (maxLines < 1)
+                    maxLines = 1;
+            }
+
+            destRect.bottom = destRect.top + (lineH * maxLines);
+            if (destRect.bottom > viewRect.bottom)
+                destRect.bottom = viewRect.bottom;
+
+            (**handle).destRect      = destRect;
+            (**handle).viewRect.bottom = destRect.bottom;
+        }
+
+        if (text)
+            TEInsert(text, strlen(text), handle);
+    }
+
+    return handle;
+}
+
+static short main_window_max_lines_for(TEHandle handle)
+{
+    TEPtr te;
+    short lineH;
+
+    if (!handle)
+        return 0;
+
+    te = *handle;
+    lineH = te->lineHeight;
+
+    if (lineH <= 0)
+        return 0;
+
+    return (short)((te->destRect.bottom - te->destRect.top) / lineH);
+}
+
+static Boolean main_window_current_line_bounds(TEHandle handle, short *outStart, short *outEnd, short *outLine)
+{
+    TEPtr te;
+    short *starts;
+    short i;
+
+    if (!handle || !outStart || !outEnd)
+        return false;
+
+    te = *handle;
+
+    if (!te || !te->lineStarts || te->nLines <= 0)
+        return false;
+
+    HLock((Handle)te->lineStarts);
+    starts = (short *)(*(te->lineStarts));
+
+    if (!starts)
+    {
+        HUnlock((Handle)te->lineStarts);
+        return false;
+    }
+
+    for (i = 0; i < te->nLines; i++)
+    {
+        short start = starts[i];
+        short end = (i + 1 < te->nLines) ? starts[i + 1] : te->teLength;
+
+        if (te->selStart >= start && te->selStart <= end)
+        {
+            *outStart = start;
+            *outEnd = end;
+            if (outLine)
+                *outLine = i;
+            HUnlock((Handle)te->lineStarts);
+            return true;
+        }
+    }
+
+    HUnlock((Handle)te->lineStarts);
+    return false;
+}
+
+static Boolean main_window_insertion_overflows(TEHandle handle, char c)
+{
+    TEPtr te;
+    short maxLines;
+    short available;
+    GrafPtr savePort = NULL;
+    Boolean overflows = false;
+    short lineStart = 0;
+    short lineEnd = 0;
+    short lineIndex = 0;
+
+    if (!handle)
+        return false;
+
+    te = *handle;
+    maxLines = main_window_max_lines_for(handle);
+
+    if (!te || maxLines <= 0)
+        return false;
+
+    if (te->nLines < maxLines)
+        return false;
+
+    if (!main_window_current_line_bounds(handle, &lineStart, &lineEnd, &lineIndex))
+        return false;
+
+    /* Allow edits that occur fully above the last visible line. */
+    if (lineIndex < maxLines - 1)
+        return false;
+
+    available = te->viewRect.right - te->viewRect.left - 2;
+    if (available <= 0)
+        return true;
+
+    if (te->hText)
+        HLock((Handle)te->hText);
+
+    {
+        short selStart = te->selStart;
+        short selEnd = te->selEnd;
+        short prefixLen;
+        short suffixLen;
+        short newLen;
+        char buffer[512];
+        Ptr text = te->hText ? *(te->hText) : NULL;
+
+        if (selStart < lineStart)
+            selStart = lineStart;
+        if (selEnd < lineStart)
+            selEnd = lineStart;
+        if (selEnd > lineEnd)
+            selEnd = lineEnd;
+
+        prefixLen = selStart - lineStart;
+        suffixLen = lineEnd - selEnd;
+        newLen = prefixLen + 1 + suffixLen;
+
+        if (newLen <= 0)
+        {
+            overflows = true;
+            goto cleanup;
+        }
+
+        if (prefixLen > 0 && text)
+            BlockMoveData(text + lineStart, buffer, prefixLen);
+
+        buffer[prefixLen] = c;
+
+        if (suffixLen > 0 && text)
+            BlockMoveData(text + selEnd, buffer + prefixLen + 1, suffixLen);
+
+        if (text)
+        {
+            GetPort(&savePort);
+            if (te->inPort)
+                SetPort(te->inPort);
+            else
+                SetPort(gMainWin);
+
+            if (TextWidth(buffer, 0, newLen) > available)
+                overflows = true;
+
+            if (savePort)
+                SetPort(savePort);
+        }
+    }
+
+cleanup:
+    if (te->hText)
+        HUnlock((Handle)te->hText);
+
+    return overflows;
+}
+
+static void main_window_update_text(TEHandle handle)
+{
+    Rect view;
+
+    if (!handle)
+        return;
+
+    view = (**handle).viewRect;
+    TEUpdate(&view, handle);
+}
+
+static void main_window_create_text_edit(void)
+{
+    static const char kInitialText[] =
+        "MacVox68 is live.\r"
+        "TCP + TTS will be pumped from the event loop.\r"
+        "Voice requests will appear here.";
+
+    if (!gMainWin)
+        return;
+
+    gTextEdit = main_window_create_text_field(&gLayout.editText, kInitialText, false);
+    gHostEdit = main_window_create_text_field(&gLayout.hostField, "127.0.0.1", true);
+    gPortEdit = main_window_create_text_field(&gLayout.portField, "5555", true);
+
+    if (gTextEdit)
+        main_window_switch_active_edit(gTextEdit);
+}
+
 static void main_window_create_controls(void)
 {
-    MenuHandle voiceMenu = NULL;
     MenuHandle soundMenu = NULL;
-    short voiceMenuID = 200;
     short soundMenuID = 201;
-    short voiceCount = 0;
     short soundCount = 0;
 
     if (!gMainWin)
         return;
 
     /* Build runtime menus so we do not rely on absent Toolbox resources. */
-    voiceMenu = NewMenu(voiceMenuID, "\pVoices");
-    if (voiceMenu)
-    {
-        AppendMenu(voiceMenu, "\pDefault\xA5Prose\xA5Narrator");
-        InsertMenu(voiceMenu, -1);
-        voiceCount = CountMItems(voiceMenu);
-    }
-
     soundMenu = NewMenu(soundMenuID, "\pSound");
     if (soundMenu)
     {
@@ -262,12 +519,6 @@ static void main_window_create_controls(void)
 
     gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
                            0, 0, 0, pushButProc, kSpeakStopBtnID);
-
-    if (voiceMenu && voiceCount > 0)
-    {
-        gVoicePop = NewControl(gMainWin, &gLayout.voicePopup, "\pVoice", true,
-                               1, voiceMenuID, voiceCount, popupMenuProc, kVoicePopupID);
-    }
 
     if (soundMenu && soundCount > 0)
     {
@@ -292,73 +543,120 @@ static void main_window_create_controls(void)
     gPitchSlider = NewControl(gMainWin, &gLayout.pitchSlider, "\p", true,
                               0, -10, 10, scrollBarProc, 0);
 
-    gHostField = NewControl(gMainWin, &gLayout.hostField, "\p127.0.0.1", true,
-                            0, 0, 0, editTextProc, 0);
-
-    gPortField = NewControl(gMainWin, &gLayout.portField, "\p5555", true,
-                            0, 0, 0, editTextProc, 0);
-
     gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
                            0, 0, 0, pushButProc, 0);
+}
+
+static void main_window_set_light_background(void)
+{
+    BackPat(&qd.white);
+    ForeColor(blackColor);
+}
+
+static void main_window_draw_text_field(const Rect *frame)
+{
+    Rect inner = *frame;
+
+    FillRect(frame, &qd.white);
+
+    PenPat(&qd.black);
+    FrameRect(frame);
+
+    InsetRect(&inner, 1, 1);
+    PenPat(&qd.gray);
+    FrameRect(&inner);
+    PenNormal();
+}
+
+static void main_window_draw_group(const Rect *r, ConstStr255Param title)
+{
+    Rect shade = *r;
+    Rect inner = *r;
+
+    main_window_set_light_background();
+    FillRect(&shade, &qd.white);
+
+    PenPat(&qd.black);
+    FrameRect(&shade);
+
+    InsetRect(&inner, 1, 1);
+    PenPat(&qd.gray);
+    FrameRect(&inner);
+    PenNormal();
+
+    if (title)
+    {
+        MoveTo(r->left + 10, r->top + 14);
+        DrawString(title);
+    }
 }
 
 static void main_window_draw_contents(WindowPtr w)
 {
     Rect content;
-    short x, y;
+    Rect textFrame;
+    Rect hostFrame;
+    Rect portFrame;
 
     SetPort(w);
     content = w->portRect;
 
-    EraseRect(&content);
+    main_window_set_light_background();
+    FillRect(&content, &qd.gray);
 
-    /* Text entry area */
-    ForeColor(whiteColor);
-    PaintRect(&gLayout.editText);
-    ForeColor(blackColor);
-    FrameRect(&gLayout.editText);
+    PenPat(&qd.gray);
+    MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
+    LineTo(content.right - 8, gLayout.speakStopButton.bottom + 6);
+    PenNormal();
 
-    x = gLayout.editText.left + 10;
-    y = gLayout.editText.top + 18;
+    /* Text entry area with a soft border. */
+    textFrame = gLayout.editText;
+    main_window_draw_text_field(&textFrame);
 
-    MoveTo(x, y);
-    DrawString("\pMacVox68 is live.");
-
-    y += 16;
-    MoveTo(x, y);
-    DrawString("\pTCP + TTS will be pumped from the event loop.");
+    main_window_update_text(gTextEdit);
 
     /* Sound group */
-    FrameRect(&gLayout.soundGroup);
-    MoveTo(gLayout.soundGroup.left + 10, gLayout.soundGroup.top + 18);
-    DrawString("\pSound:");
-    MoveTo(gLayout.soundGroup.left + 60, gLayout.soundGroup.top + 30);
+    main_window_draw_group(&gLayout.soundGroup, "\pSound");
+    MoveTo(gLayout.soundGroup.left + 16, gLayout.soundGroup.top + 32);
     DrawString("\pDevice:");
 
     /* Prosody group */
-    FrameRect(&gLayout.prosodyGroup);
-    MoveTo(gLayout.prosodyGroup.left + 10, gLayout.prosodyGroup.top + 18);
-    DrawString("\pProsody/Enunciation:");
+    main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
+    MoveTo(gLayout.prosodyGroup.left + 16, gLayout.prosodyGroup.top + 32);
+    DrawString("\pChoose clarity or HL VOX coloration.");
 
     /* Settings group */
-    FrameRect(&gLayout.settingsGroup);
-    MoveTo(gLayout.settingsGroup.left + 10, gLayout.settingsGroup.top + 18);
-    DrawString("\pSettings:");
-    MoveTo(gLayout.settingsGroup.left + 60, gLayout.settingsGroup.top + 30);
+    main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
+    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 30);
     DrawString("\pVolume");
-    MoveTo(gLayout.settingsGroup.left + 60, gLayout.settingsGroup.top + 60);
+    MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
+    DrawString("\p100%");
+
+    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 60);
     DrawString("\pRate");
-    MoveTo(gLayout.settingsGroup.left + 60, gLayout.settingsGroup.top + 90);
+    MoveTo(gLayout.rateSlider.right + 10, gLayout.settingsGroup.top + 60);
+    DrawString("\p1.00");
+
+    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 90);
     DrawString("\pPitch");
+    MoveTo(gLayout.pitchSlider.right + 10, gLayout.settingsGroup.top + 90);
+    DrawString("\p1.00");
 
     /* TCP group */
-    FrameRect(&gLayout.tcpGroup);
-    MoveTo(gLayout.tcpGroup.left + 10, gLayout.tcpGroup.top + 18);
-    DrawString("\pNetCat Receiver/TCP Server");
-    MoveTo(gLayout.tcpGroup.left + 20, gLayout.tcpGroup.top + 32);
+    main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
+    MoveTo(gLayout.tcpGroup.left + 36, gLayout.tcpGroup.top + 32);
     DrawString("\pHost:");
-    MoveTo(gLayout.portField.left - 20, gLayout.tcpGroup.top + 32);
+    MoveTo(gLayout.portField.left - 36, gLayout.tcpGroup.top + 32);
     DrawString("\pPort:");
+
+    hostFrame = gLayout.hostField;
+    portFrame = gLayout.portField;
+
+    main_window_draw_text_field(&hostFrame);
+    main_window_draw_text_field(&portFrame);
+
+    main_window_update_text(gHostEdit);
+    main_window_update_text(gPortEdit);
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
@@ -382,7 +680,7 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 void main_window_create(void)
 {
     Rect r;
-    SetRect(&r, 40, 40, 560, 520);
+    SetRect(&r, 40, 40, 620, 620);
 
     gMainWin = NewWindow(
         NULL,
@@ -401,6 +699,7 @@ void main_window_create(void)
     SetPort(gMainWin);
 
     main_window_plan_layout();
+    main_window_create_text_edit();
     main_window_create_controls();
 
     /* Speech-related controls will be updated once the engine is present. */
@@ -467,11 +766,145 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     (void)TrackControl(c, local, NULL);
                     return true;
                 }
+
+                if (gTextEdit)
+                {
+                    Rect textRect = gLayout.editText;
+
+                    if (PtInRect(local, &textRect))
+                    {
+                        main_window_switch_active_edit(gTextEdit);
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
+                        return true;
+                    }
+                }
+
+                if (gHostEdit)
+                {
+                    Rect hostRect = gLayout.hostField;
+
+                    if (PtInRect(local, &hostRect))
+                    {
+                        main_window_switch_active_edit(gHostEdit);
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gHostEdit);
+                        return true;
+                    }
+                }
+
+                if (gPortEdit)
+                {
+                    Rect portRect = gLayout.portField;
+
+                    if (PtInRect(local, &portRect))
+                    {
+                        main_window_switch_active_edit(gPortEdit);
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gPortEdit);
+                        return true;
+                    }
+                }
             }
             return false;
 
         default:
             return false;
+    }
+}
+
+Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
+{
+    char c = (char)(ev->message & charCodeMask);
+    Boolean isBackspace = (c == 0x08 || c == 0x7F);
+
+    (void)outQuit;
+
+    if ((ev->modifiers & cmdKey) != 0)
+        return false;
+
+    if (gActiveEdit)
+    {
+        TEPtr te = *gActiveEdit;
+        Boolean isReturn = (c == '\r' || c == '\n');
+
+        if (te->crOnly)
+        {
+            if (isReturn)
+                return true;
+
+            if (!isBackspace)
+            {
+                short available = te->viewRect.right - te->viewRect.left - 2;
+                short prefix    = te->selStart;
+                short suffixLen = te->teLength - te->selEnd;
+                short newLen    = prefix + 1 + suffixLen;
+
+                if (newLen > 0 && newLen < 512)
+                {
+                    char buffer[512];
+                    GrafPtr savePort = NULL;
+                    GrafPtr targetPort = te->inPort ? te->inPort : gMainWin;
+                    Ptr text = *(te->hText);
+
+                    BlockMoveData(text, buffer, prefix);
+                    buffer[prefix] = c;
+                    if (suffixLen > 0)
+                        BlockMoveData(text + te->selEnd, buffer + prefix + 1, suffixLen);
+
+                    GetPort(&savePort);
+                    if (targetPort)
+                        SetPort(targetPort);
+
+                    if (TextWidth(buffer, 0, newLen) > available)
+                    {
+                        if (savePort)
+                            SetPort(savePort);
+                        return true;
+                    }
+
+                    if (savePort)
+                        SetPort(savePort);
+                }
+            }
+        }
+        else
+        {
+            short maxLines = main_window_max_lines_for(gActiveEdit);
+
+            if (isReturn)
+            {
+                if (maxLines > 0 && te->nLines >= maxLines)
+                    return true;
+            }
+            else if (main_window_insertion_overflows(gActiveEdit, c))
+            {
+                return true;
+            }
+        }
+
+        TEKey(c, gActiveEdit);
+        return true;
+    }
+
+    if (gTextEdit)
+    {
+        main_window_switch_active_edit(gTextEdit);
+        TEKey(c, gTextEdit);
+        return true;
+    }
+
+    return false;
+}
+
+void main_window_idle(void)
+{
+    TEHandle target = gActiveEdit ? gActiveEdit : gTextEdit;
+
+    if (target)
+    {
+        GrafPtr savePort;
+        GetPort(&savePort);
+        SetPort(gMainWin);
+        TEIdle(target);
+        SetPort(savePort);
     }
 }
 

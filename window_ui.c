@@ -76,12 +76,17 @@ Boolean ui_app_pump_events(void)
                     if (c == 'q' || c == 'Q')
                         quit = true;
                 }
+
+                if (!quit)
+                    (void)main_window_handle_key(&ev, &quit);
                 break;
 
             default:
                 break;
         }
     }
+
+    main_window_idle();
 
     /* Integration point:
        Later, call tcp_poll() and speech_pump() here (nonblocking), while the loop stays responsive. */
