@@ -252,6 +252,7 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
     Rect viewRect;
     Rect destRect;
     TEHandle handle = NULL;
+    short maxLines = 10;
 
     viewRect = *frame;
     InsetRect(&viewRect, 6, 4);
@@ -291,8 +292,14 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
         }
         else
         {
-            destRect.bottom     = viewRect.bottom - (**handle).lineHeight;
-            (**handle).destRect = destRect;
+            short lineH = (**handle).lineHeight;
+
+            destRect.bottom = destRect.top + (lineH * maxLines);
+            if (destRect.bottom > viewRect.bottom)
+                destRect.bottom = viewRect.bottom;
+
+            (**handle).destRect      = destRect;
+            (**handle).viewRect.bottom = destRect.bottom;
         }
 
         if (text)
@@ -645,6 +652,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
 Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 {
     char c = (char)(ev->message & charCodeMask);
+    Boolean isBackspace = (c == 0x08 || c == 0x7F);
 
     (void)outQuit;
 
@@ -660,6 +668,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
             if (c == '\r' || c == '\n')
                 return true;
 
+            if (!isBackspace)
             {
                 short available = te->viewRect.right - te->viewRect.left - 2;
                 short prefix    = te->selStart;
