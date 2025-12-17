@@ -333,6 +333,143 @@ static short main_window_max_lines_for(TEHandle handle)
     return (short)((te->destRect.bottom - te->destRect.top) / lineH);
 }
 
+static Boolean main_window_current_line_bounds(TEHandle handle, short *outStart, short *outEnd, short *outLine)
+{
+    TEPtr te;
+    short *starts;
+    short i;
+
+    if (!handle || !outStart || !outEnd)
+        return false;
+
+    te = *handle;
+
+    if (!te || !te->lineStarts || te->nLines <= 0)
+        return false;
+
+    HLock((Handle)te->lineStarts);
+    starts = (short *)(*(te->lineStarts));
+
+    if (!starts)
+    {
+        HUnlock((Handle)te->lineStarts);
+        return false;
+    }
+
+    for (i = 0; i < te->nLines; i++)
+    {
+        short start = starts[i];
+        short end = (i + 1 < te->nLines) ? starts[i + 1] : te->teLength;
+
+        if (te->selStart >= start && te->selStart <= end)
+        {
+            *outStart = start;
+            *outEnd = end;
+            if (outLine)
+                *outLine = i;
+            HUnlock((Handle)te->lineStarts);
+            return true;
+        }
+    }
+
+    HUnlock((Handle)te->lineStarts);
+    return false;
+}
+
+static Boolean main_window_insertion_overflows(TEHandle handle, char c)
+{
+    TEPtr te;
+    short maxLines;
+    short available;
+    GrafPtr savePort = NULL;
+    Boolean overflows = false;
+    short lineStart = 0;
+    short lineEnd = 0;
+    short lineIndex = 0;
+
+    if (!handle)
+        return false;
+
+    te = *handle;
+    maxLines = main_window_max_lines_for(handle);
+
+    if (!te || maxLines <= 0)
+        return false;
+
+    if (te->nLines < maxLines)
+        return false;
+
+    if (!main_window_current_line_bounds(handle, &lineStart, &lineEnd, &lineIndex))
+        return false;
+
+    /* Allow edits that occur fully above the last visible line. */
+    if (lineIndex < maxLines - 1)
+        return false;
+
+    available = te->viewRect.right - te->viewRect.left - 2;
+    if (available <= 0)
+        return true;
+
+    if (te->hText)
+        HLock((Handle)te->hText);
+
+    {
+        short selStart = te->selStart;
+        short selEnd = te->selEnd;
+        short prefixLen;
+        short suffixLen;
+        short newLen;
+        char buffer[512];
+        Ptr text = te->hText ? *(te->hText) : NULL;
+
+        if (selStart < lineStart)
+            selStart = lineStart;
+        if (selEnd < lineStart)
+            selEnd = lineStart;
+        if (selEnd > lineEnd)
+            selEnd = lineEnd;
+
+        prefixLen = selStart - lineStart;
+        suffixLen = lineEnd - selEnd;
+        newLen = prefixLen + 1 + suffixLen;
+
+        if (newLen <= 0)
+        {
+            overflows = true;
+            goto cleanup;
+        }
+
+        if (prefixLen > 0 && text)
+            BlockMoveData(text + lineStart, buffer, prefixLen);
+
+        buffer[prefixLen] = c;
+
+        if (suffixLen > 0 && text)
+            BlockMoveData(text + selEnd, buffer + prefixLen + 1, suffixLen);
+
+        if (text)
+        {
+            GetPort(&savePort);
+            if (te->inPort)
+                SetPort(te->inPort);
+            else
+                SetPort(gMainWin);
+
+            if (TextWidth(buffer, 0, newLen) > available)
+                overflows = true;
+
+            if (savePort)
+                SetPort(savePort);
+        }
+    }
+
+cleanup:
+    if (te->hText)
+        HUnlock((Handle)te->hText);
+
+    return overflows;
+}
+
 static void main_window_update_text(TEHandle handle)
 {
     Rect view;
@@ -728,12 +865,19 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
                 }
             }
         }
-        else if (isReturn)
+        else
         {
             short maxLines = main_window_max_lines_for(gActiveEdit);
 
-            if (maxLines > 0 && te->nLines >= maxLines)
+            if (isReturn)
+            {
+                if (maxLines > 0 && te->nLines >= maxLines)
+                    return true;
+            }
+            else if (main_window_insertion_overflows(gActiveEdit, c))
+            {
                 return true;
+            }
         }
 
         TEKey(c, gActiveEdit);
