@@ -1,6 +1,5 @@
 #include <Types.h>
 #include <Quickdraw.h>
-#include <QDColors.h>
 #include <Windows.h>
 #include <Dialogs.h>
 #include <Controls.h>
