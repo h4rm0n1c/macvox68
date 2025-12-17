@@ -163,7 +163,7 @@ def generate_rez(source: Image.Image) -> str:
     rez.append(
         "resource 'FREF' (128, purgeable) {\n"
         "    'APPL',\n"
-        "    0,\n"
+        "    128,\n"
         "    \"MacVox68\"\n"
         "};\n"
     )
