@@ -6,6 +6,7 @@
 #include <ControlDefinitions.h>
 #include <Events.h>
 #include <Menus.h>
+#include <Memory.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
 #include <string.h>
@@ -293,8 +294,6 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
             destRect.bottom     = viewRect.bottom - (**handle).lineHeight;
             (**handle).destRect = destRect;
         }
-
-        (**handle).txWidth = (**handle).viewRect.right - (**handle).viewRect.left;
 
         if (text)
             TEInsert(text, strlen(text), handle);
@@ -654,6 +653,48 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 
     if (gActiveEdit)
     {
+        TEPtr te = *gActiveEdit;
+
+        if (te->crOnly)
+        {
+            if (c == '\r' || c == '\n')
+                return true;
+
+            {
+                short available = te->viewRect.right - te->viewRect.left - 2;
+                short prefix    = te->selStart;
+                short suffixLen = te->teLength - te->selEnd;
+                short newLen    = prefix + 1 + suffixLen;
+
+                if (newLen > 0 && newLen < 512)
+                {
+                    char buffer[512];
+                    GrafPtr savePort = NULL;
+                    GrafPtr targetPort = te->inPort ? te->inPort : gMainWin;
+                    Ptr text = *(te->hText);
+
+                    BlockMoveData(text, buffer, prefix);
+                    buffer[prefix] = c;
+                    if (suffixLen > 0)
+                        BlockMoveData(text + te->selEnd, buffer + prefix + 1, suffixLen);
+
+                    GetPort(&savePort);
+                    if (targetPort)
+                        SetPort(targetPort);
+
+                    if (TextWidth(buffer, 0, newLen) > available)
+                    {
+                        if (savePort)
+                            SetPort(savePort);
+                        return true;
+                    }
+
+                    if (savePort)
+                        SetPort(savePort);
+                }
+            }
+        }
+
         TEKey(c, gActiveEdit);
         return true;
     }
