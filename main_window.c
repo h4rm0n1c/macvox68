@@ -246,7 +246,7 @@ static void main_window_update_control_enabling(SpeechUIState state)
     }
 }
 
-static TEHandle main_window_create_text_field(const Rect *frame, const char *text)
+static TEHandle main_window_create_text_field(const Rect *frame, const char *text, Boolean singleLine)
 {
     Rect viewRect;
     Rect destRect;
@@ -256,7 +256,8 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
     InsetRect(&viewRect, 6, 4);
 
     destRect = viewRect;
-    destRect.bottom += 2000; /* Allow scrolling room for pasted content. */
+    /* Keep the caret constrained to the visible box. */
+    destRect.bottom = viewRect.bottom;
 
     SetPort(gMainWin);
     BackColor(whiteColor);
@@ -265,6 +266,27 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
     handle = TENew(&destRect, &viewRect);
     if (handle)
     {
+        if (singleLine)
+        {
+            Rect singleRect = viewRect;
+            short lineH    = (**handle).lineHeight;
+            short slack    = (singleRect.bottom - singleRect.top) - lineH;
+
+            if (slack > 0)
+            {
+                singleRect.top += slack / 2;
+                singleRect.bottom = singleRect.top + lineH;
+            }
+            else
+            {
+                singleRect.bottom = singleRect.top + lineH;
+            }
+
+            (**handle).destRect = singleRect;
+            (**handle).viewRect = singleRect;
+            (**handle).crOnly   = true;
+        }
+
         if (text)
             TEInsert(text, strlen(text), handle);
     }
@@ -282,9 +304,9 @@ static void main_window_create_text_edit(void)
     if (!gMainWin)
         return;
 
-    gTextEdit = main_window_create_text_field(&gLayout.editText, kInitialText);
-    gHostEdit = main_window_create_text_field(&gLayout.hostField, "127.0.0.1");
-    gPortEdit = main_window_create_text_field(&gLayout.portField, "5555");
+    gTextEdit = main_window_create_text_field(&gLayout.editText, kInitialText, false);
+    gHostEdit = main_window_create_text_field(&gLayout.hostField, "127.0.0.1", true);
+    gPortEdit = main_window_create_text_field(&gLayout.portField, "5555", true);
 
     if (gTextEdit)
         main_window_switch_active_edit(gTextEdit);
