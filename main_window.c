@@ -95,7 +95,7 @@ static void main_window_plan_layout(void)
     short sectionGutter = 14;
     short textAreaH     = 170;
     short soundH        = 60;
-    short prosodyH      = 66;
+    short prosodyH      = 76;
     short settingsH     = 108;
     short tcpH          = 60;
     short sliderH       = 16;
@@ -159,7 +159,7 @@ static void main_window_plan_layout(void)
             y + prosodyH);
 
     {
-        short radioTop   = gLayout.prosodyGroup.top + 12;
+        short radioTop   = gLayout.prosodyGroup.top + 44;
         short radioLeft  = gLayout.prosodyGroup.left + 72;
         short radioGap   = 22;
         short radioWidth = 140;
@@ -194,9 +194,9 @@ static void main_window_plan_layout(void)
             y + settingsH);
 
     SetRect(&gLayout.volumeSlider,
-            gLayout.settingsGroup.left + 90,
+            gLayout.settingsGroup.left + 124,
             gLayout.settingsGroup.top + 14,
-            gLayout.settingsGroup.left + 90 + sliderW,
+            gLayout.settingsGroup.left + 124 + sliderW,
             gLayout.settingsGroup.top + 14 + sliderH);
 
     SetRect(&gLayout.rateSlider,
@@ -221,21 +221,21 @@ static void main_window_plan_layout(void)
 
     SetRect(&gLayout.hostField,
             gLayout.tcpGroup.left + 80,
-            gLayout.tcpGroup.top + 14,
+            gLayout.tcpGroup.top + 19,
             gLayout.tcpGroup.left + 80 + fieldW,
-            gLayout.tcpGroup.top + 14 + fieldH);
+            gLayout.tcpGroup.top + 19 + fieldH);
 
     SetRect(&gLayout.portField,
-            gLayout.hostField.right + 16,
-            gLayout.tcpGroup.top + 14,
-            gLayout.hostField.right + 16 + portFieldW,
-            gLayout.tcpGroup.top + 14 + fieldH);
+            gLayout.hostField.right + 36,
+            gLayout.tcpGroup.top + 19,
+            gLayout.hostField.right + 36 + portFieldW,
+            gLayout.tcpGroup.top + 19 + fieldH);
 
     SetRect(&gLayout.startButton,
             gLayout.tcpGroup.right - 118,
-            gLayout.tcpGroup.top + 12,
+            gLayout.tcpGroup.top + 18,
             gLayout.tcpGroup.right - 118 + 104,
-            gLayout.tcpGroup.top + 12 + buttonH);
+            gLayout.tcpGroup.top + 18 + buttonH);
 }
 
 static void main_window_update_control_enabling(SpeechUIState state)
