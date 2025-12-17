@@ -266,6 +266,8 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
     handle = TENew(&destRect, &viewRect);
     if (handle)
     {
+        (**handle).viewRect = viewRect;
+
         if (singleLine)
         {
             Rect singleRect = viewRect;
@@ -286,12 +288,30 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
             (**handle).viewRect = singleRect;
             (**handle).crOnly   = true;
         }
+        else
+        {
+            destRect.bottom     = viewRect.bottom - (**handle).lineHeight;
+            (**handle).destRect = destRect;
+        }
+
+        (**handle).txWidth = (**handle).viewRect.right - (**handle).viewRect.left;
 
         if (text)
             TEInsert(text, strlen(text), handle);
     }
 
     return handle;
+}
+
+static void main_window_update_text(TEHandle handle)
+{
+    Rect view;
+
+    if (!handle)
+        return;
+
+    view = (**handle).viewRect;
+    TEUpdate(&view, handle);
 }
 
 static void main_window_create_text_edit(void)
@@ -426,10 +446,7 @@ static void main_window_draw_contents(WindowPtr w)
     textFrame = gLayout.editText;
     main_window_draw_text_field(&textFrame);
 
-    if (gTextEdit)
-    {
-        TEUpdate(&textFrame, gTextEdit);
-    }
+    main_window_update_text(gTextEdit);
 
     /* Sound group */
     main_window_draw_group(&gLayout.soundGroup, "\pSound");
@@ -471,11 +488,8 @@ static void main_window_draw_contents(WindowPtr w)
     main_window_draw_text_field(&hostFrame);
     main_window_draw_text_field(&portFrame);
 
-    if (gHostEdit)
-        TEUpdate(&hostFrame, gHostEdit);
-
-    if (gPortEdit)
-        TEUpdate(&portFrame, gPortEdit);
+    main_window_update_text(gHostEdit);
+    main_window_update_text(gPortEdit);
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
