@@ -90,18 +90,18 @@ static void main_window_plan_layout(void)
     short gutter        = 12;
     short buttonW       = 86;
     short buttonH       = 22;
-    short voicePopupW   = 210;
-    short soundPopupW   = 200;
+    short voicePopupW   = 230;
+    short soundPopupW   = 214;
     short sectionGutter = 14;
     short textAreaH     = 170;
-    short soundH        = 52;
-    short prosodyH      = 54;
-    short settingsH     = 94;
-    short tcpH          = 52;
+    short soundH        = 60;
+    short prosodyH      = 66;
+    short settingsH     = 108;
+    short tcpH          = 60;
     short sliderH       = 16;
-    short sliderW       = 200;
-    short fieldH        = 24;
-    short fieldW        = 136;
+    short sliderW       = 210;
+    short fieldH        = 26;
+    short fieldW        = 152;
     short portFieldW    = 64;
 
     if (!gMainWin)
@@ -370,7 +370,7 @@ static void main_window_create_controls(void)
 
 static void main_window_set_light_background(void)
 {
-    BackPat(&qd.gray);
+    BackPat(&qd.white);
     ForeColor(blackColor);
 }
 
@@ -380,23 +380,29 @@ static void main_window_draw_text_field(const Rect *frame)
 
     FillRect(frame, &qd.white);
 
-    PenPat(&qd.gray);
+    PenPat(&qd.black);
     FrameRect(frame);
 
     InsetRect(&inner, 1, 1);
-    PenNormal();
+    PenPat(&qd.gray);
     FrameRect(&inner);
+    PenNormal();
 }
 
 static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 {
     Rect shade = *r;
+    Rect inner = *r;
 
     main_window_set_light_background();
     FillRect(&shade, &qd.white);
 
-    PenPat(&qd.gray);
+    PenPat(&qd.black);
     FrameRect(&shade);
+
+    InsetRect(&inner, 1, 1);
+    PenPat(&qd.gray);
+    FrameRect(&inner);
     PenNormal();
 
     if (title)
@@ -417,10 +423,10 @@ static void main_window_draw_contents(WindowPtr w)
     content = w->portRect;
 
     main_window_set_light_background();
-    FillRect(&content, &qd.gray);
+    FillRect(&content, &qd.white);
 
     /* Header row accents */
-    MoveTo(gLayout.voicePopup.left - 120, gLayout.voicePopup.top + 6);
+    MoveTo(gLayout.voicePopup.left - 124, gLayout.voicePopup.top + 16);
     DrawString("\pVoice Selection:");
 
     PenPat(&qd.gray);
