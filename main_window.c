@@ -8,6 +8,7 @@
 #include <Menus.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
+#include <string.h>
 
 #include "main_window.h"
 
@@ -64,26 +65,27 @@ static ControlHandle  gPitchSlider  = NULL;
 static ControlHandle  gHostField    = NULL;
 static ControlHandle  gPortField    = NULL;
 static ControlHandle  gStartBtn     = NULL;
+static TEHandle       gTextEdit     = NULL;
 static UILayout       gLayout;
 
 static void main_window_plan_layout(void)
 {
     Rect content;
-    short margin        = 12;
-    short gutter        = 10;
-    short buttonW       = 80;
+    short margin        = 16;
+    short gutter        = 12;
+    short buttonW       = 86;
     short buttonH       = 22;
-    short popupW        = 130;
-    short sectionGutter = 12;
-    short textAreaH     = 160;
-    short soundH        = 44;
-    short prosodyH      = 50;
-    short settingsH     = 80;
-    short tcpH          = 48;
+    short popupW        = 160;
+    short sectionGutter = 14;
+    short textAreaH     = 170;
+    short soundH        = 52;
+    short prosodyH      = 54;
+    short settingsH     = 94;
+    short tcpH          = 52;
     short sliderH       = 16;
-    short sliderW       = 180;
+    short sliderW       = 200;
     short fieldH        = 18;
-    short fieldW        = 110;
+    short fieldW        = 120;
 
     if (!gMainWin)
         return;
@@ -120,15 +122,15 @@ static void main_window_plan_layout(void)
             y + soundH);
 
     SetRect(&gLayout.soundPopup,
-            gLayout.soundGroup.left + 90,
-            gLayout.soundGroup.top + 14,
-            gLayout.soundGroup.left + 90 + popupW,
-            gLayout.soundGroup.top + 14 + buttonH);
+            gLayout.soundGroup.left + 96,
+            gLayout.soundGroup.top + 16,
+            gLayout.soundGroup.left + 96 + popupW,
+            gLayout.soundGroup.top + 16 + buttonH);
 
     SetRect(&gLayout.applyButton,
-            gLayout.soundGroup.right - 90,
+            gLayout.soundGroup.right - margin - 86,
             gLayout.soundGroup.top + 14,
-            gLayout.soundGroup.right - 90 + 60,
+            gLayout.soundGroup.right - margin,
             gLayout.soundGroup.top + 14 + buttonH);
 
     y = gLayout.soundGroup.bottom + sectionGutter - 2;
@@ -231,6 +233,37 @@ static void main_window_update_control_enabling(SpeechUIState state)
     }
 }
 
+static void main_window_create_text_edit(void)
+{
+    Rect viewRect;
+    Rect destRect;
+
+    if (!gMainWin)
+        return;
+
+    viewRect = gLayout.editText;
+    InsetRect(&viewRect, 10, 10);
+
+    destRect = viewRect;
+    destRect.bottom += 2000; /* Allow scrolling room for pasted content. */
+
+    SetPort(gMainWin);
+    BackColor(whiteColor);
+    ForeColor(blackColor);
+
+    gTextEdit = TENew(&destRect, &viewRect);
+    if (gTextEdit)
+    {
+        static const char kInitialText[] =
+            "MacVox68 is live.\r"
+            "TCP + TTS will be pumped from the event loop.\r"
+            "Voice requests will appear here.";
+
+        TEInsert(kInitialText, strlen(kInitialText), gTextEdit);
+        TEActivate(gTextEdit);
+    }
+}
+
 static void main_window_create_controls(void)
 {
     MenuHandle voiceMenu = NULL;
@@ -302,62 +335,93 @@ static void main_window_create_controls(void)
                            0, 0, 0, pushButProc, 0);
 }
 
+static void main_window_draw_group(const Rect *r, ConstStr255Param title)
+{
+    Rect shade = *r;
+
+    BackColor(ltGrayColor);
+    ForeColor(blackColor);
+    PaintRect(&shade);
+
+    PenPat(&qd.gray);
+    FrameRect(&shade);
+    PenNormal();
+
+    if (title)
+    {
+        MoveTo(r->left + 10, r->top + 14);
+        DrawString(title);
+    }
+}
+
 static void main_window_draw_contents(WindowPtr w)
 {
     Rect content;
-    short x, y;
+    Rect textFrame;
 
     SetPort(w);
     content = w->portRect;
 
+    BackColor(ltGrayColor);
+    ForeColor(blackColor);
     EraseRect(&content);
 
-    /* Text entry area */
-    ForeColor(whiteColor);
-    PaintRect(&gLayout.editText);
-    ForeColor(blackColor);
-    FrameRect(&gLayout.editText);
+    /* Header row accents */
+    MoveTo(gLayout.voicePopup.left - 94, gLayout.voicePopup.top + 15);
+    DrawString("\pVoice Selection:");
 
-    x = gLayout.editText.left + 10;
-    y = gLayout.editText.top + 18;
+    PenPat(&qd.gray);
+    MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
+    LineTo(content.right - 8, gLayout.speakStopButton.bottom + 6);
+    PenNormal();
 
-    MoveTo(x, y);
-    DrawString("\pMacVox68 is live.");
+    /* Text entry area with a soft border. */
+    textFrame = gLayout.editText;
+    BackColor(whiteColor);
+    PaintRect(&textFrame);
+    PenPat(&qd.gray);
+    FrameRect(&textFrame);
+    InsetRect(&textFrame, 1, 1);
+    PenNormal();
+    FrameRect(&textFrame);
 
-    y += 16;
-    MoveTo(x, y);
-    DrawString("\pTCP + TTS will be pumped from the event loop.");
+    if (gTextEdit)
+    {
+        TEUpdate(w->visRgn, gTextEdit);
+    }
 
     /* Sound group */
-    FrameRect(&gLayout.soundGroup);
-    MoveTo(gLayout.soundGroup.left + 10, gLayout.soundGroup.top + 18);
-    DrawString("\pSound:");
-    MoveTo(gLayout.soundGroup.left + 60, gLayout.soundGroup.top + 30);
+    main_window_draw_group(&gLayout.soundGroup, "\pSound");
+    MoveTo(gLayout.soundGroup.left + 16, gLayout.soundGroup.top + 32);
     DrawString("\pDevice:");
 
     /* Prosody group */
-    FrameRect(&gLayout.prosodyGroup);
-    MoveTo(gLayout.prosodyGroup.left + 10, gLayout.prosodyGroup.top + 18);
-    DrawString("\pProsody/Enunciation:");
+    main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
+    MoveTo(gLayout.prosodyGroup.left + 16, gLayout.prosodyGroup.top + 32);
+    DrawString("\pChoose clarity or HL VOX coloration.");
 
     /* Settings group */
-    FrameRect(&gLayout.settingsGroup);
-    MoveTo(gLayout.settingsGroup.left + 10, gLayout.settingsGroup.top + 18);
-    DrawString("\pSettings:");
-    MoveTo(gLayout.settingsGroup.left + 60, gLayout.settingsGroup.top + 30);
+    main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
+    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 30);
     DrawString("\pVolume");
-    MoveTo(gLayout.settingsGroup.left + 60, gLayout.settingsGroup.top + 60);
+    MoveTo(gLayout.settingsGroup.right - 40, gLayout.settingsGroup.top + 30);
+    DrawString("\p100%");
+
+    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 60);
     DrawString("\pRate");
-    MoveTo(gLayout.settingsGroup.left + 60, gLayout.settingsGroup.top + 90);
+    MoveTo(gLayout.settingsGroup.right - 40, gLayout.settingsGroup.top + 60);
+    DrawString("\p1.00");
+
+    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 90);
     DrawString("\pPitch");
+    MoveTo(gLayout.settingsGroup.right - 40, gLayout.settingsGroup.top + 90);
+    DrawString("\p1.00");
 
     /* TCP group */
-    FrameRect(&gLayout.tcpGroup);
-    MoveTo(gLayout.tcpGroup.left + 10, gLayout.tcpGroup.top + 18);
-    DrawString("\pNetCat Receiver/TCP Server");
-    MoveTo(gLayout.tcpGroup.left + 20, gLayout.tcpGroup.top + 32);
+    main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
+    MoveTo(gLayout.tcpGroup.left + 16, gLayout.tcpGroup.top + 32);
     DrawString("\pHost:");
-    MoveTo(gLayout.portField.left - 20, gLayout.tcpGroup.top + 32);
+    MoveTo(gLayout.portField.left - 22, gLayout.tcpGroup.top + 32);
     DrawString("\pPort:");
 
     /* Draw controls after the background/text so chrome paints over the framing. */
@@ -382,7 +446,7 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 void main_window_create(void)
 {
     Rect r;
-    SetRect(&r, 40, 40, 560, 520);
+    SetRect(&r, 40, 40, 620, 620);
 
     gMainWin = NewWindow(
         NULL,
@@ -401,6 +465,7 @@ void main_window_create(void)
     SetPort(gMainWin);
 
     main_window_plan_layout();
+    main_window_create_text_edit();
     main_window_create_controls();
 
     /* Speech-related controls will be updated once the engine is present. */
@@ -467,11 +532,52 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     (void)TrackControl(c, local, NULL);
                     return true;
                 }
+
+                if (gTextEdit)
+                {
+                    Rect textRect = gLayout.editText;
+
+                    if (PtInRect(local, &textRect))
+                    {
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
+                        return true;
+                    }
+                }
             }
             return false;
 
         default:
             return false;
+    }
+}
+
+Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
+{
+    char c = (char)(ev->message & charCodeMask);
+
+    (void)outQuit;
+
+    if ((ev->modifiers & cmdKey) != 0)
+        return false;
+
+    if (gTextEdit)
+    {
+        TEKey(c, gTextEdit);
+        return true;
+    }
+
+    return false;
+}
+
+void main_window_idle(void)
+{
+    if (gTextEdit)
+    {
+        GrafPtr savePort;
+        GetPort(&savePort);
+        SetPort(gMainWin);
+        TEIdle(gTextEdit);
+        SetPort(savePort);
     }
 }
 
