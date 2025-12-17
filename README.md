@@ -13,6 +13,9 @@ MacVox68 is built with Retro68 and depends on the MPW Interfaces & Libraries hea
 ### Include-path quirks (Rez / shell)
 Retro68 Rez is invoked through the shell, so include paths that contain special characters must be quoted to avoid being split. In particular, MPW's `Interfaces&Libraries` path must be passed as a single token (or replaced with a symlink that avoids `&`). The `CMakeLists.txt` uses a quoted `-I` argument to keep the path intact when generating Ninja rules, following the safety guidance from `docs/rez_gotchas.md`.
 
+## Reference caches
+The container provides lookup-only classic Mac references under `/opt` (Retro68 checkout, Interfaces & Libraries, multiple Inside Macintosh revisions plus *develop* magazine and sample code, and the System 7.1 source reference). See [`docs/opt_reference_notes.md`](docs/opt_reference_notes.md) for paths and usage tips, and [`docs/system7_dev_notes.md`](docs/system7_dev_notes.md) for quick reminders on Toolbox startup, event loops, and other System 7 development habits.
+
 ## Current UI
 All UI is currently code-driven from the `ui_app` and `main_window` pair:
 - [`window_ui.c`](window_ui.c) initializes the Toolbox (`InitGraf`, `InitWindows`, menus, dialogs, cursor) and runs the main event pump.
