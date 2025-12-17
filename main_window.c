@@ -252,7 +252,7 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
     Rect viewRect;
     Rect destRect;
     TEHandle handle = NULL;
-    short maxLines = 10;
+    short maxLines = 0;
 
     viewRect = *frame;
     InsetRect(&viewRect, 6, 4);
@@ -294,6 +294,13 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
         {
             short lineH = (**handle).lineHeight;
 
+            if (lineH > 0)
+            {
+                maxLines = (short)((viewRect.bottom - viewRect.top) / lineH);
+                if (maxLines < 1)
+                    maxLines = 1;
+            }
+
             destRect.bottom = destRect.top + (lineH * maxLines);
             if (destRect.bottom > viewRect.bottom)
                 destRect.bottom = viewRect.bottom;
@@ -307,6 +314,23 @@ static TEHandle main_window_create_text_field(const Rect *frame, const char *tex
     }
 
     return handle;
+}
+
+static short main_window_max_lines_for(TEHandle handle)
+{
+    TEPtr te;
+    short lineH;
+
+    if (!handle)
+        return 0;
+
+    te = *handle;
+    lineH = te->lineHeight;
+
+    if (lineH <= 0)
+        return 0;
+
+    return (short)((te->destRect.bottom - te->destRect.top) / lineH);
 }
 
 static void main_window_update_text(TEHandle handle)
@@ -662,10 +686,11 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
     if (gActiveEdit)
     {
         TEPtr te = *gActiveEdit;
+        Boolean isReturn = (c == '\r' || c == '\n');
 
         if (te->crOnly)
         {
-            if (c == '\r' || c == '\n')
+            if (isReturn)
                 return true;
 
             if (!isBackspace)
@@ -702,6 +727,13 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
                         SetPort(savePort);
                 }
             }
+        }
+        else if (isReturn)
+        {
+            short maxLines = main_window_max_lines_for(gActiveEdit);
+
+            if (maxLines > 0 && te->nLines >= maxLines)
+                return true;
         }
 
         TEKey(c, gActiveEdit);
