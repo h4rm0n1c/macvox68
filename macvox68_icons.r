@@ -1,3 +1,6 @@
+#include "Types.r"
+#include "SysTypes.r"
+#include "Icons.r"
 #include "Finder.r"
 
 resource 'icl8' (128, purgeable) {

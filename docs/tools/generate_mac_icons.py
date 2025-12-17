@@ -148,6 +148,9 @@ def generate_rez(source: Image.Image) -> str:
     ics_bits = _bitplane(_make_bw(small))
 
     rez = []
+    rez.append("#include \"Types.r\"")
+    rez.append("#include \"SysTypes.r\"")
+    rez.append("#include \"Icons.r\"")
     rez.append("#include \"Finder.r\"")
     rez.append("")
     rez.append(_format_resource("icl8", 128, _rows_to_hex(_plane_to_rows(icl8_bytes, 32))))
