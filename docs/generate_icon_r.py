@@ -116,14 +116,6 @@ def _raw_index_bytes(image: Image.Image) -> bytes:
     return bytes(image.getdata())
 
 
-def _reverse_indices(index_bytes: bytes, max_value: int) -> bytes:
-    return bytes(max_value - byte for byte in index_bytes)
-
-
-def _palette_looks_black_first_white_last(palette: list[int]) -> bool:
-    return palette[:3] == [0, 0, 0] and palette[-3:] == [255, 255, 255]
-
-
 def _format_hex_lines(data: bytes, indent: str = "    ", bytes_per_line: int = 16) -> List[str]:
     lines: List[str] = []
     for offset in range(0, len(data), bytes_per_line):
@@ -195,21 +187,14 @@ def generate_rez(
         raise ValueError("16px and 32px color icons must share the exact palette ordering.")
 
     palette = color32.getpalette()
-    reverse_indices = _palette_looks_black_first_white_last(palette)
 
     icl8_data = _raw_index_bytes(color32)
     ics8_data = _raw_index_bytes(color16)
-    if reverse_indices:
-        icl8_data = _reverse_indices(icl8_data, 255)
-        ics8_data = _reverse_indices(ics8_data, 255)
 
     color32_4bit = _quantize_to_16_colors(color32, palette)
     color16_4bit = _quantize_to_16_colors(color16, palette)
     icl4_bytes = _raw_index_bytes(color32_4bit)
     ics4_bytes = _raw_index_bytes(color16_4bit)
-    if reverse_indices:
-        icl4_bytes = _reverse_indices(icl4_bytes, 15)
-        ics4_bytes = _reverse_indices(ics4_bytes, 15)
     icl4_data = _pack_nibbles(icl4_bytes)
     ics4_data = _pack_nibbles(ics4_bytes)
 
