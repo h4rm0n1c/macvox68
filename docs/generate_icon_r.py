@@ -21,7 +21,7 @@ Example:
         --bw16 macvox68_bw16.png \
         --mask32 macvox68_mask32.png \
         --mask16 macvox68_mask16.png \
-        --output docs/macvox68_icon.r
+        --output macvox68_icon.r
 
 Requires Pillow for PNG decoding.
 """
@@ -31,6 +31,9 @@ from pathlib import Path
 from typing import Iterable, List
 
 from PIL import Image
+
+
+DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / "macvox68_icon.r"
 
 
 def _ensure_paletted(image: Image.Image, expected_size: tuple[int, int]) -> Image.Image:
@@ -199,7 +202,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bw16", type=Path, required=True, help="Path to 16x16 1-bit PNG.")
     parser.add_argument("--mask32", type=Path, required=True, help="Path to 32x32 mask PNG (black=opaque).")
     parser.add_argument("--mask16", type=Path, required=True, help="Path to 16x16 mask PNG (black=opaque).")
-    parser.add_argument("--output", type=Path, required=True, help="Destination Rez source file.")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=DEFAULT_OUTPUT,
+        help=(
+            "Destination Rez source file (defaults to macvox68_icon.r in the project root)."
+        ),
+    )
     parser.add_argument(
         "--creator",
         default="MV68",

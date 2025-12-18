@@ -1,6 +1,6 @@
 # MacVox68 icon Rez generation
 
-Use `docs/generate_icon_r.py` to turn the supplied palette PNGs into a Rez `.r` source file with the Classic Mac icon resources required by the app (`'icl8'`, `'ics8'`, `'ICN#'`, and `'ics#'`). The script keeps palette indices intact to preserve the 68k-friendly color tables and builds 1-bit bitmaps for both the B&W icons and masks (black = opaque/ink, white = transparent/background). It can also emit a matching `BNDL` + `FREF` pair so Finder picks up the custom app icon automatically.
+Use `docs/generate_icon_r.py` to turn the supplied palette PNGs into a Rez `.r` source file with the Classic Mac icon resources required by the app (`'icl8'`, `'ics8'`, `'ICN#'`, and `'ics#'`). The script keeps palette indices intact to preserve the 68k-friendly color tables and builds 1-bit bitmaps for both the B&W icons and masks (black = opaque/ink, white = transparent/background). It can also emit a matching `BNDL` + `FREF` pair so Finder picks up the custom app icon automatically. The generated `.r` is expected to live next to the C and header sources (project root) for Retro68 to find it.
 
 ## Inputs
 Provide six PNGs:
@@ -25,12 +25,12 @@ python docs/generate_icon_r.py \
     --bw16 macvox68_bw16.png \
     --mask32 macvox68_mask32.png \
     --mask16 macvox68_mask16.png \
-    --output docs/macvox68_icon.r
+    --output macvox68_icon.r
 ```
 
-`--name` and `--res-id` let you align all icon variants to the same resource metadata. The output file is plain text and can be checked into the repo or fed directly to Rez. By default, a `BNDL`/`FREF` bundle is included using creator `MV68`, file type `APPL`, and the same resource ID as the icons; pass `--no-bundle` if you only want the icon data.
+`--name` and `--res-id` let you align all icon variants to the same resource metadata. The output file is plain text and can be checked into the repo or fed directly to Rez. By default, a `BNDL`/`FREF` bundle is included using creator `MV68`, file type `APPL`, and the same resource ID as the icons; pass `--no-bundle` if you only want the icon data. If you omit `--output`, the script writes `macvox68_icon.r` to the project root automatically (the conventional Retro68 location).
 
-Once you generate `docs/macvox68_icon.r`, the CMake build will pick it up automatically when the file exists. You can also point `-DMACVOX68_ICON_REZ=/path/to/icon.r` at a different location. If the file is missing, the build falls back to the default Retro68 icon.
+Once you generate `macvox68_icon.r` in the project root, the CMake build will pick it up automatically when the file exists. You can also point `-DMACVOX68_ICON_REZ=/path/to/icon.r` at a different location. If the file is missing, the build falls back to the default Retro68 icon; a legacy fallback at `docs/macvox68_icon.r` is still honored, but the root-level `.r` is preferred so Rez sits beside the C/H sources.
 
 ### Notes on resource packing
 - `icl8` and `ics8` store raw palette indices in row-major order and **must share the exact same palette** (the script enforces this).
