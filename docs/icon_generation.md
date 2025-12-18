@@ -12,7 +12,7 @@ Provide six PNGs:
 - 32x32 1-bit mask, black = opaque (`--mask32`)
 - 16x16 1-bit mask, black = opaque (`--mask16`)
 
-The color icons **must** be paletted PNGs (mode `P`) so palette indices stay stable. The B&W icons and masks are converted to 1-bit internally; anything that is black becomes a set bit in the Rez output.
+The color icons **must** be paletted PNGs (mode `P`) so palette indices stay stable. The B&W icons and masks are converted to 1-bit internally; masks are inverted on output so black (opaque) pixels in the PNG become cleared mask bits for Finder transparency.
 
 ## Usage
 ```
@@ -37,7 +37,7 @@ Once you generate `macvox68_icon.r` in the project root, the CMake build will pi
 ### Notes on resource packing
 - `icl8` and `ics8` store raw palette indices in row-major order and **must share the exact same palette** (the script enforces this). The generator preserves the incoming palette order verbatim; make sure the PNGs were authored with the classic Macintosh 256-color table so Finder interprets the indices correctly. The script derives matching 4-bit `icl4`/`ics4` data from the first 16 palette entries without reordering to keep nibble indices aligned to the classic 4-bit color table ordering.
 - `ICN#` and `ics#` pack two bitmaps each (icon first, then mask). Bits are written most-significant-bit first per byte.
-- Mask files are treated as classic 1-bit masks where black marks opaque pixels; white stays transparent.
+- Mask files are inverted on write so black-as-opaque source pixels yield cleared mask bits and white pixels become set bits, matching the Rez/Finder transparency expectations.
 - Bundles follow the standard Finder mapping: each mapped type declares one local ID (`0`) pointing at the shared icon resource ID, and the `FREF` uses the same resource ID as the bundle. This keeps Retro68 Rez happy while still exposing the color and B&W icon variants for small and large sizes.
 
 If you need to re-encode the PNGs, keep the palette ordering identical to avoid remapping color indices.

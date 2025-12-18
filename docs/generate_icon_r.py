@@ -199,9 +199,9 @@ def generate_rez(
     ics4_data = _pack_nibbles(ics4_bytes)
 
     icn_icon = _pack_bits(_bool_rows_from_1bit(bw32))
-    icn_mask = _pack_bits(_bool_rows_from_1bit(mask32))
+    icn_mask = _pack_bits(_bool_rows_from_1bit(mask32, invert=True))
     ics_icon = _pack_bits(_bool_rows_from_1bit(bw16))
-    ics_mask = _pack_bits(_bool_rows_from_1bit(mask16))
+    ics_mask = _pack_bits(_bool_rows_from_1bit(mask16, invert=True))
 
     icn_data = _build_icn_resource(icn_icon, icn_mask)
     ics_data = _build_icn_resource(ics_icon, ics_mask)
