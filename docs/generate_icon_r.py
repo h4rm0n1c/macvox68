@@ -114,18 +114,32 @@ def _resource_block(res_type: str, res_id: int, name: str, data: bytes) -> str:
 def _bundle_block(
     creator: str, bundle_id: int, icon_res_id: int, name: str, file_type: str
 ) -> str:
-    mappings = [
-        f"        'FREF', {{ 0, {bundle_id} }}",
-        f"        'ICN#', {{ 0, {icon_res_id} }}",
-        f"        'icl8', {{ 0, {icon_res_id} }}",
-        f"        'ics#', {{ 0, {icon_res_id} }}",
-        f"        'ics8', {{ 0, {icon_res_id} }}",
+    mapping_entries = [
+        ("'FREF'", bundle_id),
+        ("'ICN#'", icon_res_id),
+        ("'icl8'", icon_res_id),
+        ("'ics#'", icon_res_id),
+        ("'ics8'", icon_res_id),
     ]
+    type_count = len(mapping_entries) - 1
+    mappings = []
+    for type_code, res_id in mapping_entries:
+        mappings.extend(
+            [
+                f"        {type_code},",
+                "        0,",
+                "        {",
+                f"            0, {res_id}",
+                "        },",
+            ]
+        )
+    mappings[-1] = "        }"  # remove trailing comma from the final mapping block
     return "\n".join(
         [
             f"resource 'BNDL' ({bundle_id}, \"{name}\") {{",
             f"    '{creator}',",
             "    0,",
+            f"    {type_count},",
             "    {",
             ",\n".join(mappings),
             "    }",
