@@ -122,8 +122,8 @@ def _format_hex_lines(data: bytes, indent: str = "    ", bytes_per_line: int = 1
     return lines
 
 
-def _resource_block(res_type: str, res_id: int, name: str, data: bytes) -> str:
-    lines = [f"resource '{res_type}' ({res_id}, \"{name}\") {{"]
+def _resource_block(res_type: str, res_id: int, data: bytes) -> str:
+    lines = [f"resource '{res_type}' ({res_id}, purgeable) {{"]
     lines.extend(_format_hex_lines(data))
     lines.append("};\n")
     return "\n".join(lines)
@@ -143,14 +143,14 @@ def _bundle_block(
     ]
     return "\n".join(
         [
-            f"resource 'BNDL' ({bundle_id}, \"{name}\") {{",
+            f"resource 'BNDL' ({bundle_id}, purgeable) {{",
             f"    '{creator}',",
             "    0,",
             "    {",
             "        " + "\n        ".join(mappings),
             "    }",
             "};\n",
-            f"resource 'FREF' ({bundle_id}, \"{name}\") {{",
+            f"resource 'FREF' ({bundle_id}, purgeable) {{",
             f"    '{file_type}',",
             "    0,",
             f"    \"{name}\"",
@@ -200,12 +200,12 @@ def generate_rez(
     ics_data = _build_icn_resource(ics_icon, ics_mask)
 
     sections = [
-        _resource_block("icl8", res_id, name, icl8_data),
-        _resource_block("icl4", res_id, name, icl4_data),
-        _resource_block("ics8", res_id, name, ics8_data),
-        _resource_block("ics4", res_id, name, ics4_data),
-        _resource_block("ICN#", res_id, name, icn_data),
-        _resource_block("ics#", res_id, name, ics_data),
+        _resource_block("icl8", res_id, icl8_data),
+        _resource_block("icl4", res_id, icl4_data),
+        _resource_block("ics8", res_id, ics8_data),
+        _resource_block("ics4", res_id, ics4_data),
+        _resource_block("ICN#", res_id, icn_data),
+        _resource_block("ics#", res_id, ics_data),
     ]
     if include_bundle:
         sections.append(_bundle_block(creator, bundle_id, res_id, name, file_type))
