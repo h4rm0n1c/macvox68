@@ -35,7 +35,7 @@ The `.r` header includes `Types.r`, `SysTypes.r`, `Icons.r`, and `Finder.r` so t
 Once you generate `macvox68_icon.r` in the project root, the CMake build will pick it up automatically because the icon Rez file is listed directly alongside the C sources. Keep it in the root next to the `.c`/`.h` files so Retro68 finds it consistently.
 
 ### Notes on resource packing
-- `icl8` and `ics8` store raw palette indices in row-major order and **must share the exact same palette** (the script enforces this), and the script derives matching 4-bit `icl4`/`ics4` data from a 16-color quantization of the supplied palette.
+- `icl8` and `ics8` store raw palette indices in row-major order and **must share the exact same palette** (the script enforces this), and the script derives matching 4-bit `icl4`/`ics4` data from the first 16 entries of that palette (no dithering) so the nibble indices line up with the classic Mac 4-bit color table ordering.
 - `ICN#` and `ics#` pack two bitmaps each (icon first, then mask). Bits are written most-significant-bit first per byte.
 - Mask files are treated as classic 1-bit masks where black marks opaque pixels; white stays transparent.
 - Bundles follow the standard Finder mapping: each mapped type declares one local ID (`0`) pointing at the shared icon resource ID, and the `FREF` uses the same resource ID as the bundle. This keeps Retro68 Rez happy while still exposing the color and B&W icon variants for small and large sizes.

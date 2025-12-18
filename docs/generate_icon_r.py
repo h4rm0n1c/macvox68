@@ -102,11 +102,14 @@ def _pack_nibbles(index_bytes: bytes) -> bytes:
     return bytes(packed)
 
 
-def _quantize_to_16_colors(image: Image.Image, *, palette_reference: Image.Image | None = None) -> Image.Image:
+def _quantize_to_16_colors(image: Image.Image, palette: list[int]) -> Image.Image:
+    """Quantize using the first 16 palette entries to keep Mac palette ordering."""
+
     base = image.convert("RGBA")
-    if palette_reference is not None:
-        return base.quantize(palette=palette_reference)
-    return base.quantize(colors=16, method=Image.FASTOCTREE)
+    palette_image = Image.new("P", (1, 1))
+    padded_palette = palette[:48] + [0] * (768 - 48)
+    palette_image.putpalette(padded_palette)
+    return base.quantize(palette=palette_image, dither=Image.NONE)
 
 
 def _raw_index_bytes(image: Image.Image) -> bytes:
@@ -186,8 +189,9 @@ def generate_rez(
     icl8_data = _raw_index_bytes(color32)
     ics8_data = _raw_index_bytes(color16)
 
-    color32_4bit = _quantize_to_16_colors(color32)
-    color16_4bit = _quantize_to_16_colors(color16, palette_reference=color32_4bit)
+    palette = color32.getpalette()
+    color32_4bit = _quantize_to_16_colors(color32, palette)
+    color16_4bit = _quantize_to_16_colors(color16, palette)
     icl4_data = _pack_nibbles(_raw_index_bytes(color32_4bit))
     ics4_data = _pack_nibbles(_raw_index_bytes(color16_4bit))
 
