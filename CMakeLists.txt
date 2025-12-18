@@ -24,10 +24,21 @@
 cmake_minimum_required(VERSION 3.16)
 project(MacVox68 C)
 
+# Allow overriding the icon Rez path (defaults to docs/macvox68_icon.r when present).
+set(MACVOX68_ICON_REZ "${CMAKE_CURRENT_SOURCE_DIR}/docs/macvox68_icon.r" CACHE FILEPATH "Path to icon Rez source")
+set(MACVOX68_ICON_SOURCES)
+if(EXISTS "${MACVOX68_ICON_REZ}")
+    list(APPEND MACVOX68_ICON_SOURCES "${MACVOX68_ICON_REZ}")
+    message(STATUS "Including icon resources from ${MACVOX68_ICON_REZ}")
+else()
+    message(STATUS "No icon Rez found at ${MACVOX68_ICON_REZ}; building without custom icon")
+endif()
+
 add_application(MacVox68
     main.c
     main_window.c
     window_ui.c
+    ${MACVOX68_ICON_SOURCES}
     TYPE APPL
     CREATOR MV68
     )
