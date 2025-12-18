@@ -1,6 +1,6 @@
 # MacVox68 icon Rez generation
 
-Use `docs/generate_icon_r.py` to turn the supplied palette PNGs into a Rez `.r` source file with the Classic Mac icon resources required by the app (`'icl8'`, `'ics8'`, `'ICN#'`, and `'ics#'`). The script keeps palette indices intact to preserve the 68k-friendly color tables and builds 1-bit bitmaps for both the B&W icons and masks (black = opaque/ink, white = transparent/background).
+Use `docs/generate_icon_r.py` to turn the supplied palette PNGs into a Rez `.r` source file with the Classic Mac icon resources required by the app (`'icl8'`, `'ics8'`, `'ICN#'`, and `'ics#'`). The script keeps palette indices intact to preserve the 68k-friendly color tables and builds 1-bit bitmaps for both the B&W icons and masks (black = opaque/ink, white = transparent/background). It can also emit a matching `BNDL` + `FREF` pair so Finder picks up the custom app icon automatically.
 
 ## Inputs
 Provide six PNGs:
@@ -28,11 +28,12 @@ python docs/generate_icon_r.py \
     --output docs/macvox68_icon.r
 ```
 
-`--name` and `--res-id` let you align all icon variants to the same resource metadata. The output file is plain text and can be checked into the repo or fed directly to Rez.
+`--name` and `--res-id` let you align all icon variants to the same resource metadata. The output file is plain text and can be checked into the repo or fed directly to Rez. By default, a `BNDL`/`FREF` bundle is included using creator `MV68`, file type `APPL`, and the same resource ID as the icons; pass `--no-bundle` if you only want the icon data.
 
 ### Notes on resource packing
-- `icl8` and `ics8` store raw palette indices in row-major order.
+- `icl8` and `ics8` store raw palette indices in row-major order and **must share the exact same palette** (the script enforces this).
 - `ICN#` and `ics#` pack two bitmaps each (icon first, then mask). Bits are written most-significant-bit first per byte.
 - Mask files are treated as classic 1-bit masks where black marks opaque pixels; white stays transparent.
+- Bundles follow the standard Finder mapping: local bundle ID `0` maps to the icon resource ID, and the `FREF` uses the same resource ID as the bundle.
 
 If you need to re-encode the PNGs, keep the palette ordering identical to avoid remapping color indices.
