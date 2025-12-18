@@ -29,6 +29,7 @@ add_application(MacVox68
     main_window.c
     window_ui.c
     macvox68_icons.r
+    macvox68_size.r
     TYPE APPL
     CREATOR MV68
     )
