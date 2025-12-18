@@ -225,7 +225,7 @@ resource 'ics#' (128, purgeable) {
 
 resource 'FREF' (128, purgeable) {
     'APPL',
-    128,
+    0,
     "MacVox68"
 };
 

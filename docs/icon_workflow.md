@@ -22,7 +22,7 @@ variants.
    - `ics4`/`ics8` for 4-bit and 8-bit 16×16 color icons
    - `ICN#`/`ics#` monochrome icon/mask pairs
    - `BNDL`/`FREF` entries that associate the icon family with the `MV68`
-     creator/type.
+     creator/type using a local ID of `0` for the application icon.
 
 3. Re-run CMake/Ninja on the host build to bundle the updated resources.
 
