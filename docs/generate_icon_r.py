@@ -114,17 +114,20 @@ def _resource_block(res_type: str, res_id: int, name: str, data: bytes) -> str:
 def _bundle_block(
     creator: str, bundle_id: int, icon_res_id: int, name: str, file_type: str
 ) -> str:
+    mappings = [
+        f"        'FREF', {{ 0, {bundle_id} }}",
+        f"        'ICN#', {{ 0, {icon_res_id} }}",
+        f"        'icl8', {{ 0, {icon_res_id} }}",
+        f"        'ics#', {{ 0, {icon_res_id} }}",
+        f"        'ics8', {{ 0, {icon_res_id} }}",
+    ]
     return "\n".join(
         [
             f"resource 'BNDL' ({bundle_id}, \"{name}\") {{",
             f"    '{creator}',",
             "    0,",
             "    {",
-            f"        'FREF', {{ 0, {bundle_id}; }};",
-            f"        'ICN#', {{ 0, {icon_res_id}; }};",
-            f"        'icl8', {{ 0, {icon_res_id}; }};",
-            f"        'ics#', {{ 0, {icon_res_id}; }};",
-            f"        'ics8', {{ 0, {icon_res_id}; }};",
+            ",\n".join(mappings),
             "    }",
             "};\n",
             f"resource 'FREF' ({bundle_id}, \"{name}\") {{",
