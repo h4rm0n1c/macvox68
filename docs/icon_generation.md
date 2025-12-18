@@ -36,6 +36,6 @@ Once you generate `docs/macvox68_icon.r`, the CMake build will pick it up automa
 - `icl8` and `ics8` store raw palette indices in row-major order and **must share the exact same palette** (the script enforces this).
 - `ICN#` and `ics#` pack two bitmaps each (icon first, then mask). Bits are written most-significant-bit first per byte.
 - Mask files are treated as classic 1-bit masks where black marks opaque pixels; white stays transparent.
-- Bundles follow the standard Finder mapping: local bundle ID `0` maps to the icon resource ID, and the `FREF` uses the same resource ID as the bundle.
+- Bundles follow the standard Finder mapping: local bundle ID `0` maps to the icon resource ID, and the `FREF` uses the same resource ID as the bundle. The generated `BNDL` maps `FREF`, `ICN#`, `icl8`, `ics#`, and `ics8` so Finder can see both the color and B&W icon variants for small and large sizes.
 
 If you need to re-encode the PNGs, keep the palette ordering identical to avoid remapping color indices.
