@@ -30,6 +30,8 @@ python docs/generate_icon_r.py \
 
 `--name` and `--res-id` let you align all icon variants to the same resource metadata. The output file is plain text and can be checked into the repo or fed directly to Rez. By default, a `BNDL`/`FREF` bundle is included using creator `MV68`, file type `APPL`, and the same resource ID as the icons; pass `--no-bundle` if you only want the icon data. If you omit `--output`, the script writes `macvox68_icon.r` to the project root automatically (the conventional Retro68 location).
 
+The `.r` header includes `Types.r`, `Finder.r`, and `Icons.r` so the Rez tool can see the templates for `icl8`/`ics8`, `ICN#`/`ics#`, and the `BNDL`/`FREF` bundle mappings without requiring extra hand edits.
+
 Once you generate `macvox68_icon.r` in the project root, the CMake build will pick it up automatically when the file exists. You can also point `-DMACVOX68_ICON_REZ=/path/to/icon.r` at a different location. If the file is missing, the build falls back to the default Retro68 icon; a legacy fallback at `docs/macvox68_icon.r` is still honored, but the root-level `.r` is preferred so Rez sits beside the C/H sources.
 
 ### Notes on resource packing
