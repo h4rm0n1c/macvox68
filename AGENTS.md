@@ -13,6 +13,8 @@ Keep changes small and reversible.
 **If the human operator gives explicit instructions that differ from this file, follow the operator.  
 Otherwise, treat this file as the default guide.**
 
+When we achieve a major fix or discovery, record it in the `docs/` folder so it can be reused later.
+
 ---
 
 ## Environments
@@ -199,4 +201,3 @@ Out of scope / avoid for this project:
 Rule of thumb:
 - If you’re about to create a new app architecture, stop and check Retro68 Samples/TestApps first.
 - Keep it Classic: Toolbox APIs, Rez resources, small reversible changes.
-
