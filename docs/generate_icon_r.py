@@ -39,20 +39,37 @@ from PIL import Image
 DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / "macvox68_icon.r"
 
 
+def _pad_image(
+    image: Image.Image, expected_size: tuple[int, int], *, fill_color: int | tuple[int, ...]
+) -> Image.Image:
+    if image.size == expected_size:
+        return image
+    width, height = image.size
+    expected_width, expected_height = expected_size
+    if width > expected_width or height > expected_height:
+        raise ValueError(f"Expected image size {expected_size}, got {image.size}")
+    padded = Image.new(image.mode, expected_size, fill_color)
+    padded.paste(image, (0, 0))
+    return padded
+
+
 def _ensure_color_image(image: Image.Image, expected_size: tuple[int, int]) -> Image.Image:
-    if image.size != expected_size:
-        raise ValueError(f"Expected color image size {expected_size}, got {image.size}")
     if image.mode not in {"P", "RGB", "RGBA"}:
         raise ValueError(
             "Color icons must be RGB/RGBA or paletted PNGs "
             f"(got {image.mode})."
         )
+    if image.size != expected_size:
+        rgb_image = image.convert("RGB")
+        rgb_image = _pad_image(rgb_image, expected_size, fill_color=(255, 255, 255))
+        return rgb_image
     return image
 
 
 def _ensure_one_bit(image: Image.Image, expected_size: tuple[int, int]) -> Image.Image:
     if image.size != expected_size:
-        raise ValueError(f"Expected 1-bit image size {expected_size}, got {image.size}")
+        bit_image = image.convert("1")
+        return _pad_image(bit_image, expected_size, fill_color=1)
     return image.convert("1")
 
 
