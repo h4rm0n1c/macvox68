@@ -5,6 +5,7 @@
 #include <Events.h>
 #include <Menus.h>
 #include <Controls.h>
+#include <ControlDefinitions.h>
 #include <Icons.h>
 
 #include "about_box.h"
@@ -13,6 +14,10 @@ enum
 {
     kAboutIconID = 128
 };
+
+#ifndef kClassicPushButtonProc
+    #define kClassicPushButtonProc 0
+#endif
 
 static WindowPtr gAboutWin = NULL;
 static ControlHandle gOkButton = NULL;
@@ -101,7 +106,7 @@ void about_box_show(void)
             gAboutWin->portRect.bottom - 16);
 
     gOkButton = NewControl(gAboutWin, &buttonRect, "\pOK", true,
-                           0, 0, 0, pushButProc, 0);
+                           0, 0, 0, kClassicPushButtonProc, 0);
 
     ShowWindow(gAboutWin);
     about_box_draw_contents(gAboutWin);
