@@ -138,29 +138,37 @@ resource 'ics4' (128, purgeable) {
 };
 
 resource 'ICN#' (128, purgeable) {
-    $"00 07 F0 00 00 7F FE 00 01 C7 FF 80 03 0F FF C0"
-    $"06 1F FF E0 1C 7F FF F8 1C 3F 10 78 38 04 80 3C"
-    $"30 07 C4 1C 70 03 CC 0E 78 03 E6 3E FF 07 E3 CF"
-    $"FA 02 43 9F FE 37 CF FF FE 0F CC FF FF 07 86 7F"
-    $"FF 8F 87 FF FF 88 85 FF 7F CF CF BE 7F DF DF FE"
-    $"7F E7 FF FE 3F E3 C6 7C 3F F3 80 1C 1F FB 71 EC"
-    $"0F FF FF FC 07 FF 06 08 03 FF C0 30 01 FF F0 F0"
-    $"00 7F FF E0 00 0F FF 80 00 00 00 00 00 00 00 00"
-    $"00 07 F0 00 00 7F FE 00 01 FF FF 80 03 FF FF C0"
-    $"07 FF FF E0 1F FF FF F8 1F FF FF F8 3F FF FF FC"
-    $"3F FF FF FC 7F FF FF FE 7F FF FF FE FF FF FF FF"
-    $"FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"
-    $"FF FF FF FF FF FF FF FF 7F FF FF FE 7F FF FF FE"
-    $"7F FF FF FE 3F FF FF FC 3F FF FF FC 1F FF FF FC"
-    $"0F FF FF FC 07 FF FF F8 03 FF FF F0 01 FF FF F0"
-    $"00 7F FF E0 00 0F FF 80 00 00 00 00 FF FF FF FF"
+    {    /* array: 2 elements */
+        /* [1] */
+        $"00 07 F0 00 00 7F FE 00 01 C7 FF 80 03 0F FF C0"
+        $"06 1F FF E0 1C 7F FF F8 1C 3F 10 78 38 04 80 3C"
+        $"30 07 C4 1C 70 03 CC 0E 78 03 E6 3E FF 07 E3 CF"
+        $"FA 02 43 9F FE 37 CF FF FE 0F CC FF FF 07 86 7F"
+        $"FF 8F 87 FF FF 88 85 FF 7F CF CF BE 7F DF DF FE"
+        $"7F E7 FF FE 3F E3 C6 7C 3F F3 80 1C 1F FB 71 EC"
+        $"0F FF FF FC 07 FF 06 08 03 FF C0 30 01 FF F0 F0"
+        $"00 7F FF E0 00 0F FF 80 00 00 00 00 00 00 00 00",
+        /* [2] */
+        $"00 07 F0 00 00 7F FE 00 01 FF FF 80 03 FF FF C0"
+        $"07 FF FF E0 1F FF FF F8 1F FF FF F8 3F FF FF FC"
+        $"3F FF FF FC 7F FF FF FE 7F FF FF FE FF FF FF FF"
+        $"FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"
+        $"FF FF FF FF FF FF FF FF 7F FF FF FE 7F FF FF FE"
+        $"7F FF FF FE 3F FF FF FC 3F FF FF FC 1F FF FF FC"
+        $"0F FF FF FC 07 FF FF F8 03 FF FF F0 01 FF FF F0"
+        $"00 7F FF E0 00 0F FF 80 00 00 00 00 FF FF FF FF"
+    }
 };
 
 resource 'ics#' (128, purgeable) {
-    $"07 E0 18 18 20 44 46 02 40 A2 A1 03 90 15 82 A9"
-    $"C2 13 80 01 44 7E 41 86 2F 7A 1D 84 0F FC 03 F0"
-    $"07 E0 1F F8 3F FC 7F FE 7F FE FF FF FF FF FF FF"
-    $"FF FF FF FF 7F FE 7F FE 3F FE 1F FC 0F F8 03 D0"
+    {    /* array: 2 elements */
+        /* [1] */
+        $"07 E0 18 18 20 44 46 02 40 A2 A1 03 90 15 82 A9"
+        $"C2 13 80 01 44 7E 41 86 2F 7A 1D 84 0F FC 03 F0",
+        /* [2] */
+        $"07 E0 1F F8 3F FC 7F FE 7F FE FF FF FF FF FF FF"
+        $"FF FF FF FF 7F FE 7F FE 3F FE 1F FC 0F F8 03 D0"
+    }
 };
 
 resource 'BNDL' (128, purgeable) {

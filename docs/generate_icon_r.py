@@ -270,6 +270,18 @@ def _resource_block(res_type: str, res_id: int, data: bytes) -> str:
     return "\n".join(lines)
 
 
+def _resource_block_array(res_type: str, res_id: int, elements: Sequence[bytes]) -> str:
+    lines = [f"resource '{res_type}' ({res_id}, purgeable) {{", "    {    /* array: 2 elements */"]
+    for index, element in enumerate(elements, start=1):
+        lines.append(f"        /* [{index}] */")
+        lines.extend(_format_hex_lines(element, indent="        ", bytes_per_line=16))
+        if index < len(elements):
+            lines[-1] = f"{lines[-1]},"
+    lines.append("    }")
+    lines.append("};\n")
+    return "\n".join(lines)
+
+
 def _bundle_block(
     creator: str, bundle_id: int, icon_res_id: int, name: str, file_type: str
 ) -> str:
@@ -298,10 +310,6 @@ def _bundle_block(
             "};\n",
         ]
     )
-
-
-def _build_icn_resource(icon_bits: bytes, mask_bits: bytes) -> bytes:
-    return icon_bits + mask_bits
 
 
 def generate_rez(
@@ -337,16 +345,13 @@ def generate_rez(
     ics_icon = _pack_bits(_bool_rows_from_1bit(bw16))
     ics_mask = _pack_bits(_bool_rows_from_1bit(mask16, invert=True))
 
-    icn_data = _build_icn_resource(icn_icon, icn_mask)
-    ics_data = _build_icn_resource(ics_icon, ics_mask)
-
     sections = [
         _resource_block("icl8", res_id, icl8_data),
         _resource_block("icl4", res_id, icl4_data),
         _resource_block("ics8", res_id, ics8_data),
         _resource_block("ics4", res_id, ics4_data),
-        _resource_block("ICN#", res_id, icn_data),
-        _resource_block("ics#", res_id, ics_data),
+        _resource_block_array("ICN#", res_id, [icn_icon, icn_mask]),
+        _resource_block_array("ics#", res_id, [ics_icon, ics_mask]),
     ]
     if include_bundle:
         sections.append(_bundle_block(creator, bundle_id, res_id, name, file_type))
