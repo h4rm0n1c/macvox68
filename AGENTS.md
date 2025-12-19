@@ -72,6 +72,7 @@ Typical locations:
 - `/opt/AppearanceSDK` — Appearance Manager SDK docs (1997-era).
 - `/opt/MPW` — MPW tools/docs (reference).
 - `/opt/MacDevDocs` — Inside Macintosh, Tech Notes, HIG.
+- `/opt/KanjiTalkBasilisk2Fork` — BasiliskII fork sources for hardware behavior, error codes, and emulator-specific reference details.
 
 Curated Classic-era examples (extracted from `.sea` / `.hqx` archives; reference only):
 - `/opt/MacExamples` — extracted examples including `.rsrc` sidecar files (resource forks flattened).
@@ -94,6 +95,8 @@ Interpretation rule:
 - Use them as reference for how Classic-era projects are structured (source + resources + metadata), even if they are not built with Retro68 here.
 
 Prefer `/opt` caches over web searches for API truth and for Rez/resource idioms.
+If you uncover details that could benefit BasiliskII (crash codes, hardware behavior, emulator quirks), note them as exceptional discoveries so they can be shared back over time.
+Likewise, keep an eye out for reusable work (e.g., the icon PNG pipeline) that might be appreciated by Retro68 or related projects, and record those as helpful asides when relevant.
 
 ---
 
