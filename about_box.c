@@ -4,6 +4,7 @@
 #include <Fonts.h>
 #include <Events.h>
 #include <Menus.h>
+#include <Controls.h>
 #include <Icons.h>
 
 #include "about_box.h"
@@ -14,6 +15,7 @@ enum
 };
 
 static WindowPtr gAboutWin = NULL;
+static ControlHandle gOkButton = NULL;
 
 static void about_box_draw_contents(WindowPtr w)
 {
@@ -61,12 +63,15 @@ static void about_box_draw_contents(WindowPtr w)
 
     MoveTo(textLeft, textTop + 74);
     DrawString("\pWTFD license (Do whatever the fk you want)");
+
+    DrawControls(w);
 }
 
 void about_box_show(void)
 {
     Rect bounds;
     Rect r;
+    Rect buttonRect;
     short width = 320;
     short height = 210;
 
@@ -89,6 +94,15 @@ void about_box_show(void)
     if (!gAboutWin)
         return;
 
+    SetRect(&buttonRect,
+            gAboutWin->portRect.right - 96,
+            gAboutWin->portRect.bottom - 36,
+            gAboutWin->portRect.right - 16,
+            gAboutWin->portRect.bottom - 16);
+
+    gOkButton = NewControl(gAboutWin, &buttonRect, "\pOK", true,
+                           0, 0, 0, pushButProc, 0);
+
     ShowWindow(gAboutWin);
     about_box_draw_contents(gAboutWin);
 }
@@ -100,6 +114,7 @@ void about_box_close(void)
 
     DisposeWindow(gAboutWin);
     gAboutWin = NULL;
+    gOkButton = NULL;
 }
 
 void about_box_handle_update(WindowPtr w)
@@ -153,7 +168,30 @@ Boolean about_box_handle_mouse_down(EventRecord *ev)
 
         case inContent:
             if (w != FrontWindow())
+            {
                 SelectWindow(w);
+                return true;
+            }
+            else
+            {
+                ControlHandle c = NULL;
+                short cpart;
+                Point local = ev->where;
+
+                SetPort(w);
+                GlobalToLocal(&local);
+
+                cpart = FindControl(local, w, &c);
+                if (cpart)
+                {
+                    if (TrackControl(c, local, NULL))
+                    {
+                        if (c == gOkButton)
+                            about_box_close();
+                    }
+                    return true;
+                }
+            }
             return true;
 
         default:
