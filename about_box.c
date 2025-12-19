@@ -54,7 +54,13 @@ static void about_box_draw_contents(WindowPtr w)
     DrawString("\pBuilt for Retro68 + BasiliskII");
 
     MoveTo(textLeft, textTop + 46);
-    DrawString("\p\251 2024 MacVox68 contributors");
+    DrawString("\pCreated by h4rm0n1c");
+
+    MoveTo(textLeft, textTop + 60);
+    DrawString("\phttp://github.com/h4rm0n1c./");
+
+    MoveTo(textLeft, textTop + 74);
+    DrawString("\pWTFD license (Do whatever the fk you want)");
 }
 
 void about_box_show(void)
@@ -62,7 +68,7 @@ void about_box_show(void)
     Rect bounds;
     Rect r;
     short width = 320;
-    short height = 160;
+    short height = 210;
 
     if (gAboutWin)
     {
@@ -78,8 +84,8 @@ void about_box_show(void)
             (short)((bounds.left + bounds.right + width) / 2),
             (short)((bounds.top + bounds.bottom + height) / 2));
 
-    gAboutWin = NewWindow(NULL, &r, "\pAbout MacVox68", true,
-                          dBoxProc, (WindowPtr)-1L, true, 0);
+    gAboutWin = (WindowPtr)NewCWindow(NULL, &r, "\pAbout MacVox68", true,
+                                      dBoxProc, (WindowPtr)-1L, true, 0);
     if (!gAboutWin)
         return;
 
