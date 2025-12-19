@@ -45,6 +45,14 @@ python docs/generate_icon_r.py \
     --output macvox68_icon.r
 ```
 
+To generate canonical palette PNGs for the classic Mac CLUTs (useful when you need a stable palette reference), run:
+
+```
+python docs/make_mac_icon_palette_pngs.py --out-dir .
+```
+
+This produces `mac_clut8_palette256.png` and `mac_clut4_palette16.png` locally. Use them as `--palette-source` and `--palette4-source` inputs (do not check the PNGs into the repo).
+
 `--name` and `--res-id` let you align all icon variants to the same resource metadata. The output file is plain text and can be checked into the repo or fed directly to Rez. By default, a `BNDL`/`FREF` bundle is included using creator `MV68`, file type `APPL`, and the same resource ID as the icons; pass `--no-bundle` if you only want the icon data. If you omit `--output`, the script writes `macvox68_icon.r` to the project root automatically (the conventional Retro68 location).
 
 The `.r` header includes `Types.r`, `SysTypes.r`, `Icons.r`, and `Finder.r` so the Rez tool can see the templates for `icl8`/`icl4`/`ics8`/`ics4`, `ICN#`/`ics#`, and the `BNDL`/`FREF` bundle mappings without requiring extra hand edits.
