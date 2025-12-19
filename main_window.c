@@ -586,15 +586,14 @@ static void main_window_draw_text_field(const Rect *frame)
 
     RGBForeColor(&kFieldBorder);
     RGBBackColor(&kFieldFill);
-    PenPat(&qd.black);
+    PenNormal();
     FrameRect(frame);
 
     InsetRect(&inner, 1, 1);
     RGBForeColor(&kFieldInner);
     RGBBackColor(&kFieldFill);
-    PenPat(&qd.gray);
-    FrameRect(&inner);
     PenNormal();
+    FrameRect(&inner);
 }
 
 static void main_window_draw_group(const Rect *r, ConstStr255Param title)
