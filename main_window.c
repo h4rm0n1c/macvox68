@@ -20,6 +20,9 @@
 #ifndef kControlPushButtonDefaultTag
     #define kControlPushButtonDefaultTag 'dflt'
 #endif
+#ifndef kControlSliderProc
+    #define kControlSliderProc 48
+#endif
 
 enum
 {
@@ -560,11 +563,11 @@ static void main_window_create_controls(void)
                             0, 0, 0, radioButProc, 0);
 
     gVolumeSlider = NewControl(gMainWin, &gLayout.volumeSlider, "\p", true,
-                               100, 0, 100, scrollBarProc, 0);
+                               100, 0, 100, kControlSliderProc, 0);
     gRateSlider = NewControl(gMainWin, &gLayout.rateSlider, "\p", true,
-                             10, -10, 10, scrollBarProc, 0);
+                             10, -10, 10, kControlSliderProc, 0);
     gPitchSlider = NewControl(gMainWin, &gLayout.pitchSlider, "\p", true,
-                              0, -10, 10, scrollBarProc, 0);
+                              0, -10, 10, kControlSliderProc, 0);
 
     gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
                            0, 0, 0, pushButProc, 0);
