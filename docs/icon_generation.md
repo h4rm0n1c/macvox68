@@ -1,6 +1,6 @@
 # MacVox68 icon Rez generation
 
-Use `docs/generate_icon_r.py` to turn the supplied PNGs into a Rez `.r` source file with the Classic Mac icon resources required by the app (`'icl8'`, `'icl4'`, `'ics8'`, `'ics4'`, `'ICN#'`, and `'ics#'`). The script remaps pixels by RGB into canonical Classic Mac CLUT8/CLUT4 ordering internally, so palette ordering in the source PNGs is no longer a dependency. It also quantizes a 16-color variant for the 4-bit resources, and builds 1-bit bitmaps for both the B&W icons and masks (black = opaque/ink, white = transparent/background). It can emit a matching purgeable `BNDL` + `FREF` pair so Finder picks up the custom app icon automatically. The generated `.r` is expected to live next to the C and header sources (project root) for Retro68 to find it.
+Use `docs/generate_icon_r.py` to turn the supplied PNGs into a Rez `.r` source file with the Classic Mac icon resources required by the app (`'icl8'`, `'icl4'`, `'ics8'`, `'ics4'`, `'ICN#'`, and `'ics#'`). The script remaps pixels into the canonical Classic Mac CLUT8/CLUT4 ordering internally. If the input PNG is paletted, its palette entries are mapped directly to the Classic Mac CLUT8 indices; if the PNG is truecolor, the RGB values are matched to the closest CLUT8 entry. The 4-bit resources are derived from the 8-bit CLUT8 pixels by remapping indices into the CLUT4 palette, and the script builds 1-bit bitmaps for both the B&W icons and masks (black = opaque/ink, white = transparent/background). It can emit a matching purgeable `BNDL` + `FREF` pair so Finder picks up the custom app icon automatically. The generated `.r` is expected to live next to the C and header sources (project root) for Retro68 to find it.
 
 ## Inputs
 Provide six PNGs:
@@ -12,7 +12,7 @@ Provide six PNGs:
 - 32x32 1-bit mask, black = opaque (`--mask32`)
 - 16x16 1-bit mask, black = opaque (`--mask16`)
 
-The color icons can be paletted or truecolor PNGs (mode `P`, `RGB`, or `RGBA`); the generator remaps by RGB into the Classic Mac CLUT8/CLUT4 palette ordering. The B&W icons and masks are converted to 1-bit internally; masks are inverted on output so black (opaque) pixels in the PNG become cleared mask bits for Finder transparency.
+The color icons can be paletted or truecolor PNGs (mode `P`, `RGB`, or `RGBA`); paletted images use their palette entries to map to the Classic Mac CLUT8 indices, while truecolor images map each RGB value to the nearest CLUT8 entry. The B&W icons and masks are converted to 1-bit internally; masks are inverted on output so black (opaque) pixels in the PNG become cleared mask bits for Finder transparency.
 
 ## Usage
 ```
@@ -44,7 +44,7 @@ Once you generate `macvox68_icon.r` in the project root, the CMake build will pi
 
 ### Notes on resource packing
 - `icl8` and `ics8` store raw palette indices in row-major order. The generator maps pixels by RGB into the Classic Mac CLUT8 palette so the output indices match the system ordering.
-- 4-bit `icl4`/`ics4` data is derived by mapping the 8-bit color pixels into the Classic Mac CLUT4 palette.
+- 4-bit `icl4`/`ics4` data is derived by remapping the 8-bit CLUT8 pixels into the Classic Mac CLUT4 palette, keeping the 4-bit data aligned to the 8-bit inputs.
 - `ICN#` and `ics#` pack two bitmaps each (icon first, then mask). Bits are written most-significant-bit first per byte.
 - Mask files are inverted on write so black-as-opaque source pixels yield cleared mask bits and white pixels become set bits, matching the Rez/Finder transparency expectations.
 - Bundles follow the standard Finder mapping: each mapped type declares one local ID (`0`) pointing at the shared icon resource ID, and the `FREF` uses the same resource ID as the bundle. This keeps Retro68 Rez happy while still exposing the color and B&W icon variants for small and large sizes.

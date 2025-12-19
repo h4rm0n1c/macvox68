@@ -155,6 +155,23 @@ def _build_clut4_palette() -> List[Tuple[int, int, int]]:
     return [_clut4_rgb(i) for i in range(16)]
 
 
+def _nearest_palette_index(
+    rgb: Tuple[int, int, int], palette: Sequence[Tuple[int, int, int]]
+) -> int:
+    r, g, b = rgb
+    best_index = 0
+    best_distance = None
+    for idx, (pr, pg, pb) in enumerate(palette):
+        dr = r - pr
+        dg = g - pg
+        db = b - pb
+        distance = dr * dr + dg * dg + db * db
+        if best_distance is None or distance < best_distance:
+            best_distance = distance
+            best_index = idx
+    return best_index
+
+
 def _index_image_to_palette(
     image: Image.Image, palette: Sequence[Tuple[int, int, int]]
 ) -> bytes:
@@ -166,32 +183,53 @@ def _index_image_to_palette(
         if rgb in lookup:
             indices[i] = lookup[rgb]
         else:
-            r, g, b = rgb
-            best_index = 0
-            best_distance = None
-            for idx, (pr, pg, pb) in enumerate(palette):
-                dr = r - pr
-                dg = g - pg
-                db = b - pb
-                distance = dr * dr + dg * dg + db * db
-                if best_distance is None or distance < best_distance:
-                    best_distance = distance
-                    best_index = idx
-            indices[i] = best_index
+            indices[i] = _nearest_palette_index(rgb, palette)
     return bytes(indices)
 
 
-def _quantize_to_palette(
+def _index_paletted_image_to_palette(
     image: Image.Image, palette: Sequence[Tuple[int, int, int]]
-) -> Image.Image:
-    base = image.convert("RGBA")
-    palette_image = Image.new("P", (1, 1))
-    flat_palette: List[int] = []
-    for r, g, b in palette:
-        flat_palette.extend([r, g, b])
-    flat_palette.extend([0] * (768 - len(flat_palette)))
-    palette_image.putpalette(flat_palette)
-    return base.quantize(palette=palette_image, dither=Image.NONE)
+) -> bytes:
+    raw_palette = image.getpalette() or []
+    input_palette = []
+    for idx in range(0, min(len(raw_palette), 768), 3):
+        input_palette.append((raw_palette[idx], raw_palette[idx + 1], raw_palette[idx + 2]))
+    if not input_palette:
+        return _index_image_to_palette(image, palette)
+    mapping = [
+        _nearest_palette_index(rgb, palette) for rgb in input_palette
+    ]
+    pixels = list(image.getdata())
+    indices = bytearray(len(pixels))
+    for i, pixel in enumerate(pixels):
+        if pixel < len(mapping):
+            indices[i] = mapping[pixel]
+        else:
+            indices[i] = 0
+    return bytes(indices)
+
+
+def _clut8_indices(image: Image.Image, palette: Sequence[Tuple[int, int, int]]) -> bytes:
+    if image.mode == "P":
+        return _index_paletted_image_to_palette(image, palette)
+    return _index_image_to_palette(image, palette)
+
+
+def _remap_indices(
+    indices: bytes,
+    source_palette: Sequence[Tuple[int, int, int]],
+    target_palette: Sequence[Tuple[int, int, int]],
+) -> bytes:
+    mapping = [
+        _nearest_palette_index(rgb, target_palette) for rgb in source_palette
+    ]
+    remapped = bytearray(len(indices))
+    for i, value in enumerate(indices):
+        if value < len(mapping):
+            remapped[i] = mapping[value]
+        else:
+            remapped[i] = 0
+    return bytes(remapped)
 
 
 def _format_hex_lines(data: bytes, indent: str = "    ", bytes_per_line: int = 16) -> List[str]:
@@ -264,13 +302,11 @@ def generate_rez(
     clut8_palette = _build_clut8_palette()
     clut4_palette = _build_clut4_palette()
 
-    icl8_data = _index_image_to_palette(color32, clut8_palette)
-    ics8_data = _index_image_to_palette(color16, clut8_palette)
+    icl8_data = _clut8_indices(color32, clut8_palette)
+    ics8_data = _clut8_indices(color16, clut8_palette)
 
-    color32_4bit = _quantize_to_palette(color32, clut4_palette)
-    color16_4bit = _quantize_to_palette(color16, clut4_palette)
-    icl4_bytes = _index_image_to_palette(color32_4bit, clut4_palette)
-    ics4_bytes = _index_image_to_palette(color16_4bit, clut4_palette)
+    icl4_bytes = _remap_indices(icl8_data, clut8_palette, clut4_palette)
+    ics4_bytes = _remap_indices(ics8_data, clut8_palette, clut4_palette)
     icl4_data = _pack_nibbles(icl4_bytes)
     ics4_data = _pack_nibbles(ics4_bytes)
 
