@@ -18,6 +18,9 @@ enum
 #ifndef kClassicPushButtonProc
     #define kClassicPushButtonProc 0
 #endif
+#ifndef kControlPushButtonDefaultTag
+    #define kControlPushButtonDefaultTag 'dflt'
+#endif
 
 static WindowPtr gAboutWin = NULL;
 static ControlHandle gOkButton = NULL;
@@ -107,6 +110,13 @@ void about_box_show(void)
 
     gOkButton = NewControl(gAboutWin, &buttonRect, "\pOK", true,
                            0, 0, 0, kClassicPushButtonProc, 0);
+    if (gOkButton)
+    {
+        Boolean isDefault = true;
+        SetControlData(gOkButton, kControlEntireControl,
+                       kControlPushButtonDefaultTag,
+                       sizeof(isDefault), &isDefault);
+    }
 
     ShowWindow(gAboutWin);
     about_box_draw_contents(gAboutWin);
