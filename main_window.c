@@ -548,22 +548,25 @@ static void main_window_create_controls(void)
                            0, 0, 0, pushButProc, 0);
 }
 
-static void main_window_set_light_background(void)
-{
-    BackPat(&qd.white);
-    ForeColor(blackColor);
-}
-
 static void main_window_draw_text_field(const Rect *frame)
 {
+    static const RGBColor kFieldFill = { 0xFFFF, 0xFFFF, 0xFFFF };
+    static const RGBColor kFieldBorder = { 0x4444, 0x4444, 0x4444 };
+    static const RGBColor kFieldInner = { 0x9C9C, 0x9C9C, 0x9C9C };
     Rect inner = *frame;
 
+    RGBForeColor(&kFieldFill);
+    RGBBackColor(&kFieldFill);
     FillRect(frame, &qd.white);
 
+    RGBForeColor(&kFieldBorder);
+    RGBBackColor(&kFieldFill);
     PenPat(&qd.black);
     FrameRect(frame);
 
     InsetRect(&inner, 1, 1);
+    RGBForeColor(&kFieldInner);
+    RGBBackColor(&kFieldFill);
     PenPat(&qd.gray);
     FrameRect(&inner);
     PenNormal();
@@ -571,22 +574,33 @@ static void main_window_draw_text_field(const Rect *frame)
 
 static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 {
+    static const RGBColor kGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
+    static const RGBColor kGroupBorder = { 0x4444, 0x4444, 0x4444 };
+    static const RGBColor kGroupInner = { 0xB5B5, 0xB5B5, 0xB5B5 };
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect shade = *r;
     Rect inner = *r;
 
-    main_window_set_light_background();
+    RGBForeColor(&kGroupFill);
+    RGBBackColor(&kGroupFill);
     FillRect(&shade, &qd.white);
 
+    RGBForeColor(&kGroupBorder);
+    RGBBackColor(&kGroupFill);
     PenPat(&qd.black);
     FrameRect(&shade);
 
     InsetRect(&inner, 1, 1);
+    RGBForeColor(&kGroupInner);
+    RGBBackColor(&kGroupFill);
     PenPat(&qd.gray);
     FrameRect(&inner);
     PenNormal();
 
     if (title)
     {
+        RGBForeColor(&kText);
+        RGBBackColor(&kGroupFill);
         MoveTo(r->left + 10, r->top + 14);
         DrawString(title);
     }
@@ -594,6 +608,9 @@ static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 
 static void main_window_draw_contents(WindowPtr w)
 {
+    static const RGBColor kWindowFill = { 0xD8D8, 0xD8D8, 0xD8D8 };
+    static const RGBColor kSeparator = { 0x7A7A, 0x7A7A, 0x7A7A };
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect content;
     Rect textFrame;
     Rect hostFrame;
@@ -602,9 +619,12 @@ static void main_window_draw_contents(WindowPtr w)
     SetPort(w);
     content = w->portRect;
 
-    main_window_set_light_background();
+    RGBForeColor(&kWindowFill);
+    RGBBackColor(&kWindowFill);
     FillRect(&content, &qd.gray);
 
+    RGBForeColor(&kSeparator);
+    RGBBackColor(&kWindowFill);
     PenPat(&qd.gray);
     MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
     LineTo(content.right - 8, gLayout.speakStopButton.bottom + 6);
@@ -614,20 +634,28 @@ static void main_window_draw_contents(WindowPtr w)
     textFrame = gLayout.editText;
     main_window_draw_text_field(&textFrame);
 
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     main_window_update_text(gTextEdit);
 
     /* Sound group */
     main_window_draw_group(&gLayout.soundGroup, "\pSound");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.soundGroup.left + 16, gLayout.soundGroup.top + 32);
     DrawString("\pDevice:");
 
     /* Prosody group */
     main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.prosodyGroup.left + 16, gLayout.prosodyGroup.top + 32);
     DrawString("\pChoose clarity or HL VOX coloration.");
 
     /* Settings group */
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 30);
     DrawString("\pVolume");
     MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
@@ -645,6 +673,8 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* TCP group */
     main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.tcpGroup.left + 36, gLayout.tcpGroup.top + 32);
     DrawString("\pHost:");
     MoveTo(gLayout.portField.left - 36, gLayout.tcpGroup.top + 32);
