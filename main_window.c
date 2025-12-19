@@ -11,6 +11,7 @@
 #include <ToolUtils.h>
 #include <string.h>
 
+#include "about_box.h"
 #include "main_window.h"
 
 #ifndef kClassicPushButtonProc
@@ -666,6 +667,12 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 {
     short menuID = HiWord(menuChoice);
     short item   = LoWord(menuChoice);
+
+    if (menuID == 128) /* Apple */
+    {
+        if (item == 1)
+            about_box_show();
+    }
 
     if (menuID == 129) /* File */
     {

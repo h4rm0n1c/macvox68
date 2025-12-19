@@ -7,6 +7,7 @@
 #include <TextEdit.h>
 #include <ToolUtils.h>
 
+#include "about_box.h"
 #include "main_window.h"
 #include "ui_app.h"
 
@@ -60,11 +61,15 @@ Boolean ui_app_pump_events(void)
         switch (ev.what)
         {
             case mouseDown:
-                (void)main_window_handle_mouse_down(&ev, &quit);
+                if (!about_box_handle_mouse_down(&ev))
+                    (void)main_window_handle_mouse_down(&ev, &quit);
                 break;
 
             case updateEvt:
-                main_window_handle_update((WindowPtr)ev.message);
+                if (about_box_is_window((WindowPtr)ev.message))
+                    about_box_handle_update((WindowPtr)ev.message);
+                else
+                    main_window_handle_update((WindowPtr)ev.message);
                 break;
 
             case keyDown:

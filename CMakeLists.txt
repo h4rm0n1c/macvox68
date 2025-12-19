@@ -25,6 +25,7 @@ cmake_minimum_required(VERSION 3.16)
 project(MacVox68 C)
 
 add_application(MacVox68
+    about_box.c
     main.c
     main_window.c
     window_ui.c
