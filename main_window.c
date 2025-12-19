@@ -474,10 +474,14 @@ cleanup:
 static void main_window_update_text(TEHandle handle)
 {
     Rect view;
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
+    static const RGBColor kTextBack = { 0xFFFF, 0xFFFF, 0xFFFF };
 
     if (!handle)
         return;
 
+    RGBForeColor(&kText);
+    RGBBackColor(&kTextBack);
     view = (**handle).viewRect;
     TEUpdate(&view, handle);
 }
@@ -716,8 +720,17 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 
 void main_window_create(void)
 {
+    Rect bounds;
     Rect r;
-    SetRect(&r, 40, 40, 620, 620);
+    short width = 580;
+    short height = 580;
+
+    bounds = qd.screenBits.bounds;
+    SetRect(&r,
+            (short)((bounds.left + bounds.right - width) / 2),
+            (short)((bounds.top + bounds.bottom - height) / 2),
+            (short)((bounds.left + bounds.right + width) / 2),
+            (short)((bounds.top + bounds.bottom + height) / 2));
 
     gMainWin = (WindowPtr)NewCWindow(
         NULL,
