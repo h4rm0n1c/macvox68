@@ -154,25 +154,26 @@ static void main_window_plan_layout(void)
             y + prosodyH);
 
     {
-        short radioTop   = gLayout.prosodyGroup.top + 44;
-        short radioLeft  = gLayout.prosodyGroup.left + 72;
-        short radioGap   = 22;
-        short radioWidth = 140;
+        short radioTop        = gLayout.prosodyGroup.top + 44;
+        short radioLeft       = gLayout.prosodyGroup.left + 62;
+        short radioGap        = 22;
+        short radioWidth      = 140;
+        short radioCleanWidth = 70;
 
         SetRect(&gLayout.prosodyClean,
                 radioLeft,
                 radioTop,
-                radioLeft + radioWidth,
+                radioLeft + radioCleanWidth,
                 radioTop + 18);
 
-        radioLeft = gLayout.prosodyClean.right + radioGap;
+        radioLeft = gLayout.prosodyClean.right + radioGap - 15;
         SetRect(&gLayout.prosodyLQ,
                 radioLeft,
                 radioTop,
                 radioLeft + radioWidth,
                 radioTop + 18);
 
-        radioLeft = gLayout.prosodyLQ.right + radioGap;
+        radioLeft = gLayout.prosodyLQ.right + radioGap - 15;
         SetRect(&gLayout.prosodyHQ,
                 radioLeft,
                 radioTop,
@@ -709,6 +710,8 @@ static void main_window_draw_contents(WindowPtr w)
 
     main_window_update_text(gHostEdit);
     main_window_update_text(gPortEdit);
+
+    RGBBackColor(&kWindowFill);
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
