@@ -68,6 +68,26 @@ static TEHandle       gPortEdit     = NULL;
 static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
 
+static void main_window_draw_default_button_frame(const Rect *buttonRect)
+{
+    Rect outer;
+    Rect inner;
+
+    if (!buttonRect)
+        return;
+
+    outer = *buttonRect;
+    inner = *buttonRect;
+
+    InsetRect(&outer, -4, -4);
+    InsetRect(&inner, -2, -2);
+
+    PenNormal();
+    PenPat(&qd.black);
+    FrameRect(&outer);
+    FrameRect(&inner);
+}
+
 static void main_window_switch_active_edit(TEHandle h)
 {
     if (gActiveEdit == h)
@@ -695,6 +715,9 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
+
+    main_window_draw_default_button_frame(&gLayout.speakStopButton);
+    main_window_draw_default_button_frame(&gLayout.applyButton);
 }
 
 static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
