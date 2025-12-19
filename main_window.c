@@ -721,6 +721,12 @@ static void main_window_draw_contents(WindowPtr w)
     DrawControls(w);
 
     RGBBackColor(&kGroupFill);
+    if (gVolumeSlider)
+        Draw1Control(gVolumeSlider);
+    if (gRateSlider)
+        Draw1Control(gRateSlider);
+    if (gPitchSlider)
+        Draw1Control(gPitchSlider);
     if (gProsodyClean)
         Draw1Control(gProsodyClean);
     if (gProsodyLQ)

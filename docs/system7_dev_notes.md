@@ -42,6 +42,7 @@ Many Toolbox calls (window titles, some text routines) require Pascal strings (`
 - A window created with `NewWindow` defaults to black-and-white drawing; color icon resources (for example `icl8`/`icl4`) will still exist, but they will render in monochrome if the window isn't color-capable.
 - Use `NewCWindow` to make a color-aware window that respects the current system color depth; this is required if you want the main UI and About box to render in color on System 7.5.3.
 - Once using color windows, set colors explicitly with `RGBForeColor`/`RGBBackColor` before drawing fills, borders, or text. This avoids the UI inheriting unexpected colors from prior drawing ops and keeps the chrome consistent.
+- Classic sliders (`kControlSliderProc`) will pick up the current background color when drawn. To avoid white slider wells, set `RGBBackColor` to the owning group’s fill before drawing the slider controls.
 
 ## Appearance Manager usage (System 7.5.3 compatibility)
 
