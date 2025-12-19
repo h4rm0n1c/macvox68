@@ -12,6 +12,16 @@ MacVox68 is a Classic Mac OS 7.x (68k) application targeting Mac OS 7.5.3 and bu
 ## Build expectations
 MacVox68 is built with Retro68 and depends on the MPW Interfaces & Libraries headers. On the host machine, builds are performed out-of-tree via CMake and Ninja with the Retro68 toolchain file. The maintainer drives these builds on a Linux host (not in the Codex container), so avoid container-specific tweaks and keep configuration changes aligned with the host workflow.
 
+### Optional Appearance SDK headers
+If you need Appearance Manager headers, pass `APPEARANCE_SDK_ROOT` when configuring. It should point at the Appearance SDK headers directory that contains `CIncludes` and `RIncludes` (the project stays opt-in so local paths are not baked into the repo).
+
+Example:
+```
+cmake -G Ninja ../MacVox68 \
+  -DCMAKE_TOOLCHAIN_FILE="$HOME/OldMacStuff/Retro68/toolchain-full/m68k-apple-macos/cmake/retro68.toolchain.cmake" \
+  -DAPPEARANCE_SDK_ROOT="$HOME/OldMacStuff/TheBigOS7DocBlob/ReleaseBits/AppearanceSDK-1.0.4-ReadableOverlay/Appearance Sample Code/Headers"
+```
+
 ### Include-path quirks (Rez / shell)
 Retro68 Rez is invoked through the shell, so include paths that contain special characters must be quoted to avoid being split. In particular, MPW's `Interfaces&Libraries` path must be passed as a single token (or replaced with a symlink that avoids `&`). The `CMakeLists.txt` uses a quoted `-I` argument to keep the path intact when generating Ninja rules, following the safety guidance from `docs/rez_gotchas.md`.
 
