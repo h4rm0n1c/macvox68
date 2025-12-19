@@ -153,8 +153,7 @@ def main() -> None:
     print(f"  {p256}")
     print(f"  {p16}")
     print("")
-    print("Use with your generator like:")
-    print("  --palette-source mac_clut8_palette256.png --palette4-source mac_clut4_palette16.png")
+    print("These PNGs are optional reference artifacts for inspecting palette ordering.")
 
 
 if __name__ == "__main__":

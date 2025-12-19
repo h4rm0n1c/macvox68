@@ -1,4 +1,4 @@
-"""Generate a Rez .r file for MacVox68 icons from palette PNG sources.
+"""Generate a Rez .r file for MacVox68 icons from PNG sources.
 
 The script expects six input PNGs:
 - 32x32 256-color icon
@@ -10,6 +10,9 @@ The script expects six input PNGs:
 
 Outputs a Rez source file containing 'icl8', 'ics8', 'icl4', 'ics4',
 'ICN#', and 'ics#' resources that share the same resource ID and name.
+
+The generator uses internally defined Classic Mac CLUT8/CLUT4 palettes to
+map RGB pixels to icon indices, so no external palette PNGs are required.
 
 Example:
     python docs/generate_icon_r.py \
@@ -36,20 +39,13 @@ from PIL import Image
 DEFAULT_OUTPUT = Path(__file__).resolve().parent.parent / "macvox68_icon.r"
 
 
-def _ensure_paletted(image: Image.Image, expected_size: tuple[int, int]) -> Image.Image:
+def _ensure_color_image(image: Image.Image, expected_size: tuple[int, int]) -> Image.Image:
     if image.size != expected_size:
-        raise ValueError(f"Expected paletted image size {expected_size}, got {image.size}")
-    if image.mode != "P":
+        raise ValueError(f"Expected color image size {expected_size}, got {image.size}")
+    if image.mode not in {"P", "RGB", "RGBA"}:
         raise ValueError(
-            f"Palette mode required for accurate 8-bit export (got {image.mode}). "
-            "Re-save the source as a paletted PNG."
-        )
-    palette = image.getpalette()
-    if palette is None:
-        raise ValueError("Paletted icon is missing palette data.")
-    if len(palette) != 768:
-        raise ValueError(
-            "Paletted icon must contain 256 color entries (768 palette bytes)."
+            "Color icons must be RGB/RGBA or paletted PNGs "
+            f"(got {image.mode})."
         )
     return image
 
@@ -102,20 +98,61 @@ def _pack_nibbles(index_bytes: bytes) -> bytes:
     return bytes(packed)
 
 
-def _palette_from_image(image: Image.Image, expected_entries: int) -> List[Tuple[int, int, int]]:
-    palette = image.getpalette()
-    if palette is None:
-        raise ValueError("Palette source image is missing palette data.")
-    expected_length = expected_entries * 3
-    if len(palette) < expected_length:
-        raise ValueError(
-            f"Palette source image must contain at least {expected_entries} entries."
-        )
-    colors = []
-    for i in range(expected_entries):
-        offset = i * 3
-        colors.append((palette[offset], palette[offset + 1], palette[offset + 2]))
-    return colors
+def _clut8_rgb(index: int) -> Tuple[int, int, int]:
+    """Classic Macintosh CLUT #8 palette (system icon 8-bit indices)."""
+    x = index & 0xFF
+    if x < 215:
+        r = (5 - (x // 36)) / 5.0
+        g = (5 - ((x // 6) % 6)) / 5.0
+        b = (5 - (x % 6)) / 5.0
+        return (int(round(r * 255)), int(round(g * 255)), int(round(b * 255)))
+    if x == 255:
+        return (0, 0, 0)
+    values = [v / 15.0 for v in reversed(range(16)) if v % 3 != 0]
+    which = int((x - 215) % 10)
+    group = int((x - 215) // 10)
+    v = int(round(values[which] * 255))
+    if group == 0:
+        return (v, 0, 0)
+    if group == 1:
+        return (0, v, 0)
+    if group == 2:
+        return (0, 0, v)
+    if group == 3:
+        return (v, v, v)
+    return (255, 0, 255)
+
+
+def _clut4_rgb(index: int) -> Tuple[int, int, int]:
+    """Default Macintosh 16-color palette (often referred to as CLUT ID 4)."""
+    hexes = [
+        "FFFFFF",
+        "FCF305",
+        "FF6402",
+        "DD0806",
+        "F20884",
+        "4600A5",
+        "0000D4",
+        "02ABEA",
+        "1FB714",
+        "006411",
+        "562C05",
+        "90713A",
+        "C0C0C0",
+        "808080",
+        "404040",
+        "000000",
+    ]
+    h = hexes[index & 0x0F]
+    return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def _build_clut8_palette() -> List[Tuple[int, int, int]]:
+    return [_clut8_rgb(i) for i in range(256)]
+
+
+def _build_clut4_palette() -> List[Tuple[int, int, int]]:
+    return [_clut4_rgb(i) for i in range(16)]
 
 
 def _index_image_to_palette(
@@ -155,10 +192,6 @@ def _quantize_to_palette(
     flat_palette.extend([0] * (768 - len(flat_palette)))
     palette_image.putpalette(flat_palette)
     return base.quantize(palette=palette_image, dither=Image.NONE)
-
-
-def _raw_index_bytes(image: Image.Image) -> bytes:
-    return bytes(image.getdata())
 
 
 def _format_hex_lines(data: bytes, indent: str = "    ", bytes_per_line: int = 16) -> List[str]:
@@ -220,40 +253,24 @@ def generate_rez(
     file_type: str,
     include_bundle: bool,
     bundle_id: int,
-    palette_source: Path | None,
-    palette4_source: Path | None,
 ) -> str:
-    color32 = _ensure_paletted(Image.open(paths["color32"]), (32, 32))
-    color16 = _ensure_paletted(Image.open(paths["color16"]), (16, 16))
+    color32 = _ensure_color_image(Image.open(paths["color32"]), (32, 32))
+    color16 = _ensure_color_image(Image.open(paths["color16"]), (16, 16))
     bw32 = _ensure_one_bit(Image.open(paths["bw32"]), (32, 32))
     bw16 = _ensure_one_bit(Image.open(paths["bw16"]), (16, 16))
     mask32 = _ensure_one_bit(Image.open(paths["mask32"]), (32, 32))
     mask16 = _ensure_one_bit(Image.open(paths["mask16"]), (16, 16))
 
-    if palette_source:
-        palette_image = _ensure_paletted(Image.open(palette_source), (16, 16))
-        palette = _palette_from_image(palette_image, 256)
-        icl8_data = _index_image_to_palette(color32, palette)
-        ics8_data = _index_image_to_palette(color16, palette)
-    else:
-        if color32.getpalette() != color16.getpalette():
-            raise ValueError(
-                "16px and 32px color icons must share the exact palette ordering."
-            )
-        icl8_data = _raw_index_bytes(color32)
-        ics8_data = _raw_index_bytes(color16)
-        palette = _palette_from_image(color32, 256)
+    clut8_palette = _build_clut8_palette()
+    clut4_palette = _build_clut4_palette()
 
-    if palette4_source:
-        palette4_image = _ensure_paletted(Image.open(palette4_source), (16, 16))
-        palette4 = _palette_from_image(palette4_image, 16)
-    else:
-        palette4 = palette[:16]
+    icl8_data = _index_image_to_palette(color32, clut8_palette)
+    ics8_data = _index_image_to_palette(color16, clut8_palette)
 
-    color32_4bit = _quantize_to_palette(color32, palette4)
-    color16_4bit = _quantize_to_palette(color16, palette4)
-    icl4_bytes = _index_image_to_palette(color32_4bit, palette4)
-    ics4_bytes = _index_image_to_palette(color16_4bit, palette4)
+    color32_4bit = _quantize_to_palette(color32, clut4_palette)
+    color16_4bit = _quantize_to_palette(color16, clut4_palette)
+    icl4_bytes = _index_image_to_palette(color32_4bit, clut4_palette)
+    ics4_bytes = _index_image_to_palette(color16_4bit, clut4_palette)
     icl4_data = _pack_nibbles(icl4_bytes)
     ics4_data = _pack_nibbles(ics4_bytes)
 
@@ -297,25 +314,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bw16", type=Path, required=True, help="Path to 16x16 1-bit PNG.")
     parser.add_argument("--mask32", type=Path, required=True, help="Path to 32x32 mask PNG (black=opaque).")
     parser.add_argument("--mask16", type=Path, required=True, help="Path to 16x16 mask PNG (black=opaque).")
-    parser.add_argument(
-        "--palette-source",
-        type=Path,
-        default=None,
-        help=(
-            "Optional paletted PNG supplying the canonical 256-color palette ordering. "
-            "When set, input pixels are remapped by RGB to this palette."
-        ),
-    )
-    parser.add_argument(
-        "--palette4-source",
-        type=Path,
-        default=None,
-        help=(
-            "Optional paletted PNG supplying the canonical 16-color palette ordering "
-            "for 4-bit icons. Defaults to the first 16 entries of --palette-source or "
-            "the input icon palette."
-        ),
-    )
     parser.add_argument(
         "--output",
         type=Path,
@@ -365,8 +363,6 @@ def main() -> None:
         file_type=args.file_type,
         include_bundle=not args.no_bundle,
         bundle_id=bundle_id,
-        palette_source=args.palette_source,
-        palette4_source=args.palette4_source,
     )
     args.output.write_text(rez_text, encoding="utf-8")
 
