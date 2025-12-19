@@ -609,15 +609,14 @@ static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 
     RGBForeColor(&kGroupBorder);
     RGBBackColor(&kGroupFill);
-    PenPat(&qd.black);
+    PenNormal();
     FrameRect(&shade);
 
     InsetRect(&inner, 1, 1);
     RGBForeColor(&kGroupInner);
     RGBBackColor(&kGroupFill);
-    PenPat(&qd.gray);
-    FrameRect(&inner);
     PenNormal();
+    FrameRect(&inner);
 
     if (title)
     {
@@ -631,7 +630,9 @@ static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 static void main_window_draw_contents(WindowPtr w)
 {
     static const RGBColor kWindowFill = { 0xD8D8, 0xD8D8, 0xD8D8 };
-    static const RGBColor kSeparator = { 0x7A7A, 0x7A7A, 0x7A7A };
+    static const RGBColor kSeparatorDark = { 0x7A7A, 0x7A7A, 0x7A7A };
+    static const RGBColor kSeparatorLight = { 0xEEEE, 0xEEEE, 0xEEEE };
+    static const RGBColor kGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
     static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect content;
     Rect textFrame;
@@ -645,12 +646,14 @@ static void main_window_draw_contents(WindowPtr w)
     RGBBackColor(&kWindowFill);
     FillRect(&content, &qd.gray);
 
-    RGBForeColor(&kSeparator);
+    RGBForeColor(&kSeparatorDark);
     RGBBackColor(&kWindowFill);
-    PenPat(&qd.gray);
+    PenNormal();
     MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
     LineTo(content.right - 8, gLayout.speakStopButton.bottom + 6);
-    PenNormal();
+    RGBForeColor(&kSeparatorLight);
+    MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 7);
+    LineTo(content.right - 8, gLayout.speakStopButton.bottom + 7);
 
     /* Text entry area with a soft border. */
     textFrame = gLayout.editText;
@@ -711,10 +714,16 @@ static void main_window_draw_contents(WindowPtr w)
     main_window_update_text(gHostEdit);
     main_window_update_text(gPortEdit);
 
-    RGBBackColor(&kWindowFill);
-
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
+
+    RGBBackColor(&kGroupFill);
+    if (gProsodyClean)
+        Draw1Control(gProsodyClean);
+    if (gProsodyLQ)
+        Draw1Control(gProsodyLQ);
+    if (gProsodyHQ)
+        Draw1Control(gProsodyHQ);
 }
 
 static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
