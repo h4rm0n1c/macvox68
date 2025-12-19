@@ -90,6 +90,8 @@ static void main_window_prepare_text_port(GrafPtr *outPort, RGBColor *outFore, R
 
     if (gMainWin)
         SetPort(gMainWin);
+    ForeColor(blackColor);
+    BackColor(whiteColor);
     RGBForeColor(&kTextColor);
     RGBBackColor(&kTextBackColor);
 }
@@ -271,6 +273,10 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
 
     if (!gTextEdit)
         return;
+
+    main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+    TECalText(gTextEdit);
+    main_window_restore_text_port(savePort, &saveFore, &saveBack);
 
     te = *gTextEdit;
     if (!te)
@@ -773,6 +779,7 @@ static void main_window_update_text(TEHandle handle)
 
     main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
     view = (**handle).viewRect;
+    FillRect(&view, &qd.white);
     TEUpdate(&view, handle);
     main_window_restore_text_port(savePort, &saveFore, &saveBack);
 }
@@ -1004,6 +1011,8 @@ static void main_window_draw_contents(WindowPtr w)
     main_window_update_text(gPortEdit);
 
     /* Draw controls after the background/text so chrome paints over the framing. */
+    ForeColor(blackColor);
+    BackColor(grayColor);
     DrawControls(w);
 
     RGBBackColor(&kGroupFill);
