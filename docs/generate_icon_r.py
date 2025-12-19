@@ -28,7 +28,7 @@ Requires Pillow for PNG decoding.
 
 import argparse
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Sequence, Tuple
 
 from PIL import Image
 
@@ -102,13 +102,58 @@ def _pack_nibbles(index_bytes: bytes) -> bytes:
     return bytes(packed)
 
 
-def _quantize_to_16_colors(image: Image.Image, palette: list[int]) -> Image.Image:
-    """Quantize using the first 16 palette entries to keep Mac palette ordering."""
+def _palette_from_image(image: Image.Image, expected_entries: int) -> List[Tuple[int, int, int]]:
+    palette = image.getpalette()
+    if palette is None:
+        raise ValueError("Palette source image is missing palette data.")
+    expected_length = expected_entries * 3
+    if len(palette) < expected_length:
+        raise ValueError(
+            f"Palette source image must contain at least {expected_entries} entries."
+        )
+    colors = []
+    for i in range(expected_entries):
+        offset = i * 3
+        colors.append((palette[offset], palette[offset + 1], palette[offset + 2]))
+    return colors
 
+
+def _index_image_to_palette(
+    image: Image.Image, palette: Sequence[Tuple[int, int, int]]
+) -> bytes:
+    base = image.convert("RGB")
+    pixels = list(base.getdata())
+    lookup = {rgb: idx for idx, rgb in enumerate(palette)}
+    indices = bytearray(len(pixels))
+    for i, rgb in enumerate(pixels):
+        if rgb in lookup:
+            indices[i] = lookup[rgb]
+        else:
+            r, g, b = rgb
+            best_index = 0
+            best_distance = None
+            for idx, (pr, pg, pb) in enumerate(palette):
+                dr = r - pr
+                dg = g - pg
+                db = b - pb
+                distance = dr * dr + dg * dg + db * db
+                if best_distance is None or distance < best_distance:
+                    best_distance = distance
+                    best_index = idx
+            indices[i] = best_index
+    return bytes(indices)
+
+
+def _quantize_to_palette(
+    image: Image.Image, palette: Sequence[Tuple[int, int, int]]
+) -> Image.Image:
     base = image.convert("RGBA")
     palette_image = Image.new("P", (1, 1))
-    padded_palette = palette[:48] + [0] * (768 - 48)
-    palette_image.putpalette(padded_palette)
+    flat_palette: List[int] = []
+    for r, g, b in palette:
+        flat_palette.extend([r, g, b])
+    flat_palette.extend([0] * (768 - len(flat_palette)))
+    palette_image.putpalette(flat_palette)
     return base.quantize(palette=palette_image, dither=Image.NONE)
 
 
@@ -175,6 +220,8 @@ def generate_rez(
     file_type: str,
     include_bundle: bool,
     bundle_id: int,
+    palette_source: Path | None,
+    palette4_source: Path | None,
 ) -> str:
     color32 = _ensure_paletted(Image.open(paths["color32"]), (32, 32))
     color16 = _ensure_paletted(Image.open(paths["color16"]), (16, 16))
@@ -183,18 +230,30 @@ def generate_rez(
     mask32 = _ensure_one_bit(Image.open(paths["mask32"]), (32, 32))
     mask16 = _ensure_one_bit(Image.open(paths["mask16"]), (16, 16))
 
-    if color32.getpalette() != color16.getpalette():
-        raise ValueError("16px and 32px color icons must share the exact palette ordering.")
+    if palette_source:
+        palette_image = _ensure_paletted(Image.open(palette_source), (16, 16))
+        palette = _palette_from_image(palette_image, 256)
+        icl8_data = _index_image_to_palette(color32, palette)
+        ics8_data = _index_image_to_palette(color16, palette)
+    else:
+        if color32.getpalette() != color16.getpalette():
+            raise ValueError(
+                "16px and 32px color icons must share the exact palette ordering."
+            )
+        icl8_data = _raw_index_bytes(color32)
+        ics8_data = _raw_index_bytes(color16)
+        palette = _palette_from_image(color32, 256)
 
-    palette = color32.getpalette()
+    if palette4_source:
+        palette4_image = _ensure_paletted(Image.open(palette4_source), (16, 16))
+        palette4 = _palette_from_image(palette4_image, 16)
+    else:
+        palette4 = palette[:16]
 
-    icl8_data = _raw_index_bytes(color32)
-    ics8_data = _raw_index_bytes(color16)
-
-    color32_4bit = _quantize_to_16_colors(color32, palette)
-    color16_4bit = _quantize_to_16_colors(color16, palette)
-    icl4_bytes = _raw_index_bytes(color32_4bit)
-    ics4_bytes = _raw_index_bytes(color16_4bit)
+    color32_4bit = _quantize_to_palette(color32, palette4)
+    color16_4bit = _quantize_to_palette(color16, palette4)
+    icl4_bytes = _index_image_to_palette(color32_4bit, palette4)
+    ics4_bytes = _index_image_to_palette(color16_4bit, palette4)
     icl4_data = _pack_nibbles(icl4_bytes)
     ics4_data = _pack_nibbles(ics4_bytes)
 
@@ -238,6 +297,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--bw16", type=Path, required=True, help="Path to 16x16 1-bit PNG.")
     parser.add_argument("--mask32", type=Path, required=True, help="Path to 32x32 mask PNG (black=opaque).")
     parser.add_argument("--mask16", type=Path, required=True, help="Path to 16x16 mask PNG (black=opaque).")
+    parser.add_argument(
+        "--palette-source",
+        type=Path,
+        default=None,
+        help=(
+            "Optional paletted PNG supplying the canonical 256-color palette ordering. "
+            "When set, input pixels are remapped by RGB to this palette."
+        ),
+    )
+    parser.add_argument(
+        "--palette4-source",
+        type=Path,
+        default=None,
+        help=(
+            "Optional paletted PNG supplying the canonical 16-color palette ordering "
+            "for 4-bit icons. Defaults to the first 16 entries of --palette-source or "
+            "the input icon palette."
+        ),
+    )
     parser.add_argument(
         "--output",
         type=Path,
@@ -287,6 +365,8 @@ def main() -> None:
         file_type=args.file_type,
         include_bundle=not args.no_bundle,
         bundle_id=bundle_id,
+        palette_source=args.palette_source,
+        palette4_source=args.palette4_source,
     )
     args.output.write_text(rez_text, encoding="utf-8")
 
