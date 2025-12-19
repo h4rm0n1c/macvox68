@@ -49,6 +49,10 @@ def _pad_image(
     if width > expected_width or height > expected_height:
         raise ValueError(f"Expected image size {expected_size}, got {image.size}")
     padded = Image.new(image.mode, expected_size, fill_color)
+    if image.mode == "P":
+        palette = image.getpalette()
+        if palette:
+            padded.putpalette(palette)
     padded.paste(image, (0, 0))
     return padded
 
@@ -60,9 +64,10 @@ def _ensure_color_image(image: Image.Image, expected_size: tuple[int, int]) -> I
             f"(got {image.mode})."
         )
     if image.size != expected_size:
+        if image.mode == "P":
+            return _pad_image(image, expected_size, fill_color=0)
         rgb_image = image.convert("RGB")
-        rgb_image = _pad_image(rgb_image, expected_size, fill_color=(255, 255, 255))
-        return rgb_image
+        return _pad_image(rgb_image, expected_size, fill_color=(255, 255, 255))
     return image
 
 
