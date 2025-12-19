@@ -17,6 +17,9 @@
 #ifndef kClassicPushButtonProc
     #define kClassicPushButtonProc 0
 #endif
+#ifndef kControlPushButtonDefaultTag
+    #define kControlPushButtonDefaultTag 'dflt'
+#endif
 
 enum
 {
@@ -67,26 +70,6 @@ static TEHandle       gHostEdit     = NULL;
 static TEHandle       gPortEdit     = NULL;
 static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
-
-static void main_window_draw_default_button_frame(const Rect *buttonRect)
-{
-    Rect outer;
-    Rect inner;
-
-    if (!buttonRect)
-        return;
-
-    outer = *buttonRect;
-    inner = *buttonRect;
-
-    InsetRect(&outer, -4, -4);
-    InsetRect(&inner, -2, -2);
-
-    PenNormal();
-    PenPat(&qd.black);
-    FrameRect(&outer);
-    FrameRect(&inner);
-}
 
 static void main_window_switch_active_edit(TEHandle h)
 {
@@ -544,6 +527,13 @@ static void main_window_create_controls(void)
 
     gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
                            0, 0, 0, pushButProc, kSpeakStopBtnID);
+    if (gSpeakBtn)
+    {
+        Boolean isDefault = true;
+        SetControlData(gSpeakBtn, kControlEntireControl,
+                       kControlPushButtonDefaultTag,
+                       sizeof(isDefault), &isDefault);
+    }
 
     if (soundMenu && soundCount > 0)
     {
@@ -553,6 +543,13 @@ static void main_window_create_controls(void)
 
     gApplyBtn = NewControl(gMainWin, &gLayout.applyButton, "\pApply Audio", true,
                            0, 0, 0, pushButProc, 0);
+    if (gApplyBtn)
+    {
+        Boolean isDefault = true;
+        SetControlData(gApplyBtn, kControlEntireControl,
+                       kControlPushButtonDefaultTag,
+                       sizeof(isDefault), &isDefault);
+    }
 
     gProsodyClean = NewControl(gMainWin, &gLayout.prosodyClean, "\pClean", true,
                                1, 0, 0, radioButProc, 0);
@@ -715,9 +712,6 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
-
-    main_window_draw_default_button_frame(&gLayout.speakStopButton);
-    main_window_draw_default_button_frame(&gLayout.applyButton);
 }
 
 static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)

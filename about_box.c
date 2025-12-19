@@ -18,30 +18,12 @@ enum
 #ifndef kClassicPushButtonProc
     #define kClassicPushButtonProc 0
 #endif
+#ifndef kControlPushButtonDefaultTag
+    #define kControlPushButtonDefaultTag 'dflt'
+#endif
 
 static WindowPtr gAboutWin = NULL;
 static ControlHandle gOkButton = NULL;
-static Rect gOkButtonRect;
-
-static void about_box_draw_default_button_frame(const Rect *buttonRect)
-{
-    Rect outer;
-    Rect inner;
-
-    if (!buttonRect)
-        return;
-
-    outer = *buttonRect;
-    inner = *buttonRect;
-
-    InsetRect(&outer, -4, -4);
-    InsetRect(&inner, -2, -2);
-
-    PenNormal();
-    PenPat(&qd.black);
-    FrameRect(&outer);
-    FrameRect(&inner);
-}
 
 static void about_box_draw_contents(WindowPtr w)
 {
@@ -91,7 +73,6 @@ static void about_box_draw_contents(WindowPtr w)
     DrawString("\pWTFD license (Do whatever the fk you want)");
 
     DrawControls(w);
-    about_box_draw_default_button_frame(&gOkButtonRect);
 }
 
 void about_box_show(void)
@@ -127,9 +108,15 @@ void about_box_show(void)
             gAboutWin->portRect.right - 16,
             gAboutWin->portRect.bottom - 16);
 
-    gOkButtonRect = buttonRect;
     gOkButton = NewControl(gAboutWin, &buttonRect, "\pOK", true,
                            0, 0, 0, kClassicPushButtonProc, 0);
+    if (gOkButton)
+    {
+        Boolean isDefault = true;
+        SetControlData(gOkButton, kControlEntireControl,
+                       kControlPushButtonDefaultTag,
+                       sizeof(isDefault), &isDefault);
+    }
 
     ShowWindow(gAboutWin);
     about_box_draw_contents(gAboutWin);
