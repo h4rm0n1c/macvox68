@@ -17,6 +17,12 @@
 #ifndef kClassicPushButtonProc
     #define kClassicPushButtonProc 0
 #endif
+#ifndef kControlPushButtonDefaultTag
+    #define kControlPushButtonDefaultTag 'dflt'
+#endif
+#ifndef kControlSliderProc
+    #define kControlSliderProc 48
+#endif
 
 enum
 {
@@ -151,25 +157,26 @@ static void main_window_plan_layout(void)
             y + prosodyH);
 
     {
-        short radioTop   = gLayout.prosodyGroup.top + 44;
-        short radioLeft  = gLayout.prosodyGroup.left + 72;
-        short radioGap   = 22;
-        short radioWidth = 140;
+        short radioTop        = gLayout.prosodyGroup.top + 44;
+        short radioLeft       = gLayout.prosodyGroup.left + 62;
+        short radioGap        = 22;
+        short radioWidth      = 140;
+        short radioCleanWidth = 70;
 
         SetRect(&gLayout.prosodyClean,
                 radioLeft,
                 radioTop,
-                radioLeft + radioWidth,
+                radioLeft + radioCleanWidth,
                 radioTop + 18);
 
-        radioLeft = gLayout.prosodyClean.right + radioGap;
+        radioLeft = gLayout.prosodyClean.right + radioGap - 15;
         SetRect(&gLayout.prosodyLQ,
                 radioLeft,
                 radioTop,
                 radioLeft + radioWidth,
                 radioTop + 18);
 
-        radioLeft = gLayout.prosodyLQ.right + radioGap;
+        radioLeft = gLayout.prosodyLQ.right + radioGap - 15;
         SetRect(&gLayout.prosodyHQ,
                 radioLeft,
                 radioTop,
@@ -524,6 +531,13 @@ static void main_window_create_controls(void)
 
     gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
                            0, 0, 0, pushButProc, kSpeakStopBtnID);
+    if (gSpeakBtn)
+    {
+        Boolean isDefault = true;
+        SetControlData(gSpeakBtn, kControlEntireControl,
+                       kControlPushButtonDefaultTag,
+                       sizeof(isDefault), &isDefault);
+    }
 
     if (soundMenu && soundCount > 0)
     {
@@ -533,6 +547,13 @@ static void main_window_create_controls(void)
 
     gApplyBtn = NewControl(gMainWin, &gLayout.applyButton, "\pApply Audio", true,
                            0, 0, 0, pushButProc, 0);
+    if (gApplyBtn)
+    {
+        Boolean isDefault = true;
+        SetControlData(gApplyBtn, kControlEntireControl,
+                       kControlPushButtonDefaultTag,
+                       sizeof(isDefault), &isDefault);
+    }
 
     gProsodyClean = NewControl(gMainWin, &gLayout.prosodyClean, "\pClean", true,
                                1, 0, 0, radioButProc, 0);
@@ -542,11 +563,11 @@ static void main_window_create_controls(void)
                             0, 0, 0, radioButProc, 0);
 
     gVolumeSlider = NewControl(gMainWin, &gLayout.volumeSlider, "\p", true,
-                               100, 0, 100, scrollBarProc, 0);
+                               100, 0, 100, kControlSliderProc, 0);
     gRateSlider = NewControl(gMainWin, &gLayout.rateSlider, "\p", true,
-                             10, -10, 10, scrollBarProc, 0);
+                             10, -10, 10, kControlSliderProc, 0);
     gPitchSlider = NewControl(gMainWin, &gLayout.pitchSlider, "\p", true,
-                              0, -10, 10, scrollBarProc, 0);
+                              0, -10, 10, kControlSliderProc, 0);
 
     gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
                            0, 0, 0, pushButProc, 0);
@@ -565,15 +586,14 @@ static void main_window_draw_text_field(const Rect *frame)
 
     RGBForeColor(&kFieldBorder);
     RGBBackColor(&kFieldFill);
-    PenPat(&qd.black);
+    PenNormal();
     FrameRect(frame);
 
     InsetRect(&inner, 1, 1);
     RGBForeColor(&kFieldInner);
     RGBBackColor(&kFieldFill);
-    PenPat(&qd.gray);
-    FrameRect(&inner);
     PenNormal();
+    FrameRect(&inner);
 }
 
 static void main_window_draw_group(const Rect *r, ConstStr255Param title)
@@ -591,15 +611,14 @@ static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 
     RGBForeColor(&kGroupBorder);
     RGBBackColor(&kGroupFill);
-    PenPat(&qd.black);
+    PenNormal();
     FrameRect(&shade);
 
     InsetRect(&inner, 1, 1);
     RGBForeColor(&kGroupInner);
     RGBBackColor(&kGroupFill);
-    PenPat(&qd.gray);
-    FrameRect(&inner);
     PenNormal();
+    FrameRect(&inner);
 
     if (title)
     {
@@ -613,7 +632,9 @@ static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 static void main_window_draw_contents(WindowPtr w)
 {
     static const RGBColor kWindowFill = { 0xD8D8, 0xD8D8, 0xD8D8 };
-    static const RGBColor kSeparator = { 0x7A7A, 0x7A7A, 0x7A7A };
+    static const RGBColor kSeparatorDark = { 0x7A7A, 0x7A7A, 0x7A7A };
+    static const RGBColor kSeparatorLight = { 0xEEEE, 0xEEEE, 0xEEEE };
+    static const RGBColor kGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
     static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect content;
     Rect textFrame;
@@ -627,12 +648,14 @@ static void main_window_draw_contents(WindowPtr w)
     RGBBackColor(&kWindowFill);
     FillRect(&content, &qd.gray);
 
-    RGBForeColor(&kSeparator);
+    RGBForeColor(&kSeparatorDark);
     RGBBackColor(&kWindowFill);
-    PenPat(&qd.gray);
+    PenNormal();
     MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
     LineTo(content.right - 8, gLayout.speakStopButton.bottom + 6);
-    PenNormal();
+    RGBForeColor(&kSeparatorLight);
+    MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 7);
+    LineTo(content.right - 8, gLayout.speakStopButton.bottom + 7);
 
     /* Text entry area with a soft border. */
     textFrame = gLayout.editText;
@@ -695,6 +718,20 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
+
+    RGBBackColor(&kGroupFill);
+    if (gVolumeSlider)
+        Draw1Control(gVolumeSlider);
+    if (gRateSlider)
+        Draw1Control(gRateSlider);
+    if (gPitchSlider)
+        Draw1Control(gPitchSlider);
+    if (gProsodyClean)
+        Draw1Control(gProsodyClean);
+    if (gProsodyLQ)
+        Draw1Control(gProsodyLQ);
+    if (gProsodyHQ)
+        Draw1Control(gProsodyHQ);
 }
 
 static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
