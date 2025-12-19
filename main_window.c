@@ -274,13 +274,13 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
     if (!gTextEdit)
         return;
 
-    main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
-    TECalText(gTextEdit);
-    main_window_restore_text_port(savePort, &saveFore, &saveBack);
-
     te = *gTextEdit;
     if (!te)
         return;
+
+    main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+    TECalText(gTextEdit);
+    main_window_restore_text_port(savePort, &saveFore, &saveBack);
 
     visibleLines = main_window_visible_lines(gTextEdit);
     if (visibleLines < 1)
@@ -309,6 +309,19 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
         TECalText(gTextEdit);
         main_window_restore_text_port(savePort, &saveFore, &saveBack);
         return;
+    }
+
+    if (te->lineHeight > 0)
+    {
+        Rect viewRect = main_window_text_view_rect(true);
+        short textLines = totalLines;
+
+        if (textLines < visibleLines)
+            textLines = visibleLines;
+
+        te->viewRect = viewRect;
+        te->destRect = viewRect;
+        te->destRect.bottom = (short)(viewRect.top + (textLines * te->lineHeight));
     }
 
     if (!gTextScroll)
@@ -1012,7 +1025,6 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     ForeColor(blackColor);
-    BackColor(grayColor);
     DrawControls(w);
 
     RGBBackColor(&kGroupFill);
@@ -1302,6 +1314,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
             main_window_restore_text_port(savePort, &saveFore, &saveBack);
         }
 
+        main_window_update_text(gActiveEdit);
         if (gActiveEdit == gTextEdit)
             main_window_update_text_scrollbar(true);
         return true;
@@ -1317,6 +1330,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
         main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
         TEKey(c, gTextEdit);
         main_window_restore_text_port(savePort, &saveFore, &saveBack);
+        main_window_update_text(gTextEdit);
         main_window_update_text_scrollbar(true);
         return true;
     }
