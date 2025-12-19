@@ -1,5 +1,7 @@
 # MacVox68
 
+![MacVox68 icon](icon_raws/macicon_32.png)
+
 MacVox68 is a Classic Mac OS 7.x (68k) application targeting Mac OS 7.5.3 and built with the Retro68 toolchain. It aims to deliver a TCP-driven text-to-speech client while keeping the UI and build flow faithful to 1990s System 7 conventions.
 
 ## Target platform and runtime
