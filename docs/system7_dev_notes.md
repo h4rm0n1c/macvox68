@@ -37,6 +37,12 @@ Many Toolbox calls (window titles, some text routines) require Pascal strings (`
 - Single-line TextEdit fields (used for Host/Port) are treated as a standard control: create them with `crOnly` enabled and a dest/view rect narrowed to the line height, block overflow by measuring `TextWidth` against the view width before calling `TEKey`, but always allow backspace/delete to pass so users can recover even when the field is “full.”【F:main_window.c†L225-L266】【F:main_window.c†L585-L641】
 - Multiline TextEdit fields (the main request area) are likewise bounded to their visible frame: compute `maxLines` from the view height and line height, clamp `destRect.bottom` to that limit, and reject returns once `nLines` reaches the maximum. Before inserting any other character on the last visible line, build the would-be line content and `TextWidth` check it against the available width, blocking the keystroke when it would wrap below the border.【F:main_window.c†L225-L273】【F:main_window.c†L353-L470】【F:main_window.c†L612-L641】【F:main_window.c†L830-L881】
 
+## Color vs. black-and-white windows (System 7.5.3)
+
+- A window created with `NewWindow` defaults to black-and-white drawing; color icon resources (for example `icl8`/`icl4`) will still exist, but they will render in monochrome if the window isn't color-capable.
+- Use `NewCWindow` to make a color-aware window that respects the current system color depth; this is required if you want the main UI and About box to render in color on System 7.5.3.
+- Once using color windows, set colors explicitly with `RGBForeColor`/`RGBBackColor` before drawing fills, borders, or text. This avoids the UI inheriting unexpected colors from prior drawing ops and keeps the chrome consistent.
+
 ## Local references worth revisiting
 
 - **Classic Mac OS 7 Application Basics.pdf** (root of repo): concise reminders for Toolbox initialization, window creation in code, and basic event loop structure.

@@ -11,6 +11,7 @@
 #include <ToolUtils.h>
 #include <string.h>
 
+#include "about_box.h"
 #include "main_window.h"
 
 #ifndef kClassicPushButtonProc
@@ -473,10 +474,14 @@ cleanup:
 static void main_window_update_text(TEHandle handle)
 {
     Rect view;
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
+    static const RGBColor kTextBack = { 0xFFFF, 0xFFFF, 0xFFFF };
 
     if (!handle)
         return;
 
+    RGBForeColor(&kText);
+    RGBBackColor(&kTextBack);
     view = (**handle).viewRect;
     TEUpdate(&view, handle);
 }
@@ -547,22 +552,25 @@ static void main_window_create_controls(void)
                            0, 0, 0, pushButProc, 0);
 }
 
-static void main_window_set_light_background(void)
-{
-    BackPat(&qd.white);
-    ForeColor(blackColor);
-}
-
 static void main_window_draw_text_field(const Rect *frame)
 {
+    static const RGBColor kFieldFill = { 0xFFFF, 0xFFFF, 0xFFFF };
+    static const RGBColor kFieldBorder = { 0x4444, 0x4444, 0x4444 };
+    static const RGBColor kFieldInner = { 0x9C9C, 0x9C9C, 0x9C9C };
     Rect inner = *frame;
 
+    RGBForeColor(&kFieldFill);
+    RGBBackColor(&kFieldFill);
     FillRect(frame, &qd.white);
 
+    RGBForeColor(&kFieldBorder);
+    RGBBackColor(&kFieldFill);
     PenPat(&qd.black);
     FrameRect(frame);
 
     InsetRect(&inner, 1, 1);
+    RGBForeColor(&kFieldInner);
+    RGBBackColor(&kFieldFill);
     PenPat(&qd.gray);
     FrameRect(&inner);
     PenNormal();
@@ -570,22 +578,33 @@ static void main_window_draw_text_field(const Rect *frame)
 
 static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 {
+    static const RGBColor kGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
+    static const RGBColor kGroupBorder = { 0x4444, 0x4444, 0x4444 };
+    static const RGBColor kGroupInner = { 0xB5B5, 0xB5B5, 0xB5B5 };
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect shade = *r;
     Rect inner = *r;
 
-    main_window_set_light_background();
+    RGBForeColor(&kGroupFill);
+    RGBBackColor(&kGroupFill);
     FillRect(&shade, &qd.white);
 
+    RGBForeColor(&kGroupBorder);
+    RGBBackColor(&kGroupFill);
     PenPat(&qd.black);
     FrameRect(&shade);
 
     InsetRect(&inner, 1, 1);
+    RGBForeColor(&kGroupInner);
+    RGBBackColor(&kGroupFill);
     PenPat(&qd.gray);
     FrameRect(&inner);
     PenNormal();
 
     if (title)
     {
+        RGBForeColor(&kText);
+        RGBBackColor(&kGroupFill);
         MoveTo(r->left + 10, r->top + 14);
         DrawString(title);
     }
@@ -593,6 +612,9 @@ static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 
 static void main_window_draw_contents(WindowPtr w)
 {
+    static const RGBColor kWindowFill = { 0xD8D8, 0xD8D8, 0xD8D8 };
+    static const RGBColor kSeparator = { 0x7A7A, 0x7A7A, 0x7A7A };
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect content;
     Rect textFrame;
     Rect hostFrame;
@@ -601,9 +623,12 @@ static void main_window_draw_contents(WindowPtr w)
     SetPort(w);
     content = w->portRect;
 
-    main_window_set_light_background();
+    RGBForeColor(&kWindowFill);
+    RGBBackColor(&kWindowFill);
     FillRect(&content, &qd.gray);
 
+    RGBForeColor(&kSeparator);
+    RGBBackColor(&kWindowFill);
     PenPat(&qd.gray);
     MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
     LineTo(content.right - 8, gLayout.speakStopButton.bottom + 6);
@@ -613,20 +638,28 @@ static void main_window_draw_contents(WindowPtr w)
     textFrame = gLayout.editText;
     main_window_draw_text_field(&textFrame);
 
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     main_window_update_text(gTextEdit);
 
     /* Sound group */
     main_window_draw_group(&gLayout.soundGroup, "\pSound");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.soundGroup.left + 16, gLayout.soundGroup.top + 32);
     DrawString("\pDevice:");
 
     /* Prosody group */
     main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.prosodyGroup.left + 16, gLayout.prosodyGroup.top + 32);
     DrawString("\pChoose clarity or HL VOX coloration.");
 
     /* Settings group */
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 30);
     DrawString("\pVolume");
     MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
@@ -644,6 +677,8 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* TCP group */
     main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
+    RGBForeColor(&kText);
+    RGBBackColor(&kWindowFill);
     MoveTo(gLayout.tcpGroup.left + 36, gLayout.tcpGroup.top + 32);
     DrawString("\pHost:");
     MoveTo(gLayout.portField.left - 36, gLayout.tcpGroup.top + 32);
@@ -667,6 +702,12 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
     short menuID = HiWord(menuChoice);
     short item   = LoWord(menuChoice);
 
+    if (menuID == 128) /* Apple */
+    {
+        if (item == 1)
+            about_box_show();
+    }
+
     if (menuID == 129) /* File */
     {
         if (item == 1) /* Quit */
@@ -679,10 +720,19 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 
 void main_window_create(void)
 {
+    Rect bounds;
     Rect r;
-    SetRect(&r, 40, 40, 620, 620);
+    short width = 580;
+    short height = 580;
 
-    gMainWin = NewWindow(
+    bounds = qd.screenBits.bounds;
+    SetRect(&r,
+            (short)((bounds.left + bounds.right - width) / 2),
+            (short)((bounds.top + bounds.bottom - height) / 2),
+            (short)((bounds.left + bounds.right + width) / 2),
+            (short)((bounds.top + bounds.bottom + height) / 2));
+
+    gMainWin = (WindowPtr)NewCWindow(
         NULL,
         &r,
         "\pMacVox68",
