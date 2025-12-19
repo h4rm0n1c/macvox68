@@ -69,6 +69,7 @@ Typical locations:
 - `/opt/Retro68` — Retro68 repo checkout (reference).
 - `/opt/Interfaces&Libraries` — Apple headers/libs (MPW era).
 - `/opt/Latest Notes From Apple` — Apple dev notes.
+- `/opt/AppearanceSDK` — Appearance Manager SDK docs (1997-era).
 - `/opt/MPW` — MPW tools/docs (reference).
 - `/opt/MacDevDocs` — Inside Macintosh, Tech Notes, HIG.
 

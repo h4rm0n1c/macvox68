@@ -24,6 +24,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(MacVox68 C)
 
+set(APPEARANCE_SDK_ROOT "" CACHE PATH "Path to Appearance SDK headers root (contains CIncludes and RIncludes)")
+
 add_application(MacVox68
     about_box.c
     main.c
@@ -33,6 +35,13 @@ add_application(MacVox68
     TYPE APPL
     CREATOR MV68
     )
+
+if(APPEARANCE_SDK_ROOT)
+    target_include_directories(MacVox68 PRIVATE
+        "${APPEARANCE_SDK_ROOT}/CIncludes"
+        "${APPEARANCE_SDK_ROOT}/RIncludes"
+    )
+endif()
 
 # Enable -ffunction-sections and -gc-sections to make the app as small as possible
 # On 68K, also enable --mac-single to build it as a single-segment app (so that this code path doesn't rot)
