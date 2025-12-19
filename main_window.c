@@ -68,16 +68,297 @@ static ControlHandle  gVolumeSlider = NULL;
 static ControlHandle  gRateSlider   = NULL;
 static ControlHandle  gPitchSlider  = NULL;
 static ControlHandle  gStartBtn     = NULL;
+static ControlHandle  gTextScroll  = NULL;
 static TEHandle       gTextEdit     = NULL;
 static TEHandle       gHostEdit     = NULL;
 static TEHandle       gPortEdit     = NULL;
 static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
+static const RGBColor kTextColor = { 0x0000, 0x0000, 0x0000 };
+static const RGBColor kTextBackColor = { 0xFFFF, 0xFFFF, 0xFFFF };
+static const short    kScrollBarWidth = 16;
+static short          gTextScrollPos = 0;
+
+static void main_window_prepare_text_port(GrafPtr *outPort, RGBColor *outFore, RGBColor *outBack)
+{
+    if (outPort)
+        GetPort(outPort);
+    if (outFore)
+        GetForeColor(outFore);
+    if (outBack)
+        GetBackColor(outBack);
+
+    if (gMainWin)
+        SetPort(gMainWin);
+    RGBForeColor(&kTextColor);
+    RGBBackColor(&kTextBackColor);
+}
+
+static void main_window_restore_text_port(GrafPtr port, const RGBColor *fore, const RGBColor *back)
+{
+    if (port)
+        SetPort(port);
+    if (fore)
+        RGBForeColor(fore);
+    if (back)
+        RGBBackColor(back);
+}
+
+static Rect main_window_text_view_rect(Boolean withScroll)
+{
+    Rect viewRect = gLayout.editText;
+
+    InsetRect(&viewRect, 6, 4);
+    if (withScroll)
+        viewRect.right -= (kScrollBarWidth + 2);
+
+    return viewRect;
+}
+
+static void main_window_apply_text_view_rect(TEHandle handle, Boolean withScroll)
+{
+    Rect viewRect;
+    Rect destRect;
+    TEPtr te;
+    short lineH;
+    short maxLines;
+
+    if (!handle)
+        return;
+
+    te = *handle;
+    if (!te)
+        return;
+
+    viewRect = main_window_text_view_rect(withScroll);
+    destRect = viewRect;
+
+    if (te->crOnly)
+    {
+        destRect.bottom = viewRect.bottom;
+    }
+    else
+    {
+        lineH = te->lineHeight;
+        if (lineH <= 0)
+            lineH = 1;
+
+        maxLines = (short)((viewRect.bottom - viewRect.top) / lineH);
+        if (maxLines < 1)
+            maxLines = 1;
+
+        destRect.bottom = destRect.top + (lineH * maxLines);
+        if (destRect.bottom > viewRect.bottom)
+            destRect.bottom = viewRect.bottom;
+
+        viewRect.bottom = destRect.bottom;
+    }
+
+    te->viewRect = viewRect;
+    te->destRect = destRect;
+}
+
+static short main_window_visible_lines(TEHandle handle)
+{
+    TEPtr te;
+    short lineH;
+    short height;
+
+    if (!handle)
+        return 0;
+
+    te = *handle;
+    if (!te)
+        return 0;
+
+    lineH = te->lineHeight;
+    if (lineH <= 0)
+        return 0;
+
+    height = te->viewRect.bottom - te->viewRect.top;
+    if (height <= 0)
+        return 0;
+
+    return (short)(height / lineH);
+}
+
+static short main_window_line_for_offset(TEHandle handle, short offset)
+{
+    TEPtr te;
+    short *starts;
+    short i;
+    short line = 0;
+
+    if (!handle)
+        return 0;
+
+    te = *handle;
+    if (!te || !te->lineStarts || te->nLines <= 0)
+        return 0;
+
+    HLock((Handle)te->lineStarts);
+    starts = (short *)(*(te->lineStarts));
+
+    if (!starts)
+    {
+        HUnlock((Handle)te->lineStarts);
+        return 0;
+    }
+
+    for (i = 0; i < te->nLines; i++)
+    {
+        short start = starts[i];
+        short end = (i + 1 < te->nLines) ? starts[i + 1] : te->teLength;
+
+        if (offset >= start && offset <= end)
+        {
+            line = i;
+            break;
+        }
+    }
+
+    HUnlock((Handle)te->lineStarts);
+    return line;
+}
+
+static void main_window_scroll_text_to(short newTopLine)
+{
+    TEPtr te;
+    short lineH;
+    short delta;
+    GrafPtr savePort = NULL;
+    RGBColor saveFore;
+    RGBColor saveBack;
+
+    if (!gTextEdit)
+        return;
+
+    te = *gTextEdit;
+    if (!te)
+        return;
+
+    lineH = te->lineHeight;
+    if (lineH <= 0)
+        return;
+
+    if (newTopLine < 0)
+        newTopLine = 0;
+
+    delta = (short)(newTopLine - gTextScrollPos);
+    if (delta == 0)
+        return;
+
+    main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+    TEScroll(0, (short)(-delta * lineH), gTextEdit);
+    main_window_restore_text_port(savePort, &saveFore, &saveBack);
+
+    gTextScrollPos = newTopLine;
+    if (gTextScroll)
+        SetControlValue(gTextScroll, gTextScrollPos);
+}
+
+static void main_window_update_text_scrollbar(Boolean scrollToCaret)
+{
+    TEPtr te;
+    short visibleLines;
+    short maxScroll;
+    short totalLines;
+    Boolean needsScroll;
+    Rect scrollRect;
+    GrafPtr savePort = NULL;
+    RGBColor saveFore;
+    RGBColor saveBack;
+
+    if (!gTextEdit)
+        return;
+
+    te = *gTextEdit;
+    if (!te)
+        return;
+
+    visibleLines = main_window_visible_lines(gTextEdit);
+    if (visibleLines < 1)
+        visibleLines = 1;
+
+    totalLines = te->nLines;
+    maxScroll = (short)(totalLines - visibleLines);
+    if (maxScroll < 0)
+        maxScroll = 0;
+
+    needsScroll = (maxScroll > 0);
+
+    if (!needsScroll)
+    {
+        if (gTextScrollPos != 0)
+            main_window_scroll_text_to(0);
+
+        if (gTextScroll)
+        {
+            DisposeControl(gTextScroll);
+            gTextScroll = NULL;
+        }
+
+        main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+        main_window_apply_text_view_rect(gTextEdit, false);
+        TECalText(gTextEdit);
+        main_window_restore_text_port(savePort, &saveFore, &saveBack);
+        return;
+    }
+
+    if (!gTextScroll)
+    {
+        scrollRect = gLayout.editText;
+        InsetRect(&scrollRect, 1, 1);
+        scrollRect.left = (short)(scrollRect.right - kScrollBarWidth);
+
+        gTextScroll = NewControl(gMainWin, &scrollRect, "\p", true, 0, 0, maxScroll, scrollBarProc, 0);
+        gTextScrollPos = 0;
+        main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+        main_window_apply_text_view_rect(gTextEdit, true);
+        TECalText(gTextEdit);
+        main_window_restore_text_port(savePort, &saveFore, &saveBack);
+    }
+    else
+    {
+        SetControlMaximum(gTextScroll, maxScroll);
+    }
+
+    if (gTextScrollPos > maxScroll)
+        main_window_scroll_text_to(maxScroll);
+
+    if (scrollToCaret)
+    {
+        short line = main_window_line_for_offset(gTextEdit, te->selEnd);
+        short target = gTextScrollPos;
+
+        if (line < gTextScrollPos)
+            target = line;
+        else if (line > (short)(gTextScrollPos + visibleLines - 1))
+            target = (short)(line - (visibleLines - 1));
+
+        if (target < 0)
+            target = 0;
+        if (target > maxScroll)
+            target = maxScroll;
+
+        if (target != gTextScrollPos)
+            main_window_scroll_text_to(target);
+    }
+
+    if (gTextScroll)
+        SetControlValue(gTextScroll, gTextScrollPos);
+}
 
 static void main_window_switch_active_edit(TEHandle h)
 {
+    GrafPtr savePort = NULL;
+    RGBColor saveFore;
+    RGBColor saveBack;
+
     if (gActiveEdit == h)
         return;
+
+    main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
 
     if (gActiveEdit)
         TEDeactivate(gActiveEdit);
@@ -86,6 +367,8 @@ static void main_window_switch_active_edit(TEHandle h)
 
     if (gActiveEdit)
         TEActivate(gActiveEdit);
+
+    main_window_restore_text_port(savePort, &saveFore, &saveBack);
 }
 
 static void main_window_plan_layout(void)
@@ -481,16 +764,17 @@ cleanup:
 static void main_window_update_text(TEHandle handle)
 {
     Rect view;
-    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
-    static const RGBColor kTextBack = { 0xFFFF, 0xFFFF, 0xFFFF };
+    GrafPtr savePort = NULL;
+    RGBColor saveFore;
+    RGBColor saveBack;
 
     if (!handle)
         return;
 
-    RGBForeColor(&kText);
-    RGBBackColor(&kTextBack);
+    main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
     view = (**handle).viewRect;
     TEUpdate(&view, handle);
+    main_window_restore_text_port(savePort, &saveFore, &saveBack);
 }
 
 static void main_window_create_text_edit(void)
@@ -509,6 +793,8 @@ static void main_window_create_text_edit(void)
 
     if (gTextEdit)
         main_window_switch_active_edit(gTextEdit);
+
+    main_window_update_text_scrollbar(false);
 }
 
 static void main_window_create_controls(void)
@@ -663,6 +949,7 @@ static void main_window_draw_contents(WindowPtr w)
 
     RGBForeColor(&kText);
     RGBBackColor(&kWindowFill);
+    main_window_update_text_scrollbar(false);
     main_window_update_text(gTextEdit);
 
     /* Sound group */
@@ -850,7 +1137,17 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                 cpart = FindControl(local, w, &c);
                 if (cpart)
                 {
-                    (void)TrackControl(c, local, NULL);
+                    if (c == gTextScroll)
+                    {
+                        short oldValue = GetControlValue(gTextScroll);
+                        (void)TrackControl(c, local, NULL);
+                        if (GetControlValue(gTextScroll) != oldValue)
+                            main_window_scroll_text_to(GetControlValue(gTextScroll));
+                    }
+                    else
+                    {
+                        (void)TrackControl(c, local, NULL);
+                    }
                     return true;
                 }
 
@@ -860,8 +1157,15 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
 
                     if (PtInRect(local, &textRect))
                     {
+                        GrafPtr savePort = NULL;
+                        RGBColor saveFore;
+                        RGBColor saveBack;
+
                         main_window_switch_active_edit(gTextEdit);
+                        main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
+                        main_window_restore_text_port(savePort, &saveFore, &saveBack);
+                        main_window_update_text_scrollbar(true);
                         return true;
                     }
                 }
@@ -872,8 +1176,14 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
 
                     if (PtInRect(local, &hostRect))
                     {
+                        GrafPtr savePort = NULL;
+                        RGBColor saveFore;
+                        RGBColor saveBack;
+
                         main_window_switch_active_edit(gHostEdit);
+                        main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gHostEdit);
+                        main_window_restore_text_port(savePort, &saveFore, &saveBack);
                         return true;
                     }
                 }
@@ -884,8 +1194,14 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
 
                     if (PtInRect(local, &portRect))
                     {
+                        GrafPtr savePort = NULL;
+                        RGBColor saveFore;
+                        RGBColor saveBack;
+
                         main_window_switch_active_edit(gPortEdit);
+                        main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gPortEdit);
+                        main_window_restore_text_port(savePort, &saveFore, &saveBack);
                         return true;
                     }
                 }
@@ -967,14 +1283,32 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
             }
         }
 
-        TEKey(c, gActiveEdit);
+        {
+            GrafPtr savePort = NULL;
+            RGBColor saveFore;
+            RGBColor saveBack;
+
+            main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+            TEKey(c, gActiveEdit);
+            main_window_restore_text_port(savePort, &saveFore, &saveBack);
+        }
+
+        if (gActiveEdit == gTextEdit)
+            main_window_update_text_scrollbar(true);
         return true;
     }
 
     if (gTextEdit)
     {
+        GrafPtr savePort = NULL;
+        RGBColor saveFore;
+        RGBColor saveBack;
+
         main_window_switch_active_edit(gTextEdit);
+        main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
         TEKey(c, gTextEdit);
+        main_window_restore_text_port(savePort, &saveFore, &saveBack);
+        main_window_update_text_scrollbar(true);
         return true;
     }
 
@@ -987,11 +1321,13 @@ void main_window_idle(void)
 
     if (target)
     {
-        GrafPtr savePort;
-        GetPort(&savePort);
-        SetPort(gMainWin);
+        GrafPtr savePort = NULL;
+        RGBColor saveFore;
+        RGBColor saveBack;
+
+        main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
         TEIdle(target);
-        SetPort(savePort);
+        main_window_restore_text_port(savePort, &saveFore, &saveBack);
     }
 }
 
