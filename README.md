@@ -25,8 +25,14 @@ cmake -G Ninja ../MacVox68 \
 ### Include-path quirks (Rez / shell)
 Retro68 Rez is invoked through the shell, so include paths that contain special characters must be quoted to avoid being split. In particular, MPW's `Interfaces&Libraries` path must be passed as a single token (or replaced with a symlink that avoids `&`). The `CMakeLists.txt` uses a quoted `-I` argument to keep the path intact when generating Ninja rules, following the safety guidance from `docs/rez_gotchas.md`.
 
+## Project sources & credits
+- **Retro68** (toolchain + canonical samples): https://github.com/autc04/Retro68
+- **BasiliskII (KanjiTalk fork)** (emulator reference + hardware behavior): https://github.com/kanjitalk755/macemu
+- **Inside Macintosh (Apple developer documentation)**: https://developer.apple.com/library/archive/documentation/mac/
+- **Classic Mac OS Interfaces & Libraries (MPW headers)**: https://developer.apple.com/library/archive/documentation/DeveloperTools/Conceptual/MPW_Ref/
+
 ## Reference caches
-The container provides lookup-only classic Mac references under `/opt` (Retro68 checkout, Interfaces & Libraries, multiple Inside Macintosh revisions plus *develop* magazine and sample code, and the System 7.1 source reference). See [`docs/opt_reference_notes.md`](docs/opt_reference_notes.md) for paths and usage tips, and [`docs/system7_dev_notes.md`](docs/system7_dev_notes.md) for quick reminders on Toolbox startup, event loops, and other System 7 development habits.
+The container provides lookup-only classic Mac references sourced from the projects above along with *develop* magazine content and sample code. For details on what is available in the container and how to use it, consult the local documentation in the `docs/` folder.
 
 ## Current UI
 All UI is currently code-driven from the `ui_app` and `main_window` pair:
