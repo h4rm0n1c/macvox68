@@ -689,7 +689,7 @@ void main_window_create(void)
     Rect r;
     SetRect(&r, 40, 40, 620, 620);
 
-    gMainWin = NewWindow(
+    gMainWin = (WindowPtr)NewCWindow(
         NULL,
         &r,
         "\pMacVox68",
