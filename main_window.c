@@ -80,6 +80,8 @@ static const RGBColor kTextBackColor = { 0xFFFF, 0xFFFF, 0xFFFF };
 static const short    kScrollBarWidth = 16;
 static short          gTextScrollPos = 0;
 
+static void main_window_scroll_by(short delta);
+
 static void main_window_prepare_text_port(GrafPtr *outPort, RGBColor *outFore, RGBColor *outBack)
 {
     if (outPort)
@@ -258,6 +260,56 @@ static void main_window_scroll_text_to(short newTopLine)
     gTextScrollPos = newTopLine;
     if (gTextScroll)
         SetControlValue(gTextScroll, gTextScrollPos);
+}
+
+static void main_window_scroll_by(short delta)
+{
+    short target;
+    short maxScroll = gTextScroll ? GetControlMaximum(gTextScroll) : 0;
+
+    if (delta == 0)
+        return;
+
+    target = (short)(gTextScrollPos + delta);
+    if (target < 0)
+        target = 0;
+    if (target > maxScroll)
+        target = maxScroll;
+
+    main_window_scroll_text_to(target);
+}
+
+static pascal void main_window_scroll_action(ControlHandle control, short part)
+{
+    short page;
+
+    if (control != gTextScroll)
+        return;
+
+    page = (short)(main_window_visible_lines(gTextEdit) - 1);
+    if (page < 1)
+        page = 1;
+
+    switch (part)
+    {
+        case inUpButton:
+            main_window_scroll_by(-1);
+            break;
+        case inDownButton:
+            main_window_scroll_by(1);
+            break;
+        case inPageUp:
+            main_window_scroll_by((short)-page);
+            break;
+        case inPageDown:
+            main_window_scroll_by(page);
+            break;
+        case inThumb:
+            main_window_scroll_text_to(GetControlValue(control));
+            break;
+        default:
+            break;
+    }
 }
 
 static void main_window_update_text_scrollbar(Boolean scrollToCaret)
@@ -1203,17 +1255,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                 cpart = FindControl(local, w, &c);
                 if (cpart)
                 {
-                    if (c == gTextScroll)
-                    {
-                        short oldValue = GetControlValue(gTextScroll);
-                        (void)TrackControl(c, local, NULL);
-                        if (GetControlValue(gTextScroll) != oldValue)
-                            main_window_scroll_text_to(GetControlValue(gTextScroll));
-                    }
-                    else
-                    {
-                        (void)TrackControl(c, local, NULL);
-                    }
+                    (void)TrackControl(c, local, (c == gTextScroll) ? main_window_scroll_action : NULL);
                     return true;
                 }
 
