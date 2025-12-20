@@ -309,7 +309,7 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
     if (visibleLines < 1)
         visibleLines = 1;
 
-    totalLines = te->nLines;
+    totalLines = (short)(te->nLines + 1);
     maxScroll = (short)(totalLines - visibleLines);
     if (maxScroll < 0)
         maxScroll = 0;
@@ -355,7 +355,7 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
     if (targetVisibleLines < 1)
         targetVisibleLines = 1;
 
-    totalLines = te->nLines;
+    totalLines = (short)(te->nLines + 1);
     maxScroll = (short)(totalLines - targetVisibleLines);
     if (maxScroll < 0)
         maxScroll = 0;
