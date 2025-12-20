@@ -266,6 +266,7 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
     short visibleLines;
     short maxScroll;
     short totalLines;
+    short targetVisibleLines;
     Boolean needsScroll;
     Rect scrollRect;
     GrafPtr savePort = NULL;
@@ -346,6 +347,19 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
         te->destRect.bottom = (short)(viewRect.top + (textLines * te->lineHeight));
     }
 
+    main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+    TECalText(gTextEdit);
+    main_window_restore_text_port(savePort, &saveFore, &saveBack);
+
+    targetVisibleLines = main_window_visible_lines(gTextEdit);
+    if (targetVisibleLines < 1)
+        targetVisibleLines = 1;
+
+    totalLines = te->nLines;
+    maxScroll = (short)(totalLines - targetVisibleLines);
+    if (maxScroll < 0)
+        maxScroll = 0;
+
     if (!gTextScroll)
     {
         scrollRect = gLayout.editText;
@@ -358,6 +372,15 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
         main_window_apply_text_view_rect(gTextEdit, true);
         TECalText(gTextEdit);
         main_window_restore_text_port(savePort, &saveFore, &saveBack);
+        targetVisibleLines = main_window_visible_lines(gTextEdit);
+        if (targetVisibleLines < 1)
+            targetVisibleLines = 1;
+
+        totalLines = te->nLines;
+        maxScroll = (short)(totalLines - targetVisibleLines);
+        if (maxScroll < 0)
+            maxScroll = 0;
+        SetControlMaximum(gTextScroll, maxScroll);
     }
     else
     {
@@ -1260,6 +1283,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 {
     char c = (char)(ev->message & charCodeMask);
     Boolean isBackspace = (c == 0x08 || c == 0x7F);
+    Boolean isArrow = (c >= 0x1C && c <= 0x1F);
 
     (void)outQuit;
 
@@ -1311,7 +1335,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
                 }
             }
         }
-        else
+        else if (gActiveEdit != gTextEdit)
         {
             short maxLines = main_window_max_lines_for(gActiveEdit);
 
@@ -1324,6 +1348,22 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
             {
                 return true;
             }
+        }
+
+        if (gActiveEdit == gTextEdit && isArrow && gTextScroll)
+        {
+            short line = main_window_line_for_offset(gTextEdit, te->selStart);
+            short visibleLines = main_window_visible_lines(gTextEdit);
+            short maxScroll = GetControlMaximum(gTextScroll);
+
+            if (visibleLines < 1)
+                visibleLines = 1;
+
+            if (c == 0x1E && gTextScrollPos > 0 && line <= gTextScrollPos)
+                main_window_scroll_text_to((short)(gTextScrollPos - 1));
+            else if (c == 0x1F && gTextScrollPos < maxScroll &&
+                     line >= (short)(gTextScrollPos + visibleLines - 1))
+                main_window_scroll_text_to((short)(gTextScrollPos + 1));
         }
 
         {
