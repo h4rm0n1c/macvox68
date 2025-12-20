@@ -9,6 +9,7 @@
 #include <Memory.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "about_box.h"
@@ -199,7 +200,7 @@ static short main_window_line_for_offset(TEHandle handle, short offset)
         return 0;
 
     HLock((Handle)te->lineStarts);
-    starts = (short *)(*(te->lineStarts));
+    starts = (short *)(uintptr_t)(*(te->lineStarts));
 
     if (!starts)
     {
@@ -279,6 +280,27 @@ static void main_window_update_text_scrollbar(Boolean scrollToCaret)
         return;
 
     main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
+    {
+        Rect viewRect = main_window_text_view_rect(false);
+        Rect destRect = viewRect;
+
+        if (te->lineHeight > 0)
+        {
+            long maxLines = (long)te->teLength + 1;
+            long maxHeight = 30000L;
+
+            if (maxLines <= 0)
+                maxLines = 1;
+
+            if (maxLines > maxHeight / te->lineHeight)
+                maxLines = maxHeight / te->lineHeight;
+
+            destRect.bottom = (short)(viewRect.top + (te->lineHeight * (short)maxLines));
+        }
+
+        te->viewRect = viewRect;
+        te->destRect = destRect;
+    }
     TECalText(gTextEdit);
     main_window_restore_text_port(savePort, &saveFore, &saveBack);
 
@@ -658,7 +680,7 @@ static Boolean main_window_current_line_bounds(TEHandle handle, short *outStart,
         return false;
 
     HLock((Handle)te->lineStarts);
-    starts = (short *)(*(te->lineStarts));
+    starts = (short *)(uintptr_t)(*(te->lineStarts));
 
     if (!starts)
     {
