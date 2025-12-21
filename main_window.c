@@ -1333,7 +1333,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                         main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
                         main_window_restore_text_port(savePort, &saveFore, &saveBack);
-                        main_window_update_text_scrollbar(true);
+                        main_window_update_text_scrollbar(false);
                         main_window_keep_caret_visible(gTextEdit);
                         return true;
                     }
@@ -1482,7 +1482,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
         main_window_update_text(gActiveEdit);
         if (gActiveEdit == gTextEdit)
         {
-            main_window_update_text_scrollbar(true);
+            main_window_update_text_scrollbar(false);
             main_window_keep_caret_visible(gTextEdit);
         }
         return true;
@@ -1499,7 +1499,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
         TEKey(c, gTextEdit);
         main_window_restore_text_port(savePort, &saveFore, &saveBack);
         main_window_update_text(gTextEdit);
-        main_window_update_text_scrollbar(true);
+        main_window_update_text_scrollbar(false);
         main_window_keep_caret_visible(gTextEdit);
         return true;
     }
