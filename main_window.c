@@ -298,7 +298,7 @@ static void main_window_keep_caret_visible(TEHandle handle)
         visibleLines = 1;
 
     maxScroll = GetControlMaximum(gTextScroll);
-    line = main_window_line_for_offset(handle, te->selStart);
+    line = main_window_line_for_offset(handle, te->selEnd);
     target = gTextScrollPos;
 
     if (line < gTextScrollPos)
@@ -1512,6 +1512,9 @@ void main_window_idle(void)
         main_window_prepare_text_port(&savePort, &saveFore, &saveBack);
         TEIdle(target);
         main_window_restore_text_port(savePort, &saveFore, &saveBack);
+
+        if (target == gTextEdit)
+            main_window_keep_caret_visible(gTextEdit);
     }
 }
 
