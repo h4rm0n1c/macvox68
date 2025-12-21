@@ -96,6 +96,7 @@ static const short    kScrollBarWidth = 16;
 static short          gTextScrollPos = 0;
 
 static void main_window_scroll_by(short delta);
+static void main_window_keep_caret_visible(TEHandle handle);
 
 static void main_window_prepare_text_port(GrafPtr *outPort, RGBColor *outFore, RGBColor *outBack)
 {
@@ -275,6 +276,43 @@ static void main_window_scroll_text_to(short newTopLine)
     gTextScrollPos = newTopLine;
     if (gTextScroll)
         SetControlValue(gTextScroll, gTextScrollPos);
+}
+
+static void main_window_keep_caret_visible(TEHandle handle)
+{
+    TEPtr te;
+    short visibleLines;
+    short maxScroll;
+    short line;
+    short target;
+
+    if (!handle || !gTextScroll)
+        return;
+
+    te = *handle;
+    if (!te)
+        return;
+
+    visibleLines = main_window_visible_lines(handle);
+    if (visibleLines < 1)
+        visibleLines = 1;
+
+    maxScroll = GetControlMaximum(gTextScroll);
+    line = main_window_line_for_offset(handle, te->selStart);
+    target = gTextScrollPos;
+
+    if (line < gTextScrollPos)
+        target = line;
+    else if (line > (short)(gTextScrollPos + visibleLines - 1))
+        target = (short)(line - (visibleLines - 1));
+
+    if (target < 0)
+        target = 0;
+    if (target > maxScroll)
+        target = maxScroll;
+
+    if (target != gTextScrollPos)
+        main_window_scroll_text_to(target);
 }
 
 static void main_window_scroll_by(short delta)
@@ -1289,6 +1327,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
                         main_window_restore_text_port(savePort, &saveFore, &saveBack);
                         main_window_update_text_scrollbar(true);
+                        main_window_keep_caret_visible(gTextEdit);
                         return true;
                     }
                 }
@@ -1435,7 +1474,10 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 
         main_window_update_text(gActiveEdit);
         if (gActiveEdit == gTextEdit)
+        {
             main_window_update_text_scrollbar(true);
+            main_window_keep_caret_visible(gTextEdit);
+        }
         return true;
     }
 
@@ -1451,6 +1493,7 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
         main_window_restore_text_port(savePort, &saveFore, &saveBack);
         main_window_update_text(gTextEdit);
         main_window_update_text_scrollbar(true);
+        main_window_keep_caret_visible(gTextEdit);
         return true;
     }
 
