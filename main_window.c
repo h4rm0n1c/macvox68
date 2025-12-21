@@ -1119,7 +1119,6 @@ static void main_window_draw_contents(WindowPtr w)
 
     RGBForeColor(&kText);
     RGBBackColor(&kWindowFill);
-    main_window_update_text_scrollbar(false);
     main_window_update_text(gTextEdit);
 
     /* Sound group */
