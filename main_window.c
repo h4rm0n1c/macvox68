@@ -281,10 +281,10 @@ static void main_window_scroll_text_to(short newTopLine)
 static void main_window_keep_caret_visible(TEHandle handle)
 {
     TEPtr te;
-    short visibleLines;
     short maxScroll;
-    short line;
-    short target;
+    short lineH;
+    short dv = 0;
+    short lineDelta;
 
     if (!handle || !gTextScroll)
         return;
@@ -293,26 +293,34 @@ static void main_window_keep_caret_visible(TEHandle handle)
     if (!te)
         return;
 
-    visibleLines = main_window_visible_lines(handle);
-    if (visibleLines < 1)
-        visibleLines = 1;
+    lineH = te->lineHeight;
+    if (lineH <= 0)
+        return;
 
     maxScroll = GetControlMaximum(gTextScroll);
-    line = main_window_line_for_offset(handle, te->selEnd);
-    target = gTextScrollPos;
 
-    if (line < gTextScrollPos)
-        target = line;
-    else if (line > (short)(gTextScrollPos + visibleLines - 1))
-        target = (short)(line - (visibleLines - 1));
+    if (te->selRect.bottom > te->viewRect.bottom)
+        dv = (short)(te->viewRect.bottom - te->selRect.bottom);
+    else if (te->selRect.top < te->viewRect.top)
+        dv = (short)(te->viewRect.top - te->selRect.top);
 
-    if (target < 0)
-        target = 0;
-    if (target > maxScroll)
-        target = maxScroll;
+    if (dv == 0)
+        return;
 
-    if (target != gTextScrollPos)
-        main_window_scroll_text_to(target);
+    TEPinScroll(0, dv, handle);
+
+    if (dv < 0)
+        lineDelta = (short)((-dv + lineH - 1) / lineH);
+    else
+        lineDelta = (short)(-((dv + lineH - 1) / lineH));
+
+    gTextScrollPos = (short)(gTextScrollPos + lineDelta);
+    if (gTextScrollPos < 0)
+        gTextScrollPos = 0;
+    if (gTextScrollPos > maxScroll)
+        gTextScrollPos = maxScroll;
+
+    SetControlValue(gTextScroll, gTextScrollPos);
 }
 
 static void main_window_scroll_by(short delta)
