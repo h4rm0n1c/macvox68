@@ -352,17 +352,10 @@ static Boolean main_window_current_line_bounds(TEHandle handle, short *outStart,
 
     te = *handle;
 
-    if (!te || !te->lineStarts || te->nLines <= 0)
+    if (!te || te->nLines <= 0)
         return false;
 
-    HLock((Handle)te->lineStarts);
-    starts = (short *)(*(te->lineStarts));
-
-    if (!starts)
-    {
-        HUnlock((Handle)te->lineStarts);
-        return false;
-    }
+    starts = te->lineStarts;
 
     for (i = 0; i < te->nLines; i++)
     {
@@ -375,12 +368,10 @@ static Boolean main_window_current_line_bounds(TEHandle handle, short *outStart,
             *outEnd = end;
             if (outLine)
                 *outLine = i;
-            HUnlock((Handle)te->lineStarts);
             return true;
         }
     }
 
-    HUnlock((Handle)te->lineStarts);
     return false;
 }
 
