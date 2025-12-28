@@ -352,17 +352,10 @@ static Boolean main_window_current_line_bounds(TEHandle handle, short *outStart,
 
     te = *handle;
 
-    if (!te || !te->lineStarts || te->nLines <= 0)
+    if (!te || te->nLines <= 0)
         return false;
 
-    HLock((Handle)te->lineStarts);
-    starts = (short *)(*(te->lineStarts));
-
-    if (!starts)
-    {
-        HUnlock((Handle)te->lineStarts);
-        return false;
-    }
+    starts = te->lineStarts;
 
     for (i = 0; i < te->nLines; i++)
     {
@@ -375,12 +368,10 @@ static Boolean main_window_current_line_bounds(TEHandle handle, short *outStart,
             *outEnd = end;
             if (outLine)
                 *outLine = i;
-            HUnlock((Handle)te->lineStarts);
             return true;
         }
     }
 
-    HUnlock((Handle)te->lineStarts);
     return false;
 }
 
@@ -478,17 +469,23 @@ cleanup:
     return overflows;
 }
 
+static void main_window_set_text_colors(void)
+{
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
+    static const RGBColor kTextBack = { 0xFFFF, 0xFFFF, 0xFFFF };
+
+    RGBForeColor(&kText);
+    RGBBackColor(&kTextBack);
+}
+
 static void main_window_update_text(TEHandle handle)
 {
     Rect view;
-    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
-    static const RGBColor kTextBack = { 0xFFFF, 0xFFFF, 0xFFFF };
 
     if (!handle)
         return;
 
-    RGBForeColor(&kText);
-    RGBBackColor(&kTextBack);
+    main_window_set_text_colors();
     view = (**handle).viewRect;
     TEUpdate(&view, handle);
 }
@@ -861,6 +858,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     if (PtInRect(local, &textRect))
                     {
                         main_window_switch_active_edit(gTextEdit);
+                        main_window_set_text_colors();
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
                         return true;
                     }
@@ -873,6 +871,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     if (PtInRect(local, &hostRect))
                     {
                         main_window_switch_active_edit(gHostEdit);
+                        main_window_set_text_colors();
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gHostEdit);
                         return true;
                     }
@@ -885,6 +884,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     if (PtInRect(local, &portRect))
                     {
                         main_window_switch_active_edit(gPortEdit);
+                        main_window_set_text_colors();
                         TEClick(local, (ev->modifiers & shiftKey) != 0, gPortEdit);
                         return true;
                     }
@@ -967,14 +967,28 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
             }
         }
 
-        TEKey(c, gActiveEdit);
+        {
+            GrafPtr savePort;
+            GetPort(&savePort);
+            SetPort(gMainWin);
+            main_window_set_text_colors();
+            TEKey(c, gActiveEdit);
+            SetPort(savePort);
+        }
         return true;
     }
 
     if (gTextEdit)
     {
         main_window_switch_active_edit(gTextEdit);
-        TEKey(c, gTextEdit);
+        {
+            GrafPtr savePort;
+            GetPort(&savePort);
+            SetPort(gMainWin);
+            main_window_set_text_colors();
+            TEKey(c, gTextEdit);
+            SetPort(savePort);
+        }
         return true;
     }
 
@@ -990,6 +1004,7 @@ void main_window_idle(void)
         GrafPtr savePort;
         GetPort(&savePort);
         SetPort(gMainWin);
+        main_window_set_text_colors();
         TEIdle(target);
         SetPort(savePort);
     }
