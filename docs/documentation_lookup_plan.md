@@ -8,8 +8,8 @@ This document tracks where to pull authoritative information when filling in Mac
 - **Event loop/responsiveness questions.** We frequently revisit whether to lean on `WaitNextEvent` vs. `GetNextEvent` and how to integrate network polling without starving QuickDraw updates.
 
 ## Reference caches to mine (read-only)
-- **Inside Macintosh + Tech Notes (`/opt/MacDevDocs`)**: Use the multi-volume Inside Macintosh set and Tech Notes for Window Manager, Dialog Manager, Control Manager, Menu Manager, and Speech Manager behavior (look for Inside Macintosh: Sound and related volumes). Search PDFs with `pdftotext` to jump to specific managers.
-- **MacDevDocs example corpus (`/opt/MacDevDocs`)**: Besides the formal docs, this tree also contains Apple-published example code from 1992–1996 (including *develop* magazine issues, sample drivers, and demo projects). Treat it as an additional code corpus alongside `/opt/MacExamples*` when hunting for Speech Manager, MacTCP, or UI idioms.
+- **Inside Macintosh + Tech Notes (`/opt/MacDevDocs`)**: Use the multi-volume Inside Macintosh set and Tech Notes for Window Manager, Dialog Manager, Control Manager, Menu Manager, and Speech Manager behavior (look for Inside Macintosh: Sound and related volumes). Search PDFs with `pdftotext` to jump to specific managers, or lean on the `Acrobat Indexes` folders on the 1995–1997 discs for catalog-assisted searches.
+- **MacDevDocs example corpus (`/opt/MacDevDocs`)**: Besides the formal docs, this tree also contains Apple-published example code from the Developer CDs (1992–1997) plus the Appearance SDK bundle. Treat it as an additional code corpus alongside `/opt/MacExamples*` when hunting for Speech Manager, MacTCP, or UI idioms.
   - Expect classic encodings: some samples keep resource forks as BinHex/MacBinary blobs or `.rsrc` sidecars, and many Rez `.r` files mirror the idioms we need. Use these as syntax references rather than trying to “clean” them.
 - **Sample code (`/opt/MacExamples_TextOnly`, `/opt/MacExamples`)**: Grep for `TrackControl`, `MacTCP`, `PBRead`, `PBWrite`, and Speech Manager calls to see practical event-loop integration.
 - **System 7.1 sources (`/opt/sys71src`)**: Inspect `Interfaces` and `Toolbox` source for Speech Manager, QuickDraw update paths, and MacTCP glue when API docs leave gaps.
@@ -20,13 +20,15 @@ This document tracks where to pull authoritative information when filling in Mac
   - Pull routine signatures and initialization order from Inside Macintosh (Sound/Speech) in `/opt/MacDevDocs`.
   - Cross-check handle/queue management in the System 7.1 sources under `/opt/sys71src` (search for Speech Manager units and `Snd` routines) to confirm memory handling in cooperative multitasking.
   - Use sample code hits in `/opt/MacExamples_TextOnly` to see how real apps schedule speech completion callbacks alongside UI events.
+  - The 1993–1996 DevCDs in `/opt/MacDevDocs` carry Speech Manager tech notes and Inside Macintosh revisions; keep one of those PDFs open for callback contracts while wiring the TCP/audio bridge.
 - **TCP control channel**
   - Review Inside Macintosh: Networking (MacTCP) in `/opt/MacDevDocs` for asynchronous vs synchronous calls and required `WaitNextEvent`/`SystemTask` servicing.
   - Compare against System 7.1 MacTCP sources for edge cases (timeouts, async parameter blocks) before layering on our socket pump.
-  - Borrow structure from sample MacTCP clients in `/opt/MacExamples_TextOnly`, focusing on how they integrate idle processing without blocking QuickDraw.
+  - Borrow structure from sample MacTCP clients in `/opt/MacExamples_TextOnly`, focusing on how they integrate idle processing without blocking QuickDraw. Also skim the MacTCP examples under `1995-08-DevCD-TC/Sample Code` for additional Toolbox-era patterns.
 - **Window/controls layout**
   - Use Inside Macintosh volumes covering Window Manager, Control Manager, and Dialog Manager to verify pop-up menu construction, radio cluster handling, and slider ranges.
   - Mine sample UI code in `/opt/MacExamples_TextOnly` that builds controls at runtime (no resources) to mirror our current code-driven layout.
+  - Reference the Appearance SDK drop (`/opt/MacDevDocs/1997-AppearanceSDK`) for button/slider conventions and any Rez templates that survive in the sample code set.
   - Keep Retro68 sample app scaffolding from `/opt/Retro68` in mind for window creation and update-region handling so our main loop stays minimal.
 - **Event loop + idle time**
   - Revisit `WaitNextEvent` guidance in the System 7 docs; confirm minimum set of events to service while still calling `SystemTask` when using MacTCP or Speech Manager callbacks.
