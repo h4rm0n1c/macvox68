@@ -71,7 +71,8 @@ Typical locations:
 - `/opt/Latest Notes From Apple` — Apple dev notes.
 - `/opt/AppearanceSDK` — Appearance Manager SDK docs (1997-era).
 - `/opt/MPW` — MPW tools/docs (reference).
-- `/opt/MacDevDocs` — Inside Macintosh, Tech Notes, HIG.
+- `/opt/MacDevDocs` — Inside Macintosh, Tech Notes, HIG. The overlay now mirrors 1992–1997 Developer CDs and includes Acrobat
+  indexes plus the Appearance SDK; use the in-repo map at `docs/macdevdocs_overlay_map.md` before spelunking.
 - `/opt/KanjiTalkBasilisk2Fork` — BasiliskII fork sources for hardware behavior, error codes, and emulator-specific reference details.
 
 Curated Classic-era examples (extracted from `.sea` / `.hqx` archives; reference only):
