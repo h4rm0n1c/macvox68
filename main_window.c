@@ -91,20 +91,20 @@ static void main_window_switch_active_edit(TEHandle h)
 static void main_window_plan_layout(void)
 {
     Rect content;
-    short margin        = 16;
-    short gutter        = 12;
+    short margin        = 12;
+    short gutter        = 8;
     short buttonW       = 86;
-    short buttonH       = 22;
+    short buttonH       = 20;
     short soundPopupW   = 214;
-    short sectionGutter = 14;
-    short textAreaH     = 170;
-    short soundH        = 60;
-    short prosodyH      = 76;
-    short settingsH     = 108;
-    short tcpH          = 60;
+    short sectionGutter = 10;
+    short textAreaH     = 120;
+    short soundH        = 48;
+    short prosodyH      = 64;
+    short settingsH     = 90;
+    short tcpH          = 50;
     short sliderH       = 16;
     short sliderW       = 210;
-    short fieldH        = 26;
+    short fieldH        = 24;
     short fieldW        = 152;
     short portFieldW    = 64;
 
@@ -157,7 +157,7 @@ static void main_window_plan_layout(void)
             y + prosodyH);
 
     {
-        short radioTop        = gLayout.prosodyGroup.top + 44;
+        short radioTop        = gLayout.prosodyGroup.top + 30;
         short radioLeft       = gLayout.prosodyGroup.left + 62;
         short radioGap        = 22;
         short radioWidth      = 140;
@@ -757,7 +757,7 @@ void main_window_create(void)
     Rect bounds;
     Rect r;
     short width = 580;
-    short height = 580;
+    short height = 460;
 
     bounds = qd.screenBits.bounds;
     SetRect(&r,
