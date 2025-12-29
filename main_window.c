@@ -814,7 +814,7 @@ void main_window_create(void)
 {
     Rect bounds;
     Rect r;
-    short width = 540;
+    short width = 508;
     short height;
     short topInset;
     short bottomInset = kLayoutMetrics.margin;
