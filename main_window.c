@@ -34,9 +34,6 @@ typedef struct UILayout
 {
     Rect editText;
     Rect speakStopButton;
-    Rect soundGroup;
-    Rect soundPopup;
-    Rect applyButton;
     Rect prosodyGroup;
     Rect prosodyClean;
     Rect prosodyLQ;
@@ -51,6 +48,24 @@ typedef struct UILayout
     Rect startButton;
 } UILayout;
 
+typedef struct LayoutMetrics
+{
+    short margin;
+    short gutter;
+    short buttonW;
+    short buttonH;
+    short sectionGutter;
+    short textAreaH;
+    short prosodyH;
+    short settingsH;
+    short tcpH;
+    short sliderH;
+    short sliderW;
+    short fieldH;
+    short fieldW;
+    short portFieldW;
+} LayoutMetrics;
+
 typedef enum
 {
     kSpeechIdleState,
@@ -59,8 +74,6 @@ typedef enum
 
 static WindowPtr      gMainWin  = NULL;
 static ControlHandle  gSpeakBtn = NULL;
-static ControlHandle  gSoundPop = NULL;
-static ControlHandle  gApplyBtn = NULL;
 static ControlHandle  gProsodyClean = NULL;
 static ControlHandle  gProsodyLQ    = NULL;
 static ControlHandle  gProsodyHQ    = NULL;
@@ -73,6 +86,30 @@ static TEHandle       gHostEdit     = NULL;
 static TEHandle       gPortEdit     = NULL;
 static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
+static const LayoutMetrics kLayoutMetrics = {
+    8,   /* margin */
+    6,   /* gutter */
+    86,  /* buttonW */
+    20,  /* buttonH */
+    6,   /* sectionGutter */
+    120, /* textAreaH */
+    57,  /* prosodyH */
+    100, /* settingsH */
+    52,  /* tcpH */
+    16,  /* sliderH */
+    210, /* sliderW */
+    24,  /* fieldH */
+    152, /* fieldW */
+    64   /* portFieldW */
+};
+
+static short main_window_layout_height(const LayoutMetrics *m)
+{
+    return (short)(m->margin * 2 +
+                   m->buttonH + m->gutter + m->textAreaH + m->sectionGutter +
+                   m->prosodyH + (m->sectionGutter - 2) + m->settingsH +
+                   (m->sectionGutter - 2) + m->tcpH);
+}
 
 static void main_window_switch_active_edit(TEHandle h)
 {
@@ -91,75 +128,42 @@ static void main_window_switch_active_edit(TEHandle h)
 static void main_window_plan_layout(void)
 {
     Rect content;
-    short margin        = 16;
-    short gutter        = 12;
-    short buttonW       = 86;
-    short buttonH       = 22;
-    short soundPopupW   = 214;
-    short sectionGutter = 14;
-    short textAreaH     = 170;
-    short soundH        = 60;
-    short prosodyH      = 76;
-    short settingsH     = 108;
-    short tcpH          = 60;
-    short sliderH       = 16;
-    short sliderW       = 210;
-    short fieldH        = 26;
-    short fieldW        = 152;
-    short portFieldW    = 64;
+    short startY;
+    const LayoutMetrics *m = &kLayoutMetrics;
 
     if (!gMainWin)
         return;
 
     content = gMainWin->portRect;
+    startY = content.top + m->margin;
 
     /* Top row: Speak/Stop (left). */
     SetRect(&gLayout.speakStopButton,
-            content.left + margin,
-            content.top + margin,
-            content.left + margin + buttonW,
-            content.top + margin + buttonH);
+            content.left + m->margin,
+            startY,
+            content.left + m->margin + m->buttonW,
+            startY + m->buttonH);
 
     /* Text area sits beneath the control row. */
     SetRect(&gLayout.editText,
-            content.left + margin,
-            gLayout.speakStopButton.bottom + gutter,
-            content.right - margin,
-            gLayout.speakStopButton.bottom + gutter + textAreaH);
+            content.left + m->margin,
+            gLayout.speakStopButton.bottom + m->gutter,
+            content.right - m->margin,
+            gLayout.speakStopButton.bottom + m->gutter + m->textAreaH);
 
     /* Section sequencing mirrors the Windows UI rows. */
-    short y = gLayout.editText.bottom + sectionGutter;
-
-    SetRect(&gLayout.soundGroup,
-            content.left + margin,
-            y,
-            content.right - margin,
-            y + soundH);
-
-    SetRect(&gLayout.soundPopup,
-            gLayout.soundGroup.left + 96,
-            gLayout.soundGroup.top + 16,
-            gLayout.soundGroup.left + 96 + soundPopupW,
-            gLayout.soundGroup.top + 16 + buttonH);
-
-    SetRect(&gLayout.applyButton,
-            gLayout.soundGroup.right - margin - 86,
-            gLayout.soundGroup.top + 14,
-            gLayout.soundGroup.right - margin,
-            gLayout.soundGroup.top + 14 + buttonH);
-
-    y = gLayout.soundGroup.bottom + sectionGutter - 2;
+    short y = gLayout.editText.bottom + m->gutter;
 
     SetRect(&gLayout.prosodyGroup,
-            content.left + margin,
+            content.left + m->margin,
             y,
-            content.right - margin,
-            y + prosodyH);
+            content.right - m->margin,
+            y + m->prosodyH);
 
     {
-        short radioTop        = gLayout.prosodyGroup.top + 44;
-        short radioLeft       = gLayout.prosodyGroup.left + 62;
-        short radioGap        = 22;
+        short radioTop        = gLayout.prosodyGroup.top + 18;
+        short radioLeft       = gLayout.prosodyGroup.left + 54;
+        short radioGap        = 24;
         short radioWidth      = 140;
         short radioCleanWidth = 70;
 
@@ -184,57 +188,57 @@ static void main_window_plan_layout(void)
                 radioTop + 18);
     }
 
-    y = gLayout.prosodyGroup.bottom + sectionGutter - 2;
+    y = gLayout.prosodyGroup.bottom + m->sectionGutter - 2;
 
     SetRect(&gLayout.settingsGroup,
-            content.left + margin,
+            content.left + m->margin,
             y,
-            content.right - margin,
-            y + settingsH);
+            content.right - m->margin,
+            y + m->settingsH);
 
     SetRect(&gLayout.volumeSlider,
             gLayout.settingsGroup.left + 124,
             gLayout.settingsGroup.top + 14,
-            gLayout.settingsGroup.left + 124 + sliderW,
-            gLayout.settingsGroup.top + 14 + sliderH);
+            gLayout.settingsGroup.left + 124 + m->sliderW,
+            gLayout.settingsGroup.top + 14 + m->sliderH);
 
     SetRect(&gLayout.rateSlider,
             gLayout.volumeSlider.left,
             gLayout.volumeSlider.bottom + 14,
             gLayout.volumeSlider.right,
-            gLayout.volumeSlider.bottom + 14 + sliderH);
+            gLayout.volumeSlider.bottom + 14 + m->sliderH);
 
     SetRect(&gLayout.pitchSlider,
             gLayout.rateSlider.left,
             gLayout.rateSlider.bottom + 14,
             gLayout.rateSlider.right,
-            gLayout.rateSlider.bottom + 14 + sliderH);
+            gLayout.rateSlider.bottom + 14 + m->sliderH);
 
-    y = gLayout.settingsGroup.bottom + sectionGutter - 2;
+    y = gLayout.settingsGroup.bottom + m->sectionGutter - 2;
 
     SetRect(&gLayout.tcpGroup,
-            content.left + margin,
+            content.left + m->margin,
             y,
-            content.right - margin,
-            y + tcpH);
+            content.right - m->margin,
+            y + m->tcpH);
 
     SetRect(&gLayout.hostField,
             gLayout.tcpGroup.left + 80,
             gLayout.tcpGroup.top + 19,
-            gLayout.tcpGroup.left + 80 + fieldW,
-            gLayout.tcpGroup.top + 19 + fieldH);
+            gLayout.tcpGroup.left + 80 + m->fieldW,
+            gLayout.tcpGroup.top + 19 + m->fieldH);
 
     SetRect(&gLayout.portField,
             gLayout.hostField.right + 56,
             gLayout.tcpGroup.top + 19,
-            gLayout.hostField.right + 56 + portFieldW,
-            gLayout.tcpGroup.top + 19 + fieldH);
+            gLayout.hostField.right + 56 + m->portFieldW,
+            gLayout.tcpGroup.top + 19 + m->fieldH);
 
     SetRect(&gLayout.startButton,
             gLayout.tcpGroup.right - 118,
             gLayout.tcpGroup.top + 18,
             gLayout.tcpGroup.right - 118 + 104,
-            gLayout.tcpGroup.top + 18 + buttonH);
+            gLayout.tcpGroup.top + 18 + m->buttonH);
 }
 
 static void main_window_update_control_enabling(SpeechUIState state)
@@ -510,21 +514,8 @@ static void main_window_create_text_edit(void)
 
 static void main_window_create_controls(void)
 {
-    MenuHandle soundMenu = NULL;
-    short soundMenuID = 201;
-    short soundCount = 0;
-
     if (!gMainWin)
         return;
-
-    /* Build runtime menus so we do not rely on absent Toolbox resources. */
-    soundMenu = NewMenu(soundMenuID, "\pSound");
-    if (soundMenu)
-    {
-        AppendMenu(soundMenu, "\p(Default output device)\xA5Line Out\xA5Headphones");
-        InsertMenu(soundMenu, -1);
-        soundCount = CountMItems(soundMenu);
-    }
 
     gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
                            0, 0, 0, pushButProc, kSpeakStopBtnID);
@@ -532,22 +523,6 @@ static void main_window_create_controls(void)
     {
         Boolean isDefault = true;
         SetControlData(gSpeakBtn, kControlEntireControl,
-                       kControlPushButtonDefaultTag,
-                       sizeof(isDefault), &isDefault);
-    }
-
-    if (soundMenu && soundCount > 0)
-    {
-        gSoundPop = NewControl(gMainWin, &gLayout.soundPopup, "\pSound", true,
-                               1, soundMenuID, soundCount, popupMenuProc, 0);
-    }
-
-    gApplyBtn = NewControl(gMainWin, &gLayout.applyButton, "\pApply Audio", true,
-                           0, 0, 0, pushButProc, 0);
-    if (gApplyBtn)
-    {
-        Boolean isDefault = true;
-        SetControlData(gApplyBtn, kControlEntireControl,
                        kControlPushButtonDefaultTag,
                        sizeof(isDefault), &isDefault);
     }
@@ -662,19 +637,10 @@ static void main_window_draw_contents(WindowPtr w)
     RGBBackColor(&kWindowFill);
     main_window_update_text(gTextEdit);
 
-    /* Sound group */
-    main_window_draw_group(&gLayout.soundGroup, "\pSound");
-    RGBForeColor(&kText);
-    RGBBackColor(&kWindowFill);
-    MoveTo(gLayout.soundGroup.left + 16, gLayout.soundGroup.top + 32);
-    DrawString("\pDevice:");
-
     /* Prosody group */
     main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
     RGBForeColor(&kText);
     RGBBackColor(&kWindowFill);
-    MoveTo(gLayout.prosodyGroup.left + 16, gLayout.prosodyGroup.top + 32);
-    DrawString("\pChoose clarity or HL VOX coloration.");
 
     /* Settings group */
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
@@ -757,14 +723,34 @@ void main_window_create(void)
     Rect bounds;
     Rect r;
     short width = 580;
-    short height = 580;
+    short height;
+    short topInset;
+    short bottomInset = kLayoutMetrics.margin;
 
     bounds = qd.screenBits.bounds;
-    SetRect(&r,
-            (short)((bounds.left + bounds.right - width) / 2),
-            (short)((bounds.top + bounds.bottom - height) / 2),
-            (short)((bounds.left + bounds.right + width) / 2),
-            (short)((bounds.top + bounds.bottom + height) / 2));
+    height = main_window_layout_height(&kLayoutMetrics);
+    topInset = GetMBarHeight() + bottomInset + 16;
+
+    {
+        short availableTop    = bounds.top + topInset;
+        short availableBottom = bounds.bottom - bottomInset;
+        short availableHeight = availableBottom - availableTop;
+        short startY;
+
+        if (availableHeight > height)
+            startY = (short)(availableTop + (availableHeight - height) / 2);
+        else
+            startY = availableTop;
+
+        SetRect(&r,
+                (short)((bounds.left + bounds.right - width) / 2),
+                startY,
+                (short)((bounds.left + bounds.right + width) / 2),
+                (short)(startY + height));
+
+        if (r.bottom > availableBottom)
+            OffsetRect(&r, 0, (short)(availableBottom - r.bottom));
+    }
 
     gMainWin = (WindowPtr)NewCWindow(
         NULL,
