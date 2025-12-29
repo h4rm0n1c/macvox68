@@ -711,17 +711,27 @@ void main_window_create(void)
 
     bounds = qd.screenBits.bounds;
     topInset = GetMBarHeight() + bottomInset;
-    SetRect(&r,
-            (short)((bounds.left + bounds.right - width) / 2),
-            (short)((bounds.top + bounds.bottom - height) / 2),
-            (short)((bounds.left + bounds.right + width) / 2),
-            (short)((bounds.top + bounds.bottom + height) / 2));
 
-    if (r.top < bounds.top + topInset)
-        OffsetRect(&r, 0, (short)((bounds.top + topInset) - r.top));
+    {
+        short availableTop    = bounds.top + topInset;
+        short availableBottom = bounds.bottom - bottomInset;
+        short availableHeight = availableBottom - availableTop;
+        short startY;
 
-    if (r.bottom > bounds.bottom - bottomInset)
-        OffsetRect(&r, 0, (short)((bounds.bottom - bottomInset) - r.bottom));
+        if (availableHeight > height)
+            startY = (short)(availableTop + (availableHeight - height) / 2);
+        else
+            startY = availableTop;
+
+        SetRect(&r,
+                (short)((bounds.left + bounds.right - width) / 2),
+                startY,
+                (short)((bounds.left + bounds.right + width) / 2),
+                (short)(startY + height));
+
+        if (r.bottom > availableBottom)
+            OffsetRect(&r, 0, (short)(availableBottom - r.bottom));
+    }
 
     gMainWin = (WindowPtr)NewCWindow(
         NULL,
