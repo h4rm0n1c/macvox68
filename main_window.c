@@ -92,26 +92,39 @@ static void main_window_plan_layout(void)
     short buttonH       = 20;
     short sectionGutter = 6;
     short textAreaH     = 120;
-    short prosodyH      = 62;
-    short settingsH     = 88;
+    short prosodyH      = 57;
+    short settingsH     = 100;
     short tcpH          = 52;
     short sliderH       = 16;
     short sliderW       = 210;
     short fieldH        = 24;
     short fieldW        = 152;
     short portFieldW    = 64;
+    short verticalOffset = 0;
+    short contentHeight;
+    short startY;
 
     if (!gMainWin)
         return;
 
     content = gMainWin->portRect;
+    contentHeight = buttonH + gutter + textAreaH + sectionGutter + prosodyH +
+                    (sectionGutter - 2) + settingsH + (sectionGutter - 2) +
+                    tcpH;
+
+    verticalOffset = (content.bottom - margin) -
+                     (content.top + margin + contentHeight);
+    if (verticalOffset < 0)
+        verticalOffset = 0;
+
+    startY = content.top + margin + verticalOffset;
 
     /* Top row: Speak/Stop (left). */
     SetRect(&gLayout.speakStopButton,
             content.left + margin,
-            content.top + margin,
+            startY,
             content.left + margin + buttonW,
-            content.top + margin + buttonH);
+            startY + buttonH);
 
     /* Text area sits beneath the control row. */
     SetRect(&gLayout.editText,
@@ -693,13 +706,22 @@ void main_window_create(void)
     Rect r;
     short width = 580;
     short height = 460;
+    short menuInset;
+    short bottomInset = 8;
 
     bounds = qd.screenBits.bounds;
+    menuInset = GetMBarHeight() + 4;
     SetRect(&r,
             (short)((bounds.left + bounds.right - width) / 2),
             (short)((bounds.top + bounds.bottom - height) / 2),
             (short)((bounds.left + bounds.right + width) / 2),
             (short)((bounds.top + bounds.bottom + height) / 2));
+
+    if (r.top < bounds.top + menuInset)
+        OffsetRect(&r, 0, (short)((bounds.top + menuInset) - r.top));
+
+    if (r.bottom > bounds.bottom - bottomInset)
+        OffsetRect(&r, 0, (short)((bounds.bottom - bottomInset) - r.bottom));
 
     gMainWin = (WindowPtr)NewCWindow(
         NULL,
