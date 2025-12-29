@@ -53,7 +53,6 @@ typedef struct UILayout
     Rect prosodyGroup;
     Rect prosodyClean;
     Rect prosodyLQ;
-    Rect prosodyHQ;
     Rect settingsGroup;
     Rect volumeSlider;
     Rect rateSlider;
@@ -93,7 +92,6 @@ static ControlHandle  gSpeakBtn = NULL;
 static ControlHandle  gTextScroll = NULL;
 static ControlHandle  gProsodyClean = NULL;
 static ControlHandle  gProsodyLQ    = NULL;
-static ControlHandle  gProsodyHQ    = NULL;
 static ControlHandle  gVolumeSlider = NULL;
 static ControlHandle  gRateSlider   = NULL;
 static ControlHandle  gPitchSlider  = NULL;
@@ -221,13 +219,6 @@ static void main_window_plan_layout(void)
 
         radioLeft = gLayout.prosodyClean.right + radioGap - 15;
         SetRect(&gLayout.prosodyLQ,
-                radioLeft,
-                radioTop,
-                radioLeft + radioWidth,
-                radioTop + radioHeight);
-
-        radioLeft = gLayout.prosodyLQ.right + radioGap - 15;
-        SetRect(&gLayout.prosodyHQ,
                 radioLeft,
                 radioTop,
                 radioLeft + radioWidth,
@@ -590,9 +581,7 @@ static void main_window_create_controls(void)
 
     gProsodyClean = NewControl(gMainWin, &gLayout.prosodyClean, "\pClean", true,
                                1, 0, 0, radioButProc, 0);
-    gProsodyLQ = NewControl(gMainWin, &gLayout.prosodyLQ, "\pHL VOX Prosody LQ", true,
-                            0, 0, 0, radioButProc, 0);
-    gProsodyHQ = NewControl(gMainWin, &gLayout.prosodyHQ, "\pHL VOX Prosody HQ", true,
+    gProsodyLQ = NewControl(gMainWin, &gLayout.prosodyLQ, "\pHL VOX Prosody", true,
                             0, 0, 0, radioButProc, 0);
 
     gVolumeSlider = NewControl(gMainWin, &gLayout.volumeSlider, "\p", true,
@@ -761,8 +750,6 @@ static void main_window_draw_contents(WindowPtr w)
         Draw1Control(gProsodyClean);
     if (gProsodyLQ)
         Draw1Control(gProsodyLQ);
-    if (gProsodyHQ)
-        Draw1Control(gProsodyHQ);
 }
 
 static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
