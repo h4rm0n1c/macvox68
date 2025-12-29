@@ -164,6 +164,7 @@ static void main_window_plan_layout(void)
     short startY;
     short prosodyColumnLeft;
     short sectionLeft;
+    short buttonLeft;
     short y;
     const LayoutMetrics *m = &kLayoutMetrics;
 
@@ -173,7 +174,8 @@ static void main_window_plan_layout(void)
     content = gMainWin->portRect;
     startY = content.top + m->margin;
     prosodyColumnLeft = (short)(content.left + m->margin);
-    sectionLeft = (short)(prosodyColumnLeft + m->buttonW + m->gutter);
+    buttonLeft = (short)(prosodyColumnLeft + 5);
+    sectionLeft = (short)(prosodyColumnLeft + m->buttonW + m->gutter + 10);
 
     /* Text area sits beneath the top margin. */
     SetRect(&gLayout.editText,
@@ -194,10 +196,10 @@ static void main_window_plan_layout(void)
 
     /* Speak/Stop button sits in the reserved prosody margin. */
     SetRect(&gLayout.speakStopButton,
-            prosodyColumnLeft,
-            (short)(gLayout.prosodyGroup.top + 12),
-            prosodyColumnLeft + m->buttonW,
-            (short)(gLayout.prosodyGroup.top + 12 + m->buttonH));
+            buttonLeft,
+            (short)(gLayout.prosodyGroup.top + ((m->prosodyH - m->buttonH) / 2)),
+            buttonLeft + m->buttonW,
+            (short)(gLayout.prosodyGroup.top + ((m->prosodyH - m->buttonH) / 2) + m->buttonH));
 
     {
         short radioTop        = gLayout.prosodyGroup.top + 18;
@@ -679,10 +681,10 @@ static void main_window_draw_contents(WindowPtr w)
     RGBForeColor(&kSeparatorDark);
     RGBBackColor(&kWindowFill);
     PenNormal();
-    MoveTo(content.left + 8, gLayout.editText.bottom + kLayoutMetrics.gutter);
+    MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kLayoutMetrics.gutter);
     LineTo(content.right - 8, gLayout.editText.bottom + kLayoutMetrics.gutter);
     RGBForeColor(&kSeparatorLight);
-    MoveTo(content.left + 8, gLayout.editText.bottom + kLayoutMetrics.gutter + 1);
+    MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kLayoutMetrics.gutter + 1);
     LineTo(content.right - 8, gLayout.editText.bottom + kLayoutMetrics.gutter + 1);
 
     /* Text entry area with a soft border. */
