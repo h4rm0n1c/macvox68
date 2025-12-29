@@ -165,8 +165,10 @@ static void main_window_plan_layout(void)
     Rect content;
     short startY;
     short buttonColumnLeft;
+    short buttonColumnWidth;
     short sectionLeft;
     short buttonLeft;
+    short buttonCenter;
     short y;
     const LayoutMetrics *m = &kLayoutMetrics;
 
@@ -175,9 +177,11 @@ static void main_window_plan_layout(void)
 
     content = gMainWin->portRect;
     startY = content.top + m->margin;
-    buttonColumnLeft = (short)(content.left + m->margin);
-    buttonLeft = (short)(buttonColumnLeft + kButtonInset);
-    sectionLeft = (short)(buttonLeft + kStartButtonW + m->gutter + 5);
+    buttonColumnLeft  = (short)(content.left + m->margin);
+    buttonColumnWidth = kStartButtonW;
+    buttonLeft        = (short)(buttonColumnLeft + kButtonInset);
+    buttonCenter      = (short)(buttonLeft + (buttonColumnWidth / 2));
+    sectionLeft       = (short)(buttonLeft + buttonColumnWidth + m->gutter + 5);
 
     /* Text area sits beneath the top margin. */
     SetRect(&gLayout.editText,
@@ -197,11 +201,16 @@ static void main_window_plan_layout(void)
             y + m->prosodyH);
 
     /* Speak/Stop button sits in the reserved prosody margin. */
-    SetRect(&gLayout.speakStopButton,
-            buttonLeft,
-            (short)(gLayout.prosodyGroup.top + ((m->prosodyH - m->buttonH) / 2)),
-            buttonLeft + m->buttonW,
-            (short)(gLayout.prosodyGroup.top + ((m->prosodyH - m->buttonH) / 2) + m->buttonH));
+    {
+        short verticalCenter = (short)(gLayout.prosodyGroup.top + ((m->prosodyH - m->buttonH) / 2));
+        short halfButtonW    = (short)(m->buttonW / 2);
+
+        SetRect(&gLayout.speakStopButton,
+                (short)(buttonCenter - halfButtonW),
+                verticalCenter,
+                (short)(buttonCenter + halfButtonW),
+                (short)(verticalCenter + m->buttonH));
+    }
 
     {
         short labelBaseline   = (short)(gLayout.prosodyGroup.top + 14);
@@ -274,12 +283,13 @@ static void main_window_plan_layout(void)
             gLayout.tcpGroup.top + 19 + m->fieldH);
 
     {
-        short startTop = (short)(gLayout.tcpGroup.top + 6);
+        short halfButtonW = (short)(m->buttonW / 2);
+        short startTop    = (short)(gLayout.speakStopButton.bottom + m->gutter);
 
         SetRect(&gLayout.startButton,
-                buttonLeft,
+                (short)(buttonCenter - halfButtonW),
                 startTop,
-                buttonLeft + kStartButtonW,
+                (short)(buttonCenter + halfButtonW),
                 (short)(startTop + m->buttonH));
     }
 }
@@ -599,6 +609,13 @@ static void main_window_create_controls(void)
 
     gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
                            0, 0, 0, pushButProc, 0);
+    if (gStartBtn)
+    {
+        Boolean isDefault = true;
+        SetControlData(gStartBtn, kControlEntireControl,
+                       kControlPushButtonDefaultTag,
+                       sizeof(isDefault), &isDefault);
+    }
 
     main_window_update_scrollbar();
 }
