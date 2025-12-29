@@ -706,19 +706,19 @@ void main_window_create(void)
     Rect r;
     short width = 580;
     short height = 460;
-    short menuInset;
+    short topInset;
     short bottomInset = 8;
 
     bounds = qd.screenBits.bounds;
-    menuInset = GetMBarHeight() + 4;
+    topInset = GetMBarHeight() + bottomInset;
     SetRect(&r,
             (short)((bounds.left + bounds.right - width) / 2),
             (short)((bounds.top + bounds.bottom - height) / 2),
             (short)((bounds.left + bounds.right + width) / 2),
             (short)((bounds.top + bounds.bottom + height) / 2));
 
-    if (r.top < bounds.top + menuInset)
-        OffsetRect(&r, 0, (short)((bounds.top + menuInset) - r.top));
+    if (r.top < bounds.top + topInset)
+        OffsetRect(&r, 0, (short)((bounds.top + topInset) - r.top));
 
     if (r.bottom > bounds.bottom - bottomInset)
         OffsetRect(&r, 0, (short)((bounds.bottom - bottomInset) - r.bottom));
