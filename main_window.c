@@ -228,7 +228,7 @@ static void main_window_plan_layout(void)
     y = gLayout.prosodyGroup.bottom + m->sectionGutter - 2;
 
     SetRect(&gLayout.settingsGroup,
-            sectionLeft,
+            content.left + m->margin,
             y,
             content.right - m->margin,
             y + m->settingsH);
@@ -254,7 +254,7 @@ static void main_window_plan_layout(void)
     y = gLayout.settingsGroup.bottom + m->sectionGutter - 2;
 
     SetRect(&gLayout.tcpGroup,
-            sectionLeft,
+            content.left + m->margin,
             y,
             content.right - m->margin,
             y + m->tcpH);
