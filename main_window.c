@@ -202,7 +202,10 @@ static void main_window_plan_layout(void)
             (short)(gLayout.prosodyGroup.top + ((m->prosodyH - m->buttonH) / 2) + m->buttonH));
 
     {
-        short radioTop        = gLayout.prosodyGroup.top + 18;
+        short labelBaseline   = (short)(gLayout.prosodyGroup.top + 14);
+        short radioHeight     = 18;
+        short radioTop        = (short)(labelBaseline +
+                                 ((gLayout.prosodyGroup.bottom - labelBaseline - radioHeight) / 2));
         short radioLeft       = gLayout.prosodyGroup.left + 54;
         short radioGap        = 24;
         short radioWidth      = 140;
@@ -212,21 +215,21 @@ static void main_window_plan_layout(void)
                 radioLeft,
                 radioTop,
                 radioLeft + radioCleanWidth,
-                radioTop + 18);
+                radioTop + radioHeight);
 
         radioLeft = gLayout.prosodyClean.right + radioGap - 15;
         SetRect(&gLayout.prosodyLQ,
                 radioLeft,
                 radioTop,
                 radioLeft + radioWidth,
-                radioTop + 18);
+                radioTop + radioHeight);
 
         radioLeft = gLayout.prosodyLQ.right + radioGap - 15;
         SetRect(&gLayout.prosodyHQ,
                 radioLeft,
                 radioTop,
                 radioLeft + radioWidth,
-                radioTop + 18);
+                radioTop + radioHeight);
     }
 
     y = gLayout.prosodyGroup.bottom + m->sectionGutter - 2;
