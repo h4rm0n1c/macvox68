@@ -245,9 +245,9 @@ static void main_window_plan_layout(void)
             y + m->settingsH);
 
     SetRect(&gLayout.volumeSlider,
-            gLayout.settingsGroup.left + 124,
+            gLayout.settingsGroup.left + 80,
             gLayout.settingsGroup.top + 14,
-            gLayout.settingsGroup.left + 124 + m->sliderW,
+            gLayout.settingsGroup.left + 80 + m->sliderW,
             gLayout.settingsGroup.top + 14 + m->sliderH);
 
     SetRect(&gLayout.rateSlider,
@@ -723,17 +723,17 @@ static void main_window_draw_contents(WindowPtr w)
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
     RGBForeColor(&kText);
     RGBBackColor(&kWindowFill);
-    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 30);
+    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 30);
     DrawString("\pVolume");
     MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
     DrawString("\p100%");
 
-    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 60);
+    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 60);
     DrawString("\pRate");
     MoveTo(gLayout.rateSlider.right + 10, gLayout.settingsGroup.top + 60);
     DrawString("\p1.00");
 
-    MoveTo(gLayout.settingsGroup.left + 52, gLayout.settingsGroup.top + 90);
+    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 90);
     DrawString("\pPitch");
     MoveTo(gLayout.pitchSlider.right + 10, gLayout.settingsGroup.top + 90);
     DrawString("\p1.00");
