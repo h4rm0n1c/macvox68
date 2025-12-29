@@ -23,6 +23,21 @@
 #ifndef kControlSliderProc
     #define kControlSliderProc 48
 #endif
+#ifndef inUpButton
+    #define inUpButton 20
+#endif
+#ifndef inDownButton
+    #define inDownButton 21
+#endif
+#ifndef inPageUp
+    #define inPageUp 22
+#endif
+#ifndef inPageDown
+    #define inPageDown 23
+#endif
+#ifndef inThumb
+    #define inThumb 129
+#endif
 
 enum
 {
