@@ -162,6 +162,8 @@ static void main_window_plan_layout(void)
 {
     Rect content;
     short startY;
+    short sectionLeft;
+    short y;
     const LayoutMetrics *m = &kLayoutMetrics;
 
     if (!gMainWin)
@@ -169,6 +171,7 @@ static void main_window_plan_layout(void)
 
     content = gMainWin->portRect;
     startY = content.top + m->margin;
+    sectionLeft = (short)(content.left + m->margin + m->buttonW + m->gutter);
 
     /* Top row: Speak/Stop (left). */
     SetRect(&gLayout.speakStopButton,
@@ -186,10 +189,10 @@ static void main_window_plan_layout(void)
     gLayout.editScroll = main_window_text_scroll_rect(&gLayout.editText);
 
     /* Section sequencing mirrors the Windows UI rows. */
-    short y = gLayout.editText.bottom + m->gutter;
+    y = gLayout.editText.bottom + m->gutter;
 
     SetRect(&gLayout.prosodyGroup,
-            content.left + m->margin,
+            sectionLeft,
             y,
             content.right - m->margin,
             y + m->prosodyH);
@@ -225,7 +228,7 @@ static void main_window_plan_layout(void)
     y = gLayout.prosodyGroup.bottom + m->sectionGutter - 2;
 
     SetRect(&gLayout.settingsGroup,
-            content.left + m->margin,
+            sectionLeft,
             y,
             content.right - m->margin,
             y + m->settingsH);
@@ -251,7 +254,7 @@ static void main_window_plan_layout(void)
     y = gLayout.settingsGroup.bottom + m->sectionGutter - 2;
 
     SetRect(&gLayout.tcpGroup,
-            content.left + m->margin,
+            sectionLeft,
             y,
             content.right - m->margin,
             y + m->tcpH);
