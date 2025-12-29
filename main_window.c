@@ -125,6 +125,8 @@ static const short kTextInsetH = 6;
 static const short kTextInsetV = 4;
 static const short kTextScrollbarW = 15;
 static const short kMaxTextDestGrowth = 30000;
+static const short kStartButtonW = 104;
+static const short kButtonInset = 5;
 
 static short main_window_layout_height(const LayoutMetrics *m)
 {
@@ -162,7 +164,7 @@ static void main_window_plan_layout(void)
 {
     Rect content;
     short startY;
-    short prosodyColumnLeft;
+    short buttonColumnLeft;
     short sectionLeft;
     short buttonLeft;
     short y;
@@ -173,9 +175,9 @@ static void main_window_plan_layout(void)
 
     content = gMainWin->portRect;
     startY = content.top + m->margin;
-    prosodyColumnLeft = (short)(content.left + m->margin);
-    buttonLeft = (short)(prosodyColumnLeft + 5);
-    sectionLeft = (short)(prosodyColumnLeft + m->buttonW + m->gutter + 10);
+    buttonColumnLeft = (short)(content.left + m->margin);
+    buttonLeft = (short)(buttonColumnLeft + kButtonInset);
+    sectionLeft = (short)(buttonLeft + kStartButtonW + m->gutter + 5);
 
     /* Text area sits beneath the top margin. */
     SetRect(&gLayout.editText,
@@ -254,7 +256,7 @@ static void main_window_plan_layout(void)
     y = gLayout.settingsGroup.bottom + m->sectionGutter - 2;
 
     SetRect(&gLayout.tcpGroup,
-            content.left + m->margin,
+            sectionLeft,
             y,
             content.right - m->margin,
             y + m->tcpH);
@@ -271,11 +273,15 @@ static void main_window_plan_layout(void)
             gLayout.hostField.right + 56 + m->portFieldW,
             gLayout.tcpGroup.top + 19 + m->fieldH);
 
-    SetRect(&gLayout.startButton,
-            gLayout.tcpGroup.right - 118,
-            gLayout.tcpGroup.top + 18,
-            gLayout.tcpGroup.right - 118 + 104,
-            gLayout.tcpGroup.top + 18 + m->buttonH);
+    {
+        short startTop = (short)(gLayout.tcpGroup.top + 6);
+
+        SetRect(&gLayout.startButton,
+                buttonLeft,
+                startTop,
+                buttonLeft + kStartButtonW,
+                (short)(startTop + m->buttonH));
+    }
 }
 
 static void main_window_update_control_enabling(SpeechUIState state)
