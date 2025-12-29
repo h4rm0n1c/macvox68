@@ -50,6 +50,8 @@ typedef struct UILayout
     Rect editText;
     Rect editScroll;
     Rect speakStopButton;
+    Rect startButton;
+    Rect quitButton;
     Rect prosodyGroup;
     Rect prosodyClean;
     Rect prosodyLQ;
@@ -60,7 +62,6 @@ typedef struct UILayout
     Rect tcpGroup;
     Rect hostField;
     Rect portField;
-    Rect startButton;
 } UILayout;
 
 typedef struct LayoutMetrics
@@ -96,6 +97,7 @@ static ControlHandle  gVolumeSlider = NULL;
 static ControlHandle  gRateSlider   = NULL;
 static ControlHandle  gPitchSlider  = NULL;
 static ControlHandle  gStartBtn     = NULL;
+static ControlHandle  gQuitBtn      = NULL;
 static TEHandle       gTextEdit     = NULL;
 static TEHandle       gHostEdit     = NULL;
 static TEHandle       gPortEdit     = NULL;
@@ -169,6 +171,7 @@ static void main_window_plan_layout(void)
     short sectionLeft;
     short buttonLeft;
     short buttonCenter;
+    short buttonStackGap;
     short y;
     const LayoutMetrics *m = &kLayoutMetrics;
 
@@ -181,6 +184,7 @@ static void main_window_plan_layout(void)
     buttonColumnWidth = kStartButtonW;
     buttonLeft        = (short)(buttonColumnLeft + kButtonInset);
     buttonCenter      = (short)(buttonLeft + (buttonColumnWidth / 2));
+    buttonStackGap    = (short)(m->gutter + 4);
     sectionLeft       = (short)(buttonLeft + buttonColumnWidth + m->gutter + 5);
 
     /* Text area sits beneath the top margin. */
@@ -245,9 +249,9 @@ static void main_window_plan_layout(void)
             y + m->settingsH);
 
     SetRect(&gLayout.volumeSlider,
-            gLayout.settingsGroup.left + 80,
+            gLayout.settingsGroup.left + 88,
             gLayout.settingsGroup.top + 14,
-            gLayout.settingsGroup.left + 80 + m->sliderW,
+            gLayout.settingsGroup.left + 88 + m->sliderW,
             gLayout.settingsGroup.top + 14 + m->sliderH);
 
     SetRect(&gLayout.rateSlider,
@@ -284,13 +288,20 @@ static void main_window_plan_layout(void)
 
     {
         short halfButtonW = (short)(m->buttonW / 2);
-        short startTop    = (short)(gLayout.speakStopButton.bottom + m->gutter);
+        short startTop    = (short)(gLayout.speakStopButton.bottom + buttonStackGap);
+        short quitTop     = (short)(startTop + m->buttonH + buttonStackGap);
 
         SetRect(&gLayout.startButton,
                 (short)(buttonCenter - halfButtonW),
                 startTop,
                 (short)(buttonCenter + halfButtonW),
                 (short)(startTop + m->buttonH));
+
+        SetRect(&gLayout.quitButton,
+                (short)(buttonCenter - halfButtonW),
+                quitTop,
+                (short)(buttonCenter + halfButtonW),
+                (short)(quitTop + m->buttonH));
     }
 }
 
@@ -616,6 +627,9 @@ static void main_window_create_controls(void)
                        kControlPushButtonDefaultTag,
                        sizeof(isDefault), &isDefault);
     }
+
+    gQuitBtn = NewControl(gMainWin, &gLayout.quitButton, "\pQuit", true,
+                          0, 0, 0, pushButProc, 0);
 
     main_window_update_scrollbar();
 }
