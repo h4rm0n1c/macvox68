@@ -121,6 +121,8 @@ static const LayoutMetrics kLayoutMetrics = {
     64   /* portFieldW */
 };
 
+static const RGBColor kSettingsGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
+
 static const short kTextInsetH = 6;
 static const short kTextInsetV = 4;
 static const short kTextScrollbarW = 15;
@@ -899,10 +901,23 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                 cpart = FindControl(local, w, &c);
                 if (cpart)
                 {
+                    Boolean setGroupFill =
+                        (c == gVolumeSlider || c == gRateSlider || c == gPitchSlider);
+                    RGBColor prevBack;
+
+                    if (setGroupFill)
+                        GetBackColor(&prevBack);
+
+                    if (setGroupFill)
+                        RGBBackColor(&kSettingsGroupFill);
+
                     if (c == gTextScroll)
                         (void)TrackControl(c, local, (ControlActionUPP)main_window_track_text_scroll);
                     else
                         (void)TrackControl(c, local, NULL);
+
+                    if (setGroupFill)
+                        RGBBackColor(&prevBack);
                     return true;
                 }
 
