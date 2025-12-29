@@ -289,7 +289,8 @@ static void main_window_plan_layout(void)
     {
         short halfButtonW = (short)(m->buttonW / 2);
         short startTop    = (short)(gLayout.speakStopButton.bottom + buttonStackGap);
-        short quitTop     = (short)(startTop + m->buttonH + buttonStackGap);
+        short tcpCenter   = (short)(gLayout.tcpGroup.top + (m->tcpH / 2));
+        short quitTop     = (short)(tcpCenter - (m->buttonH / 2));
 
         SetRect(&gLayout.startButton,
                 (short)(buttonCenter - halfButtonW),
