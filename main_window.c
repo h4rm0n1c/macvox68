@@ -34,9 +34,6 @@ typedef struct UILayout
 {
     Rect editText;
     Rect speakStopButton;
-    Rect soundGroup;
-    Rect soundPopup;
-    Rect applyButton;
     Rect prosodyGroup;
     Rect prosodyClean;
     Rect prosodyLQ;
@@ -59,8 +56,6 @@ typedef enum
 
 static WindowPtr      gMainWin  = NULL;
 static ControlHandle  gSpeakBtn = NULL;
-static ControlHandle  gSoundPop = NULL;
-static ControlHandle  gApplyBtn = NULL;
 static ControlHandle  gProsodyClean = NULL;
 static ControlHandle  gProsodyLQ    = NULL;
 static ControlHandle  gProsodyHQ    = NULL;
@@ -91,17 +86,15 @@ static void main_window_switch_active_edit(TEHandle h)
 static void main_window_plan_layout(void)
 {
     Rect content;
-    short margin        = 12;
-    short gutter        = 8;
+    short margin        = 8;
+    short gutter        = 6;
     short buttonW       = 86;
     short buttonH       = 20;
-    short soundPopupW   = 214;
-    short sectionGutter = 10;
+    short sectionGutter = 6;
     short textAreaH     = 120;
-    short soundH        = 48;
-    short prosodyH      = 64;
-    short settingsH     = 90;
-    short tcpH          = 50;
+    short prosodyH      = 62;
+    short settingsH     = 88;
+    short tcpH          = 52;
     short sliderH       = 16;
     short sliderW       = 210;
     short fieldH        = 24;
@@ -128,27 +121,7 @@ static void main_window_plan_layout(void)
             gLayout.speakStopButton.bottom + gutter + textAreaH);
 
     /* Section sequencing mirrors the Windows UI rows. */
-    short y = gLayout.editText.bottom + sectionGutter;
-
-    SetRect(&gLayout.soundGroup,
-            content.left + margin,
-            y,
-            content.right - margin,
-            y + soundH);
-
-    SetRect(&gLayout.soundPopup,
-            gLayout.soundGroup.left + 96,
-            gLayout.soundGroup.top + 16,
-            gLayout.soundGroup.left + 96 + soundPopupW,
-            gLayout.soundGroup.top + 16 + buttonH);
-
-    SetRect(&gLayout.applyButton,
-            gLayout.soundGroup.right - margin - 86,
-            gLayout.soundGroup.top + 14,
-            gLayout.soundGroup.right - margin,
-            gLayout.soundGroup.top + 14 + buttonH);
-
-    y = gLayout.soundGroup.bottom + sectionGutter - 2;
+    short y = gLayout.editText.bottom + gutter;
 
     SetRect(&gLayout.prosodyGroup,
             content.left + margin,
@@ -157,9 +130,9 @@ static void main_window_plan_layout(void)
             y + prosodyH);
 
     {
-        short radioTop        = gLayout.prosodyGroup.top + 30;
-        short radioLeft       = gLayout.prosodyGroup.left + 62;
-        short radioGap        = 22;
+        short radioTop        = gLayout.prosodyGroup.top + 18;
+        short radioLeft       = gLayout.prosodyGroup.left + 54;
+        short radioGap        = 24;
         short radioWidth      = 140;
         short radioCleanWidth = 70;
 
@@ -510,21 +483,8 @@ static void main_window_create_text_edit(void)
 
 static void main_window_create_controls(void)
 {
-    MenuHandle soundMenu = NULL;
-    short soundMenuID = 201;
-    short soundCount = 0;
-
     if (!gMainWin)
         return;
-
-    /* Build runtime menus so we do not rely on absent Toolbox resources. */
-    soundMenu = NewMenu(soundMenuID, "\pSound");
-    if (soundMenu)
-    {
-        AppendMenu(soundMenu, "\p(Default output device)\xA5Line Out\xA5Headphones");
-        InsertMenu(soundMenu, -1);
-        soundCount = CountMItems(soundMenu);
-    }
 
     gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
                            0, 0, 0, pushButProc, kSpeakStopBtnID);
@@ -532,22 +492,6 @@ static void main_window_create_controls(void)
     {
         Boolean isDefault = true;
         SetControlData(gSpeakBtn, kControlEntireControl,
-                       kControlPushButtonDefaultTag,
-                       sizeof(isDefault), &isDefault);
-    }
-
-    if (soundMenu && soundCount > 0)
-    {
-        gSoundPop = NewControl(gMainWin, &gLayout.soundPopup, "\pSound", true,
-                               1, soundMenuID, soundCount, popupMenuProc, 0);
-    }
-
-    gApplyBtn = NewControl(gMainWin, &gLayout.applyButton, "\pApply Audio", true,
-                           0, 0, 0, pushButProc, 0);
-    if (gApplyBtn)
-    {
-        Boolean isDefault = true;
-        SetControlData(gApplyBtn, kControlEntireControl,
                        kControlPushButtonDefaultTag,
                        sizeof(isDefault), &isDefault);
     }
@@ -662,19 +606,10 @@ static void main_window_draw_contents(WindowPtr w)
     RGBBackColor(&kWindowFill);
     main_window_update_text(gTextEdit);
 
-    /* Sound group */
-    main_window_draw_group(&gLayout.soundGroup, "\pSound");
-    RGBForeColor(&kText);
-    RGBBackColor(&kWindowFill);
-    MoveTo(gLayout.soundGroup.left + 16, gLayout.soundGroup.top + 32);
-    DrawString("\pDevice:");
-
     /* Prosody group */
     main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
     RGBForeColor(&kText);
     RGBBackColor(&kWindowFill);
-    MoveTo(gLayout.prosodyGroup.left + 16, gLayout.prosodyGroup.top + 32);
-    DrawString("\pChoose clarity or HL VOX coloration.");
 
     /* Settings group */
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
