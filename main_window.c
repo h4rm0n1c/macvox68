@@ -129,8 +129,8 @@ static const short kMaxTextDestGrowth = 30000;
 static short main_window_layout_height(const LayoutMetrics *m)
 {
     return (short)(m->margin * 2 +
-                   m->buttonH + m->gutter + m->textAreaH + m->sectionGutter +
-                   m->prosodyH + (m->sectionGutter - 2) + m->settingsH +
+                   m->textAreaH + m->gutter + m->prosodyH +
+                   (m->sectionGutter - 2) + m->settingsH +
                    (m->sectionGutter - 2) + m->tcpH);
 }
 
@@ -162,6 +162,7 @@ static void main_window_plan_layout(void)
 {
     Rect content;
     short startY;
+    short prosodyColumnLeft;
     short sectionLeft;
     short y;
     const LayoutMetrics *m = &kLayoutMetrics;
@@ -171,21 +172,15 @@ static void main_window_plan_layout(void)
 
     content = gMainWin->portRect;
     startY = content.top + m->margin;
-    sectionLeft = (short)(content.left + m->margin + m->buttonW + m->gutter);
+    prosodyColumnLeft = (short)(content.left + m->margin);
+    sectionLeft = (short)(prosodyColumnLeft + m->buttonW + m->gutter);
 
-    /* Top row: Speak/Stop (left). */
-    SetRect(&gLayout.speakStopButton,
-            content.left + m->margin,
-            startY,
-            content.left + m->margin + m->buttonW,
-            startY + m->buttonH);
-
-    /* Text area sits beneath the control row. */
+    /* Text area sits beneath the top margin. */
     SetRect(&gLayout.editText,
             content.left + m->margin,
-            gLayout.speakStopButton.bottom + m->gutter,
+            startY,
             content.right - m->margin,
-            gLayout.speakStopButton.bottom + m->gutter + m->textAreaH);
+            startY + m->textAreaH);
     gLayout.editScroll = main_window_text_scroll_rect(&gLayout.editText);
 
     /* Section sequencing mirrors the Windows UI rows. */
@@ -196,6 +191,13 @@ static void main_window_plan_layout(void)
             y,
             content.right - m->margin,
             y + m->prosodyH);
+
+    /* Speak/Stop button sits in the reserved prosody margin. */
+    SetRect(&gLayout.speakStopButton,
+            prosodyColumnLeft,
+            (short)(gLayout.prosodyGroup.top + 12),
+            prosodyColumnLeft + m->buttonW,
+            (short)(gLayout.prosodyGroup.top + 12 + m->buttonH));
 
     {
         short radioTop        = gLayout.prosodyGroup.top + 18;
@@ -677,11 +679,11 @@ static void main_window_draw_contents(WindowPtr w)
     RGBForeColor(&kSeparatorDark);
     RGBBackColor(&kWindowFill);
     PenNormal();
-    MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 6);
-    LineTo(content.right - 8, gLayout.speakStopButton.bottom + 6);
+    MoveTo(content.left + 8, gLayout.editText.bottom + kLayoutMetrics.gutter);
+    LineTo(content.right - 8, gLayout.editText.bottom + kLayoutMetrics.gutter);
     RGBForeColor(&kSeparatorLight);
-    MoveTo(content.left + 8, gLayout.speakStopButton.bottom + 7);
-    LineTo(content.right - 8, gLayout.speakStopButton.bottom + 7);
+    MoveTo(content.left + 8, gLayout.editText.bottom + kLayoutMetrics.gutter + 1);
+    LineTo(content.right - 8, gLayout.editText.bottom + kLayoutMetrics.gutter + 1);
 
     /* Text entry area with a soft border. */
     textFrame = gLayout.editText;
