@@ -16,6 +16,7 @@
 #include "ui_input.h"
 #include "ui_layout.h"
 #include "ui_text_fields.h"
+#include "ui_theme.h"
 #include "ui_windows.h"
 
 #ifndef kClassicPushButtonProc
@@ -71,7 +72,7 @@ static UITextField     gHostField;
 static UITextField     gPortField;
 static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
-static const RGBColor kSettingsGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
+static const UITheme *sTheme = NULL;
 
 static void main_window_demo_log_event(const InputEvent *ev, const char *context)
 {
@@ -332,85 +333,76 @@ static void main_window_create_controls(void)
 
 static void main_window_draw_text_field(const Rect *frame)
 {
-    static const RGBColor kFieldFill = { 0xFFFF, 0xFFFF, 0xFFFF };
-    static const RGBColor kFieldBorder = { 0x4444, 0x4444, 0x4444 };
-    static const RGBColor kFieldInner = { 0x9C9C, 0x9C9C, 0x9C9C };
     Rect inner = *frame;
+    const UITheme *theme = sTheme ? sTheme : ui_theme_get();
 
-    RGBForeColor(&kFieldFill);
-    RGBBackColor(&kFieldFill);
+    RGBForeColor(&theme->colors.textFieldFill);
+    RGBBackColor(&theme->colors.textFieldFill);
     FillRect(frame, &qd.white);
 
-    RGBForeColor(&kFieldBorder);
-    RGBBackColor(&kFieldFill);
+    RGBForeColor(&theme->colors.textFieldBorder);
+    RGBBackColor(&theme->colors.textFieldFill);
     PenNormal();
     FrameRect(frame);
 
     InsetRect(&inner, 1, 1);
-    RGBForeColor(&kFieldInner);
-    RGBBackColor(&kFieldFill);
+    RGBForeColor(&theme->colors.textFieldInner);
+    RGBBackColor(&theme->colors.textFieldFill);
     PenNormal();
     FrameRect(&inner);
 }
 
 static void main_window_draw_group(const Rect *r, ConstStr255Param title)
 {
-    static const RGBColor kGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
-    static const RGBColor kGroupBorder = { 0x4444, 0x4444, 0x4444 };
-    static const RGBColor kGroupInner = { 0xB5B5, 0xB5B5, 0xB5B5 };
-    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect shade = *r;
     Rect inner = *r;
+    const UITheme *theme = sTheme ? sTheme : ui_theme_get();
 
-    RGBForeColor(&kGroupFill);
-    RGBBackColor(&kGroupFill);
+    RGBForeColor(&theme->colors.groupFill);
+    RGBBackColor(&theme->colors.groupFill);
     FillRect(&shade, &qd.white);
 
-    RGBForeColor(&kGroupBorder);
-    RGBBackColor(&kGroupFill);
+    RGBForeColor(&theme->colors.groupBorder);
+    RGBBackColor(&theme->colors.groupFill);
     PenNormal();
     FrameRect(&shade);
 
     InsetRect(&inner, 1, 1);
-    RGBForeColor(&kGroupInner);
-    RGBBackColor(&kGroupFill);
+    RGBForeColor(&theme->colors.groupInner);
+    RGBBackColor(&theme->colors.groupFill);
     PenNormal();
     FrameRect(&inner);
 
     if (title)
     {
-        RGBForeColor(&kText);
-        RGBBackColor(&kGroupFill);
-        MoveTo(r->left + 10, r->top + 14);
+        RGBForeColor(&theme->colors.text);
+        RGBBackColor(&theme->colors.groupFill);
+        MoveTo(r->left + theme->metrics.groupLabelInsetH, r->top + theme->metrics.groupLabelBaseline);
         DrawString(title);
     }
 }
 
 static void main_window_draw_contents(WindowPtr w)
 {
-    static const RGBColor kWindowFill = { 0xD8D8, 0xD8D8, 0xD8D8 };
-    static const RGBColor kSeparatorDark = { 0x7A7A, 0x7A7A, 0x7A7A };
-    static const RGBColor kSeparatorLight = { 0xEEEE, 0xEEEE, 0xEEEE };
-    static const RGBColor kGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
-    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
     Rect content;
     Rect textFrame;
     Rect hostFrame;
     Rect portFrame;
+    const UITheme *theme = sTheme ? sTheme : ui_theme_get();
 
     SetPort(w);
     content = w->portRect;
 
-    RGBForeColor(&kWindowFill);
-    RGBBackColor(&kWindowFill);
+    RGBForeColor(&theme->colors.windowFill);
+    RGBBackColor(&theme->colors.windowFill);
     FillRect(&content, &qd.gray);
 
-    RGBForeColor(&kSeparatorDark);
-    RGBBackColor(&kWindowFill);
+    RGBForeColor(&theme->colors.separatorDark);
+    RGBBackColor(&theme->colors.windowFill);
     PenNormal();
     MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kUILayoutMetrics.gutter);
     LineTo(content.right - 8, gLayout.editText.bottom + kUILayoutMetrics.gutter);
-    RGBForeColor(&kSeparatorLight);
+    RGBForeColor(&theme->colors.separatorLight);
     MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kUILayoutMetrics.gutter + 1);
     LineTo(content.right - 8, gLayout.editText.bottom + kUILayoutMetrics.gutter + 1);
 
@@ -418,21 +410,21 @@ static void main_window_draw_contents(WindowPtr w)
     textFrame = gLayout.editText;
     main_window_draw_text_field(&textFrame);
 
-    RGBForeColor(&kText);
-    RGBBackColor(&kWindowFill);
+    RGBForeColor(&theme->colors.text);
+    RGBBackColor(&theme->colors.windowFill);
     if (gTextArea.field.handle)
         ui_text_scrolling_update_scrollbar(&gTextArea);
     ui_text_field_update(&gTextArea.field, gMainWin);
 
     /* Prosody group */
     main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
-    RGBForeColor(&kText);
-    RGBBackColor(&kWindowFill);
+    RGBForeColor(&theme->colors.text);
+    RGBBackColor(&theme->colors.windowFill);
 
     /* Settings group */
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
-    RGBForeColor(&kText);
-    RGBBackColor(&kWindowFill);
+    RGBForeColor(&theme->colors.text);
+    RGBBackColor(&theme->colors.windowFill);
     MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 30);
     DrawString("\pVolume");
     MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
@@ -450,8 +442,8 @@ static void main_window_draw_contents(WindowPtr w)
 
     /* TCP group */
     main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
-    RGBForeColor(&kText);
-    RGBBackColor(&kWindowFill);
+    RGBForeColor(&theme->colors.text);
+    RGBBackColor(&theme->colors.windowFill);
     MoveTo(gLayout.tcpGroup.left + 36, gLayout.tcpGroup.top + 32);
     DrawString("\pHost:");
     MoveTo(gLayout.portField.left - 36, gLayout.tcpGroup.top + 32);
@@ -472,7 +464,7 @@ static void main_window_draw_contents(WindowPtr w)
     if (gTextArea.scroll)
         Draw1Control(gTextArea.scroll);
 
-    RGBBackColor(&kGroupFill);
+    RGBBackColor(&theme->colors.groupFill);
     if (gVolumeSlider)
         Draw1Control(gVolumeSlider);
     if (gRateSlider)
@@ -520,6 +512,8 @@ void main_window_create(void)
     spec.width  = 508;
     spec.height = main_window_layout_height(&kUILayoutMetrics);
     spec.margin = kUILayoutMetrics.margin;
+
+    sTheme = ui_theme_get();
 
     gMainWin = ui_windows_create_standard(&spec);
 
@@ -595,11 +589,12 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                 SetPort(w);
 
                 {
+                    const RGBColor *sliderBg = sTheme ? &sTheme->colors.groupFill : &ui_theme_get()->colors.groupFill;
                     UIControlTrackingSpec specs[] = {
                         { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL },
-                        { gVolumeSlider, NULL, &kSettingsGroupFill },
-                        { gRateSlider, NULL, &kSettingsGroupFill },
-                        { gPitchSlider, NULL, &kSettingsGroupFill },
+                        { gVolumeSlider, NULL, sliderBg },
+                        { gRateSlider, NULL, sliderBg },
+                        { gPitchSlider, NULL, sliderBg },
                         { gStartBtn, NULL, NULL },
                         { gQuitBtn, NULL, NULL },
                         { gProsodyClean, NULL, NULL },

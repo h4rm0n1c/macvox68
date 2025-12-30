@@ -15,6 +15,12 @@ We will keep the shared layers in **C** for now. The existing build is `project(
 - **`ui/theme`**: Central place for colors, metrics, and spacing constants. The current text helpers define colors locally; moving them into a theme module keeps text fields, sliders, and buttons consistent, and offers a single knob for classic/greyscale palettes. Shared layout metrics now live in `ui_layout.[hc]` to keep margins and common widths in one place.
 - **Text controls integration**: `ui_text_fields` would consume `ui/theme` for colors and padding, expose creation/update/key/idle hooks to `ui/windows`, and register its scrollbar tracking proc with `ui/input` so mouse/scroll events flow through the same dispatcher.
 
+### Theme tokens (MacVox68 look)
+- **Palette (QuickDraw RGB)**: window fill `0xD8D8`, separators `0x7A7A`/`0xEEEE`, group fill `0xF2F2` with borders `0x4444`/`0xB5B5`, text `0x0000`, and text-field chrome `0xFFFF` fill with `0x4444` outer / `0x9C9C` inner strokes.
+- **Control insets and baselines**: text fields inset (H=6, V=4) with a reserved scrollbar gutter of 15px when needed. Group titles sit at `groupLabelInsetH=10` and `groupLabelBaseline=14` relative to the group rect.
+- **Fonts**: system font/size (0,12) for all labels today to match Classic defaults.
+- **Usage**: `ui_theme_get()` exposes the shared palette/metrics; `ui_theme_apply_text_colors()` sets standard fore/back for window text and `ui_theme_apply_field_colors()` sets text-field drawing colors before TE calls. `main_window.c` consumes theme colors for window fills, separators, group frames, and control backgrounds; `ui_text_fields.c` uses theme metrics for view insets/scrollbar reservations and applies the field palette before TE operations.
+
 ## Event flow mapping (System 7 expectations)
 - `WaitNextEvent` feeds `InputDispatcher`, which expands modifier flags and global/local points before routing.
 - `mouseDown`: `FindWindow` runs once in the dispatcher, then events land on the overlay About box (if its window matches) or the main window handler. Local points are precomputed for control hit-testing and `TEClick`.

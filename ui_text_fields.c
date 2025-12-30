@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "ui_text_fields.h"
+#include "ui_theme.h"
 
 #ifndef kControlSliderProc
     #define kControlSliderProc 48
@@ -27,47 +28,42 @@
     #define inThumb 129
 #endif
 
-static const short kTextInsetH = 6;
-static const short kTextInsetV = 4;
-static const short kTextScrollbarW = 15;
 static const short kMaxTextDestGrowth = 30000;
-
 static void ui_text_set_colors(void)
 {
-    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
-    static const RGBColor kBack = { 0xFFFF, 0xFFFF, 0xFFFF };
-
-    RGBForeColor(&kText);
-    RGBBackColor(&kBack);
+    ui_theme_apply_field_colors();
 }
 
 void ui_text_fields_set_colors(void)
 {
-    ui_text_set_colors();
+    ui_theme_apply_field_colors();
 }
 
 void ui_text_field_scroll_rect(const Rect *frame, Rect *outScrollRect)
 {
+    const UITheme *theme = ui_theme_get();
+
     if (!frame || !outScrollRect)
         return;
 
     *outScrollRect = *frame;
-    InsetRect(outScrollRect, kTextInsetH, kTextInsetV);
-    outScrollRect->left = (short)(outScrollRect->right - kTextScrollbarW);
+    InsetRect(outScrollRect, theme->metrics.textInsetH, theme->metrics.textInsetV);
+    outScrollRect->left = (short)(outScrollRect->right - theme->metrics.textScrollbarW);
 }
 
 void ui_text_field_init(UITextField *field, WindowPtr window, const Rect *frame, const char *text, Boolean singleLine, Boolean reserveScrollbar)
 {
     Rect viewRect;
     Rect destRect;
+    const UITheme *theme = ui_theme_get();
 
     if (!field || !window || !frame)
         return;
 
     viewRect = *frame;
-    InsetRect(&viewRect, kTextInsetH, kTextInsetV);
+    InsetRect(&viewRect, theme->metrics.textInsetH, theme->metrics.textInsetV);
     if (reserveScrollbar)
-        viewRect.right = (short)(viewRect.right - kTextScrollbarW);
+        viewRect.right = (short)(viewRect.right - theme->metrics.textScrollbarW);
 
     destRect = viewRect;
     destRect.bottom = (short)(destRect.top + kMaxTextDestGrowth);
@@ -75,8 +71,7 @@ void ui_text_field_init(UITextField *field, WindowPtr window, const Rect *frame,
         destRect.bottom = 32767;
 
     SetPort(window);
-    BackColor(whiteColor);
-    ForeColor(blackColor);
+    ui_theme_apply_field_colors();
 
     field->handle = TENew(&destRect, &viewRect);
     field->singleLine = singleLine;

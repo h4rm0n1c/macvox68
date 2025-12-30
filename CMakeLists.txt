@@ -32,6 +32,7 @@ add_application(MacVox68
     main_window.c
     ui_input.c
     ui_layout.c
+    ui_theme.c
     ui_text_fields.c
     ui_windows.c
     window_ui.c
