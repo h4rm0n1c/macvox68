@@ -42,6 +42,10 @@ add_application(MacVox68
     CREATOR MV68
     )
 
+if(CMAKE_SYSTEM_NAME MATCHES Retro68)
+    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet)
+endif()
+
 if(APPEARANCE_SDK_ROOT)
     target_include_directories(MacVox68 PRIVATE
         "${APPEARANCE_SDK_ROOT}/CIncludes"
