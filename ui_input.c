@@ -194,12 +194,16 @@ Boolean ui_input_dispatcher_handle_event(InputDispatcher *dispatcher, const Even
             return ui_input_dispatch_update(dispatcher, &input);
 
         case osEvt:
-            if (((ev->message >> 24) & 0xFF) == 0x08)
+        {
+            unsigned long subtype = ((unsigned long)ev->message >> 24) & 0xFFUL;
+
+            if (subtype == 0x08)
             {
                 input.wheelDelta = (short)(ev->message & 0xFFFF);
                 return ui_input_dispatch_mouse_wheel(dispatcher, &input, outQuit);
             }
             break;
+        }
 
         default:
             break;

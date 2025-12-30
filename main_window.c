@@ -836,15 +836,21 @@ Boolean main_window_handle_mouse_wheel(const InputEvent *ev, Boolean *outQuit)
     TEPtr te;
     short lineStep;
     short newOffset;
+    GrafPtr savePort;
 
     (void)outQuit;
 
     if (!ev || !gTextArea.field.handle)
         return false;
 
+    savePort = ui_text_set_active_port(gTextArea.field.handle, gMainWin);
+
     te = *gTextArea.field.handle;
     if (!te)
+    {
+        ui_text_restore_port(savePort);
         return false;
+    }
 
     lineStep = te->lineHeight;
     if (lineStep <= 0)
@@ -853,6 +859,8 @@ Boolean main_window_handle_mouse_wheel(const InputEvent *ev, Boolean *outQuit)
     newOffset = (short)(gTextArea.scrollOffset - (ev->wheelDelta * lineStep));
     ui_text_scrolling_apply_scroll(&gTextArea, newOffset);
     ui_text_scrolling_update_scrollbar(&gTextArea);
+
+    ui_text_restore_port(savePort);
     return true;
 }
 

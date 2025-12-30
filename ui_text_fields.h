@@ -29,6 +29,8 @@ void ui_text_field_update(const UITextField *field, WindowPtr window);
 Boolean ui_text_field_key(UITextField *field, WindowPtr window, char c);
 void ui_text_field_idle(const UITextField *field, WindowPtr window);
 void ui_text_fields_set_colors(void);
+GrafPtr ui_text_set_active_port(TEHandle handle, WindowPtr fallback);
+void ui_text_restore_port(GrafPtr savePort);
 
 void ui_text_scrolling_init(UIScrollingText *area, WindowPtr window, const Rect *frame, const Rect *scrollRect, const char *text);
 void ui_text_scrolling_apply_scroll(UIScrollingText *area, short offset);

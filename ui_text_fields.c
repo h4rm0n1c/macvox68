@@ -29,6 +29,34 @@
 #endif
 
 static const short kMaxTextDestGrowth = 30000;
+
+GrafPtr ui_text_set_active_port(TEHandle handle, WindowPtr fallback)
+{
+    GrafPtr savePort = NULL;
+    GrafPtr target   = fallback;
+
+    if (handle)
+    {
+        TEPtr te = *handle;
+
+        if (te && te->inPort)
+            target = te->inPort;
+    }
+
+    if (target)
+    {
+        GetPort(&savePort);
+        SetPort(target);
+    }
+
+    return savePort;
+}
+
+void ui_text_restore_port(GrafPtr savePort)
+{
+    if (savePort)
+        SetPort(savePort);
+}
 static void ui_text_set_colors(void)
 {
     ui_theme_apply_field_colors();
@@ -158,9 +186,14 @@ static short ui_text_scroll_max(const UIScrollingText *area)
 void ui_text_scrolling_apply_scroll(UIScrollingText *area, short offset)
 {
     short max;
+    GrafPtr savePort;
 
     if (!area || !area->field.handle)
         return;
+
+    savePort = ui_text_set_active_port(area->field.handle, NULL);
+
+    TECalText(area->field.handle);
 
     max = ui_text_scroll_max(area);
     if (offset < 0)
@@ -176,14 +209,19 @@ void ui_text_scrolling_apply_scroll(UIScrollingText *area, short offset)
 
     if (area->scroll)
         SetControlValue(area->scroll, area->scrollOffset);
+
+    ui_text_restore_port(savePort);
 }
 
 void ui_text_scrolling_update_scrollbar(UIScrollingText *area)
 {
     short max;
+    GrafPtr savePort;
 
     if (!area || !area->field.handle || !area->scroll)
         return;
+
+    savePort = ui_text_set_active_port(area->field.handle, NULL);
 
     TECalText(area->field.handle);
 
@@ -194,6 +232,8 @@ void ui_text_scrolling_update_scrollbar(UIScrollingText *area)
         ui_text_scrolling_apply_scroll(area, max);
     else
         SetControlValue(area->scroll, area->scrollOffset);
+
+    ui_text_restore_port(savePort);
 }
 
 void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
@@ -205,13 +245,19 @@ void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
     short caretBottom;
     short contentTop;
     short contentBottom;
+    GrafPtr savePort;
 
     if (!area || !area->field.handle)
         return;
 
+    savePort = ui_text_set_active_port(area->field.handle, NULL);
+
     te = *area->field.handle;
     if (!te)
+    {
+        ui_text_restore_port(savePort);
         return;
+    }
 
     TECalText(area->field.handle);
     caret = TEGetPoint(te->selEnd, area->field.handle);
@@ -231,6 +277,8 @@ void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
     {
         ui_text_scrolling_apply_scroll(area, (short)(caretBottom - viewH));
     }
+
+    ui_text_restore_port(savePort);
 }
 
 pascal void ui_text_scrolling_track(ControlHandle control, short part)
@@ -292,13 +340,18 @@ pascal void ui_text_scrolling_track(ControlHandle control, short part)
 void ui_text_field_update(const UITextField *field, WindowPtr window)
 {
     Rect view;
+    GrafPtr savePort;
 
     if (!field || !field->handle || !window)
         return;
 
+    savePort = ui_text_set_active_port(field->handle, window);
+
     ui_text_set_colors();
     view = (**field->handle).viewRect;
     TEUpdate(&view, field->handle);
+
+    ui_text_restore_port(savePort);
 }
 
 Boolean ui_text_field_get_text(const UITextField *field, char *buffer, short maxLen)
