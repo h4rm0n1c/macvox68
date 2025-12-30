@@ -14,7 +14,8 @@ typedef enum InputEventType
     kInputEventNone = 0,
     kInputEventMouseDown,
     kInputEventKeyDown,
-    kInputEventUpdate
+    kInputEventUpdate,
+    kInputEventMouseWheel
 } InputEventType;
 
 typedef struct InputEvent
@@ -24,6 +25,7 @@ typedef struct InputEvent
     Point          global;
     Point          local;
     char           keyChar;
+    short          wheelDelta;
     Boolean        commandDown;
     Boolean        shiftDown;
     Boolean        optionDown;
@@ -33,12 +35,14 @@ typedef struct InputEvent
 
 typedef Boolean (*InputMouseHandler)(const InputEvent *ev, Boolean *outQuit);
 typedef Boolean (*InputKeyHandler)(const InputEvent *ev, Boolean *outQuit);
+typedef Boolean (*InputMouseWheelHandler)(const InputEvent *ev, Boolean *outQuit);
 typedef void (*InputUpdateHandler)(const InputEvent *ev);
 
 typedef struct InputWindowHandlers
 {
     InputMouseHandler  onMouseDown;
     InputKeyHandler    onKeyDown;
+    InputMouseWheelHandler onMouseWheel;
     InputUpdateHandler onUpdate;
 } InputWindowHandlers;
 

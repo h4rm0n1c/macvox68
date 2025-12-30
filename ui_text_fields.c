@@ -199,6 +199,12 @@ void ui_text_scrolling_update_scrollbar(UIScrollingText *area)
 void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
 {
     TEPtr te;
+    short viewH;
+    Point caret;
+    short caretTop;
+    short caretBottom;
+    short contentTop;
+    short contentBottom;
 
     if (!area || !area->field.handle)
         return;
@@ -207,13 +213,23 @@ void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
     if (!te)
         return;
 
-    if (te->selRect.top < te->viewRect.top)
+    TECalText(area->field.handle);
+    caret = TEGetPoint(te->selEnd, area->field.handle);
+    viewH = ui_text_view_height(area->field.handle);
+
+    caretTop = (short)(caret.v + area->scrollOffset - te->lineHeight);
+    caretBottom = (short)(caret.v + area->scrollOffset + te->lineHeight);
+
+    contentTop = area->scrollOffset;
+    contentBottom = (short)(contentTop + viewH);
+
+    if (caretTop < contentTop)
     {
-        ui_text_scrolling_apply_scroll(area, (short)(area->scrollOffset + (te->selRect.top - te->viewRect.top)));
+        ui_text_scrolling_apply_scroll(area, caretTop);
     }
-    else if (te->selRect.bottom > te->viewRect.bottom)
+    else if (caretBottom > contentBottom)
     {
-        ui_text_scrolling_apply_scroll(area, (short)(area->scrollOffset + (te->selRect.bottom - te->viewRect.bottom)));
+        ui_text_scrolling_apply_scroll(area, (short)(caretBottom - viewH));
     }
 }
 

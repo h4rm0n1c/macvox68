@@ -89,6 +89,28 @@ static Boolean ui_input_dispatch_key(InputDispatcher *dispatcher, InputEvent *ev
     return false;
 }
 
+static Boolean ui_input_dispatch_mouse_wheel(InputDispatcher *dispatcher, InputEvent *ev, Boolean *outQuit)
+{
+    if (!dispatcher || !ev)
+        return false;
+
+    ev->window = FrontWindow();
+    ev->type = kInputEventMouseWheel;
+    ui_input_prepare_points(ev);
+
+    if (dispatcher->overlayIsWindow && dispatcher->overlayIsWindow(ev->window) &&
+        dispatcher->overlayHandlers.onMouseWheel)
+    {
+        if (dispatcher->overlayHandlers.onMouseWheel(ev, outQuit))
+            return true;
+    }
+
+    if (dispatcher->mainHandlers.onMouseWheel)
+        return dispatcher->mainHandlers.onMouseWheel(ev, outQuit);
+
+    return false;
+}
+
 static Boolean ui_input_dispatch_update(InputDispatcher *dispatcher, InputEvent *ev)
 {
     if (!dispatcher || !ev)
@@ -122,6 +144,7 @@ void ui_input_dispatcher_init(InputDispatcher *dispatcher, const InputWindowHand
     dispatcher->mainHandlers = *mainHandlers;
     dispatcher->overlayHandlers.onMouseDown = NULL;
     dispatcher->overlayHandlers.onKeyDown = NULL;
+    dispatcher->overlayHandlers.onMouseWheel = NULL;
     dispatcher->overlayHandlers.onUpdate = NULL;
     dispatcher->overlayIsWindow = NULL;
 }
@@ -149,6 +172,7 @@ Boolean ui_input_dispatcher_handle_event(InputDispatcher *dispatcher, const Even
     input.global.h = input.global.v = 0;
     input.local = input.global;
     input.keyChar = 0;
+    input.wheelDelta = 0;
     input.commandDown = false;
     input.shiftDown = false;
     input.optionDown = false;
@@ -168,6 +192,14 @@ Boolean ui_input_dispatcher_handle_event(InputDispatcher *dispatcher, const Even
 
         case updateEvt:
             return ui_input_dispatch_update(dispatcher, &input);
+
+        case osEvt:
+            if (((ev->message >> 24) & 0xFF) == 0x08)
+            {
+                input.wheelDelta = (short)(ev->message & 0xFFFF);
+                return ui_input_dispatch_mouse_wheel(dispatcher, &input, outQuit);
+            }
+            break;
 
         default:
             break;

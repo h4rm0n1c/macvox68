@@ -84,6 +84,7 @@ static Boolean        gServerSuggested = false;
 static void main_window_append_line(const char *text)
 {
     TEHandle te;
+    GrafPtr savePort = NULL;
 
     if (!text || !gMainWin)
         return;
@@ -92,12 +93,17 @@ static void main_window_append_line(const char *text)
     if (!te)
         return;
 
+    GetPort(&savePort);
     SetPort(gMainWin);
+    ui_text_fields_set_colors();
     TESetSelect((**te).teLength, (**te).teLength, te);
     TEInsert(text, strlen(text), te);
     TEInsert("\r", 1, te);
     ui_text_scrolling_update_scrollbar(&gTextArea);
     ui_text_scrolling_scroll_selection_into_view(&gTextArea);
+
+    if (savePort)
+        SetPort(savePort);
 }
 
 static UInt16 main_window_read_port_field(Boolean *ok)
@@ -823,6 +829,31 @@ Boolean main_window_handle_key(const InputEvent *ev, Boolean *outQuit)
     }
 
     return false;
+}
+
+Boolean main_window_handle_mouse_wheel(const InputEvent *ev, Boolean *outQuit)
+{
+    TEPtr te;
+    short lineStep;
+    short newOffset;
+
+    (void)outQuit;
+
+    if (!ev || !gTextArea.field.handle)
+        return false;
+
+    te = *gTextArea.field.handle;
+    if (!te)
+        return false;
+
+    lineStep = te->lineHeight;
+    if (lineStep <= 0)
+        lineStep = 12;
+
+    newOffset = (short)(gTextArea.scrollOffset - (ev->wheelDelta * lineStep));
+    ui_text_scrolling_apply_scroll(&gTextArea, newOffset);
+    ui_text_scrolling_update_scrollbar(&gTextArea);
+    return true;
 }
 
 void main_window_idle(void)
