@@ -30,6 +30,7 @@ add_application(MacVox68
     about_box.c
     main.c
     main_window.c
+    network.c
     ui_input.c
     ui_layout.c
     ui_theme.c

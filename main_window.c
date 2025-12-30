@@ -8,11 +8,14 @@
 #include <Menus.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
+#include <Memory.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "about_box.h"
 #include "main_window.h"
+#include "network.h"
 #include "ui_input.h"
 #include "ui_layout.h"
 #include "ui_text_fields.h"
@@ -27,6 +30,9 @@
 #endif
 #ifndef kControlSliderProc
     #define kControlSliderProc 48
+#endif
+#ifndef kControlButtonPart
+    #define kControlButtonPart 10
 #endif
 enum
 {
@@ -73,6 +79,126 @@ static UITextField     gPortField;
 static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
 static const UITheme *sTheme = NULL;
+static Boolean        gServerSuggested = false;
+
+static void main_window_append_line(const char *text)
+{
+    TEHandle te;
+
+    if (!text || !gMainWin)
+        return;
+
+    te = gTextArea.field.handle;
+    if (!te)
+        return;
+
+    SetPort(gMainWin);
+    TESetSelect((**te).teLength, (**te).teLength, te);
+    TEInsert(text, strlen(text), te);
+    TEInsert("\r", 1, te);
+    ui_text_scrolling_scroll_selection_into_view(&gTextArea);
+}
+
+static UInt16 main_window_read_port_field(Boolean *ok)
+{
+    char buffer[16];
+    long portValue;
+
+    if (ok)
+        *ok = false;
+
+    if (!ui_text_field_get_text(&gPortField, buffer, sizeof(buffer)))
+        return 0;
+
+    portValue = strtol(buffer, NULL, 10);
+    if (portValue > 0 && portValue <= 65535)
+    {
+        if (ok)
+            *ok = true;
+        return (UInt16)portValue;
+    }
+
+    return 0;
+}
+
+static void main_window_update_start_button(void)
+{
+    if (gStartBtn)
+    {
+        if (network_is_running())
+            SetControlTitle(gStartBtn, "\pStop Server");
+        else
+            SetControlTitle(gStartBtn, "\pStart Server");
+    }
+}
+
+static void main_window_handle_network_data(const char *data, Size len)
+{
+    char buffer[NETWORK_READ_BUFFER];
+    Size copyLen;
+
+    if (!data || len <= 0)
+        return;
+
+    copyLen = len;
+    if (copyLen >= (Size)sizeof(buffer))
+        copyLen = (Size)(sizeof(buffer) - 1);
+
+    BlockMove(data, buffer, copyLen);
+    buffer[copyLen] = '\0';
+
+    main_window_append_line(buffer);
+}
+
+static void main_window_handle_network_log(const char *line)
+{
+    if (line)
+        main_window_append_line(line);
+}
+
+static void main_window_toggle_server(void)
+{
+    Boolean portOK = false;
+
+    if (network_is_running())
+    {
+        network_stop_server();
+        main_window_update_start_button();
+        main_window_append_line("TCP server stopped.");
+        return;
+    }
+    else
+    {
+        UInt16 port = main_window_read_port_field(&portOK);
+        char host[64];
+
+        if (!portOK)
+        {
+            main_window_append_line("Port must be between 1 and 65535.");
+            return;
+        }
+
+        if (!ui_text_field_get_text(&gHostField, host, sizeof(host)))
+            strcpy(host, "127.0.0.1");
+
+        if (network_start_server(host, port))
+        {
+            main_window_update_start_button();
+            if (!gServerSuggested)
+            {
+                char message[64];
+                snprintf(message, sizeof(message), "Status port reserved at %u.", (unsigned int)(port + 1));
+                main_window_append_line(message);
+                gServerSuggested = true;
+            }
+            main_window_append_line("TCP server listening for NetCat input.");
+        }
+        else
+        {
+            main_window_append_line("Could not start Open Transport server.");
+        }
+    }
+}
 
 static void main_window_demo_log_event(const InputEvent *ev, const char *context)
 {
@@ -525,9 +651,11 @@ void main_window_create(void)
     main_window_plan_layout();
     main_window_create_text_edit();
     main_window_create_controls();
+    network_set_handlers(main_window_handle_network_data, main_window_handle_network_log);
 
     /* Speech-related controls will be updated once the engine is present. */
     main_window_update_control_enabling(kSpeechIdleState);
+    main_window_update_start_button();
 
     ShowWindow(gMainWin);
 }
@@ -602,9 +730,17 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                         { gProsodyClean, NULL, NULL },
                         { gProsodyLQ, NULL, NULL }
                     };
+                    ControlHandle hitControl = NULL;
+                    short hitPart = 0;
 
-                    if (ui_windows_track_hit_control(w, local, specs, (short)(sizeof(specs) / sizeof(specs[0]))))
+                    if (ui_windows_track_hit_control(w, local, specs, (short)(sizeof(specs) / sizeof(specs[0])), &hitControl, &hitPart))
+                    {
+                        if (hitControl == gStartBtn && hitPart != 0)
+                            main_window_toggle_server();
+                        else if (hitControl == gQuitBtn && hitPart != 0 && outQuit)
+                            *outQuit = true;
                         return true;
+                    }
                 }
 
                 if (gTextArea.field.handle)

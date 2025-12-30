@@ -1,6 +1,7 @@
 #include <Types.h>
 
 #include "ui_app.h"
+#include "network.h"
 
 int main(void)
 {
@@ -10,6 +11,8 @@ int main(void)
     {
         /* Future: tcp_poll(); speech_pump(); */
     }
+
+    network_shutdown();
 
     return 0;
 }

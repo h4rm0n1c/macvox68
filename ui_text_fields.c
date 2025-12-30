@@ -285,6 +285,35 @@ void ui_text_field_update(const UITextField *field, WindowPtr window)
     TEUpdate(&view, field->handle);
 }
 
+Boolean ui_text_field_get_text(const UITextField *field, char *buffer, short maxLen)
+{
+    TEPtr te;
+    long len;
+    Ptr text;
+
+    if (!field || !field->handle || !buffer || maxLen <= 0)
+        return false;
+
+    te = *field->handle;
+    if (!te)
+        return false;
+
+    len = te->teLength;
+    if (len >= maxLen)
+        len = maxLen - 1;
+
+    text = *(te->hText);
+    if (!text)
+        return false;
+
+    HLock(te->hText);
+    BlockMove(text, buffer, len);
+    HUnlock(te->hText);
+
+    buffer[len] = '\0';
+    return true;
+}
+
 static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window, char c)
 {
     TEPtr te;

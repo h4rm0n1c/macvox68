@@ -36,6 +36,7 @@ void ui_text_scrolling_update_scrollbar(UIScrollingText *area);
 void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area);
 pascal void ui_text_scrolling_track(ControlHandle control, short part);
 Boolean ui_text_scrolling_handle_key(UIScrollingText *area, WindowPtr window, char c);
+Boolean ui_text_field_get_text(const UITextField *field, char *buffer, short maxLen);
 
 #ifdef __cplusplus
 }
