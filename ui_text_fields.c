@@ -314,6 +314,13 @@ Boolean ui_text_field_get_text(const UITextField *field, char *buffer, short max
     return true;
 }
 
+static Boolean ui_text_is_navigation_character(char c)
+{
+    unsigned char uc = (unsigned char)c;
+
+    return (Boolean)((uc >= 0x1C && uc <= 0x1F));
+}
+
 static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window, char c)
 {
     TEPtr te;
@@ -321,6 +328,7 @@ static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window
     Boolean isReturn;
     Boolean isTab;
     Boolean isPrintable;
+    Boolean isNavigation;
     unsigned char uc;
 
     if (!handle)
@@ -331,13 +339,17 @@ static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window
         return false;
 
     uc         = (unsigned char)c;
-    isBackspace = (Boolean)(c == 0x08 || c == 0x7F);
-    isReturn    = (Boolean)(c == '\r' || c == '\n');
-    isTab       = (Boolean)(c == '\t');
-    isPrintable = (Boolean)(uc >= 0x20);
+    isBackspace  = (Boolean)(c == 0x08 || c == 0x7F);
+    isReturn     = (Boolean)(c == '\r' || c == '\n');
+    isTab        = (Boolean)(c == '\t');
+    isPrintable  = (Boolean)(uc >= 0x20);
+    isNavigation = ui_text_is_navigation_character(c);
 
-    if (!isBackspace && !isReturn && !isTab && !isPrintable)
+    if (!isBackspace && !isReturn && !isTab && !isPrintable && !isNavigation)
         return false;
+
+    if (isNavigation)
+        return true;
 
     if (te->crOnly)
     {
