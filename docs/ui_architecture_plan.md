@@ -11,8 +11,8 @@ We will keep the shared layers in **C** for now. The existing build is `project(
 
 ## Proposed modules
 - **`ui/input`**: An event dispatcher that wraps `WaitNextEvent`, normalizes quit/menu shortcuts, and routes to window-level controllers. This replaces the ad-hoc switch in `window_ui.c` with a table of handlers per event class and allows later insertion of TCP/speech polling without bloating the main loop.
-- **`ui/windows`**: Small structs that pair a window handle with its controller callbacks (create, update, mouse, key, idle). `main_window.c` already acts as one such controller; we can lift its signatures into a header and keep per-window private state in accompanying `*_priv.h` files.
-- **`ui/theme`**: Central place for colors, metrics, and spacing constants. The current text helpers define colors locally; moving them into a theme module keeps text fields, sliders, and buttons consistent, and offers a single knob for classic/greyscale palettes.
+- **`ui/windows`**: Small structs that pair a window handle with its controller callbacks (create, update, mouse, key, idle). `main_window.c` already acts as one such controller; we can lift its signatures into a header and keep per-window private state in accompanying `*_priv.h` files. A first step now exists in `ui_windows.[hc]` to centralize centered window creation, `BeginUpdate`/`EndUpdate` wrapping, and `FindControl`/`TrackControl` helpers.
+- **`ui/theme`**: Central place for colors, metrics, and spacing constants. The current text helpers define colors locally; moving them into a theme module keeps text fields, sliders, and buttons consistent, and offers a single knob for classic/greyscale palettes. Shared layout metrics now live in `ui_layout.[hc]` to keep margins and common widths in one place.
 - **Text controls integration**: `ui_text_fields` would consume `ui/theme` for colors and padding, expose creation/update/key/idle hooks to `ui/windows`, and register its scrollbar tracking proc with `ui/input` so mouse/scroll events flow through the same dispatcher.
 
 ## Event flow mapping (System 7 expectations)

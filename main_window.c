@@ -14,7 +14,9 @@
 #include "about_box.h"
 #include "main_window.h"
 #include "ui_input.h"
+#include "ui_layout.h"
 #include "ui_text_fields.h"
+#include "ui_windows.h"
 
 #ifndef kClassicPushButtonProc
     #define kClassicPushButtonProc 0
@@ -49,24 +51,6 @@ typedef struct UILayout
     Rect portField;
 } UILayout;
 
-typedef struct LayoutMetrics
-{
-    short margin;
-    short gutter;
-    short buttonW;
-    short buttonH;
-    short sectionGutter;
-    short textAreaH;
-    short prosodyH;
-    short settingsH;
-    short tcpH;
-    short sliderH;
-    short sliderW;
-    short fieldH;
-    short fieldW;
-    short portFieldW;
-} LayoutMetrics;
-
 typedef enum
 {
     kSpeechIdleState,
@@ -87,27 +71,7 @@ static UITextField     gHostField;
 static UITextField     gPortField;
 static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
-static const LayoutMetrics kLayoutMetrics = {
-    8,   /* margin */
-    6,   /* gutter */
-    86,  /* buttonW */
-    20,  /* buttonH */
-    6,   /* sectionGutter */
-    120, /* textAreaH */
-    57,  /* prosodyH */
-    100, /* settingsH */
-    52,  /* tcpH */
-    16,  /* sliderH */
-    210, /* sliderW */
-    24,  /* fieldH */
-    152, /* fieldW */
-    64   /* portFieldW */
-};
-
 static const RGBColor kSettingsGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
-
-static const short kStartButtonW = 104;
-static const short kButtonInset = 5;
 
 static void main_window_demo_log_event(const InputEvent *ev, const char *context)
 {
@@ -145,7 +109,7 @@ static void main_window_demo_log_event(const InputEvent *ev, const char *context
     }
 }
 
-static short main_window_layout_height(const LayoutMetrics *m)
+static short main_window_layout_height(const UILayoutMetrics *m)
 {
     return (short)(m->margin * 2 +
                    m->textAreaH + m->gutter + m->prosodyH +
@@ -178,7 +142,7 @@ static void main_window_plan_layout(void)
     short buttonCenter;
     short buttonStackGap;
     short y;
-    const LayoutMetrics *m = &kLayoutMetrics;
+    const UILayoutMetrics *m = &kUILayoutMetrics;
 
     if (!gMainWin)
         return;
@@ -186,8 +150,8 @@ static void main_window_plan_layout(void)
     content = gMainWin->portRect;
     startY = content.top + m->margin;
     buttonColumnLeft  = (short)(content.left + m->margin);
-    buttonColumnWidth = kStartButtonW;
-    buttonLeft        = (short)(buttonColumnLeft + kButtonInset);
+    buttonColumnWidth = kUILayoutStartButtonW;
+    buttonLeft        = (short)(buttonColumnLeft + kUILayoutButtonInset);
     buttonCenter      = (short)(buttonLeft + (buttonColumnWidth / 2));
     buttonStackGap    = (short)(m->gutter + 4);
     sectionLeft       = (short)(buttonLeft + buttonColumnWidth + m->gutter + 5);
@@ -352,40 +316,18 @@ static void main_window_create_controls(void)
     if (!gMainWin)
         return;
 
-    gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
-                           0, 0, 0, pushButProc, kSpeakStopBtnID);
-    if (gSpeakBtn)
-    {
-        Boolean isDefault = true;
-        SetControlData(gSpeakBtn, kControlEntireControl,
-                       kControlPushButtonDefaultTag,
-                       sizeof(isDefault), &isDefault);
-    }
+    gSpeakBtn = ui_windows_new_button(gMainWin, &gLayout.speakStopButton, "\pSpeak", true, kSpeakStopBtnID);
 
-    gProsodyClean = NewControl(gMainWin, &gLayout.prosodyClean, "\pClean", true,
-                               1, 0, 0, radioButProc, 0);
-    gProsodyLQ = NewControl(gMainWin, &gLayout.prosodyLQ, "\pHL VOX Prosody", true,
-                            0, 0, 0, radioButProc, 0);
+    gProsodyClean = ui_windows_new_radio(gMainWin, &gLayout.prosodyClean, "\pClean", 1);
+    gProsodyLQ = ui_windows_new_radio(gMainWin, &gLayout.prosodyLQ, "\pHL VOX Prosody", 0);
 
-    gVolumeSlider = NewControl(gMainWin, &gLayout.volumeSlider, "\p", true,
-                               100, 0, 100, kControlSliderProc, 0);
-    gRateSlider = NewControl(gMainWin, &gLayout.rateSlider, "\p", true,
-                             10, -10, 10, kControlSliderProc, 0);
-    gPitchSlider = NewControl(gMainWin, &gLayout.pitchSlider, "\p", true,
-                              0, -10, 10, kControlSliderProc, 0);
+    gVolumeSlider = ui_windows_new_slider(gMainWin, &gLayout.volumeSlider, 100, 0, 100);
+    gRateSlider = ui_windows_new_slider(gMainWin, &gLayout.rateSlider, 10, -10, 10);
+    gPitchSlider = ui_windows_new_slider(gMainWin, &gLayout.pitchSlider, 0, -10, 10);
 
-    gStartBtn = NewControl(gMainWin, &gLayout.startButton, "\pStart Server", true,
-                           0, 0, 0, pushButProc, 0);
-    if (gStartBtn)
-    {
-        Boolean isDefault = true;
-        SetControlData(gStartBtn, kControlEntireControl,
-                       kControlPushButtonDefaultTag,
-                       sizeof(isDefault), &isDefault);
-    }
+    gStartBtn = ui_windows_new_button(gMainWin, &gLayout.startButton, "\pStart Server", true, 0);
 
-    gQuitBtn = NewControl(gMainWin, &gLayout.quitButton, "\pQuit", true,
-                          0, 0, 0, pushButProc, 0);
+    gQuitBtn = ui_windows_new_button(gMainWin, &gLayout.quitButton, "\pQuit", false, 0);
 }
 
 static void main_window_draw_text_field(const Rect *frame)
@@ -466,11 +408,11 @@ static void main_window_draw_contents(WindowPtr w)
     RGBForeColor(&kSeparatorDark);
     RGBBackColor(&kWindowFill);
     PenNormal();
-    MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kLayoutMetrics.gutter);
-    LineTo(content.right - 8, gLayout.editText.bottom + kLayoutMetrics.gutter);
+    MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kUILayoutMetrics.gutter);
+    LineTo(content.right - 8, gLayout.editText.bottom + kUILayoutMetrics.gutter);
     RGBForeColor(&kSeparatorLight);
-    MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kLayoutMetrics.gutter + 1);
-    LineTo(content.right - 8, gLayout.editText.bottom + kLayoutMetrics.gutter + 1);
+    MoveTo(gLayout.prosodyGroup.left, gLayout.editText.bottom + kUILayoutMetrics.gutter + 1);
+    LineTo(content.right - 8, gLayout.editText.bottom + kUILayoutMetrics.gutter + 1);
 
     /* Text entry area with a soft border. */
     textFrame = gLayout.editText;
@@ -543,6 +485,12 @@ static void main_window_draw_contents(WindowPtr w)
         Draw1Control(gProsodyLQ);
 }
 
+static void main_window_draw_proc(WindowPtr w, void *refCon)
+{
+    (void)refCon;
+    main_window_draw_contents(w);
+}
+
 static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 {
     short menuID = HiWord(menuChoice);
@@ -566,48 +514,14 @@ static Boolean main_window_handle_menu(long menuChoice, Boolean *outQuit)
 
 void main_window_create(void)
 {
-    Rect bounds;
-    Rect r;
-    short width = 508;
-    short height;
-    short topInset;
-    short bottomInset = kLayoutMetrics.margin;
+    UIWindowSpec spec;
 
-    bounds = qd.screenBits.bounds;
-    height = main_window_layout_height(&kLayoutMetrics);
-    topInset = GetMBarHeight() + bottomInset + 16;
+    spec.title  = "\pMacVox68";
+    spec.width  = 508;
+    spec.height = main_window_layout_height(&kUILayoutMetrics);
+    spec.margin = kUILayoutMetrics.margin;
 
-    {
-        short availableTop    = bounds.top + topInset;
-        short availableBottom = bounds.bottom - bottomInset;
-        short availableHeight = availableBottom - availableTop;
-        short startY;
-
-        if (availableHeight > height)
-            startY = (short)(availableTop + (availableHeight - height) / 2);
-        else
-            startY = availableTop;
-
-        SetRect(&r,
-                (short)((bounds.left + bounds.right - width) / 2),
-                startY,
-                (short)((bounds.left + bounds.right + width) / 2),
-                (short)(startY + height));
-
-        if (r.bottom > availableBottom)
-            OffsetRect(&r, 0, (short)(availableBottom - r.bottom));
-    }
-
-    gMainWin = (WindowPtr)NewCWindow(
-        NULL,
-        &r,
-        "\pMacVox68",
-        true,
-        documentProc,
-        (WindowPtr)-1L,
-        true,
-        0
-    );
+    gMainWin = ui_windows_create_standard(&spec);
 
     if (!gMainWin)
         return;
@@ -626,20 +540,12 @@ void main_window_create(void)
 
 void main_window_handle_update(const InputEvent *ev)
 {
-    GrafPtr savePort;
     WindowPtr w = ev ? ev->window : NULL;
 
     if (!w)
         return;
 
-    GetPort(&savePort);
-    SetPort(w);
-
-    BeginUpdate(w);
-    main_window_draw_contents(w);
-    EndUpdate(w);
-
-    SetPort(savePort);
+    ui_windows_draw(w, main_window_draw_proc, NULL);
 }
 
 Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
@@ -686,32 +592,22 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
             }
             else
             {
-                ControlHandle c;
-                short cpart;
-
                 SetPort(w);
 
-                cpart = FindControl(local, w, &c);
-                if (cpart)
                 {
-                    Boolean setGroupFill =
-                        (c == gVolumeSlider || c == gRateSlider || c == gPitchSlider);
-                    RGBColor prevBack;
+                    UIControlTrackingSpec specs[] = {
+                        { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL },
+                        { gVolumeSlider, NULL, &kSettingsGroupFill },
+                        { gRateSlider, NULL, &kSettingsGroupFill },
+                        { gPitchSlider, NULL, &kSettingsGroupFill },
+                        { gStartBtn, NULL, NULL },
+                        { gQuitBtn, NULL, NULL },
+                        { gProsodyClean, NULL, NULL },
+                        { gProsodyLQ, NULL, NULL }
+                    };
 
-                    if (setGroupFill)
-                        GetBackColor(&prevBack);
-
-                    if (setGroupFill)
-                        RGBBackColor(&kSettingsGroupFill);
-
-                    if (c == gTextArea.scroll)
-                        (void)TrackControl(c, local, (ControlActionUPP)ui_text_scrolling_track);
-                    else
-                        (void)TrackControl(c, local, NULL);
-
-                    if (setGroupFill)
-                        RGBBackColor(&prevBack);
-                    return true;
+                    if (ui_windows_track_hit_control(w, local, specs, (short)(sizeof(specs) / sizeof(specs[0]))))
+                        return true;
                 }
 
                 if (gTextArea.field.handle)

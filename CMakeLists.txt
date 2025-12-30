@@ -31,7 +31,9 @@ add_application(MacVox68
     main.c
     main_window.c
     ui_input.c
+    ui_layout.c
     ui_text_fields.c
+    ui_windows.c
     window_ui.c
     macvox68_icon.r
     TYPE APPL
