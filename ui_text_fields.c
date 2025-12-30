@@ -1,0 +1,422 @@
+#include <Quickdraw.h>
+#include <Controls.h>
+#include <ControlDefinitions.h>
+#include <TextEdit.h>
+#include <ToolUtils.h>
+#include <Memory.h>
+#include <string.h>
+
+#include "ui_text_fields.h"
+
+#ifndef kControlSliderProc
+    #define kControlSliderProc 48
+#endif
+#ifndef inUpButton
+    #define inUpButton 20
+#endif
+#ifndef inDownButton
+    #define inDownButton 21
+#endif
+#ifndef inPageUp
+    #define inPageUp 22
+#endif
+#ifndef inPageDown
+    #define inPageDown 23
+#endif
+#ifndef inThumb
+    #define inThumb 129
+#endif
+
+static const short kTextInsetH = 6;
+static const short kTextInsetV = 4;
+static const short kTextScrollbarW = 15;
+static const short kMaxTextDestGrowth = 30000;
+
+static void ui_text_set_colors(void)
+{
+    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
+    static const RGBColor kBack = { 0xFFFF, 0xFFFF, 0xFFFF };
+
+    RGBForeColor(&kText);
+    RGBBackColor(&kBack);
+}
+
+void ui_text_fields_set_colors(void)
+{
+    ui_text_set_colors();
+}
+
+void ui_text_field_scroll_rect(const Rect *frame, Rect *outScrollRect)
+{
+    if (!frame || !outScrollRect)
+        return;
+
+    *outScrollRect = *frame;
+    InsetRect(outScrollRect, kTextInsetH, kTextInsetV);
+    outScrollRect->left = (short)(outScrollRect->right - kTextScrollbarW);
+}
+
+void ui_text_field_init(UITextField *field, WindowPtr window, const Rect *frame, const char *text, Boolean singleLine, Boolean reserveScrollbar)
+{
+    Rect viewRect;
+    Rect destRect;
+
+    if (!field || !window || !frame)
+        return;
+
+    viewRect = *frame;
+    InsetRect(&viewRect, kTextInsetH, kTextInsetV);
+    if (reserveScrollbar)
+        viewRect.right = (short)(viewRect.right - kTextScrollbarW);
+
+    destRect = viewRect;
+    destRect.bottom = (short)(destRect.top + kMaxTextDestGrowth);
+    if (destRect.bottom < destRect.top)
+        destRect.bottom = 32767;
+
+    SetPort(window);
+    BackColor(whiteColor);
+    ForeColor(blackColor);
+
+    field->handle = TENew(&destRect, &viewRect);
+    field->singleLine = singleLine;
+
+    if (field->handle)
+    {
+        (**field->handle).viewRect = viewRect;
+
+        if (singleLine)
+        {
+            Rect singleRect = viewRect;
+            short lineH    = (**field->handle).lineHeight;
+            short slack    = (short)((singleRect.bottom - singleRect.top) - lineH);
+
+            if (slack > 0)
+            {
+                singleRect.top += slack / 2;
+                singleRect.bottom = (short)(singleRect.top + lineH);
+            }
+            else
+            {
+                singleRect.bottom = (short)(singleRect.top + lineH);
+            }
+
+            (**field->handle).destRect = singleRect;
+            (**field->handle).viewRect = singleRect;
+            (**field->handle).crOnly   = true;
+        }
+        else
+        {
+            (**field->handle).destRect = destRect;
+            (**field->handle).viewRect = viewRect;
+        }
+
+        if (text)
+            TEInsert(text, strlen(text), field->handle);
+    }
+}
+
+static short ui_text_view_height(TEHandle handle)
+{
+    TEPtr te;
+
+    if (!handle)
+        return 0;
+
+    te = *handle;
+    if (!te)
+        return 0;
+
+    return (short)(te->viewRect.bottom - te->viewRect.top);
+}
+
+static short ui_text_height(TEHandle handle)
+{
+    TEPtr te;
+
+    if (!handle)
+        return 0;
+
+    te = *handle;
+    if (!te)
+        return 0;
+
+    return (short)(te->nLines * te->lineHeight);
+}
+
+static short ui_text_scroll_max(const UIScrollingText *area)
+{
+    short viewH;
+    short textH;
+    short max;
+
+    if (!area || !area->field.handle)
+        return 0;
+
+    viewH = ui_text_view_height(area->field.handle);
+    textH = ui_text_height(area->field.handle);
+    max   = (short)(textH - viewH);
+
+    return (max > 0) ? max : 0;
+}
+
+void ui_text_scrolling_apply_scroll(UIScrollingText *area, short offset)
+{
+    short max;
+
+    if (!area || !area->field.handle)
+        return;
+
+    max = ui_text_scroll_max(area);
+    if (offset < 0)
+        offset = 0;
+    if (offset > max)
+        offset = max;
+
+    if (offset != area->scrollOffset)
+    {
+        TEPinScroll(0, (short)(area->scrollOffset - offset), area->field.handle);
+        area->scrollOffset = offset;
+    }
+
+    if (area->scroll)
+        SetControlValue(area->scroll, area->scrollOffset);
+}
+
+void ui_text_scrolling_update_scrollbar(UIScrollingText *area)
+{
+    short max;
+
+    if (!area || !area->field.handle || !area->scroll)
+        return;
+
+    TECalText(area->field.handle);
+
+    max = ui_text_scroll_max(area);
+    SetControlMaximum(area->scroll, max);
+
+    if (area->scrollOffset > max)
+        ui_text_scrolling_apply_scroll(area, max);
+    else
+        SetControlValue(area->scroll, area->scrollOffset);
+}
+
+void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
+{
+    TEPtr te;
+
+    if (!area || !area->field.handle)
+        return;
+
+    te = *area->field.handle;
+    if (!te)
+        return;
+
+    if (te->selRect.top < te->viewRect.top)
+    {
+        ui_text_scrolling_apply_scroll(area, (short)(area->scrollOffset + (te->selRect.top - te->viewRect.top)));
+    }
+    else if (te->selRect.bottom > te->viewRect.bottom)
+    {
+        ui_text_scrolling_apply_scroll(area, (short)(area->scrollOffset + (te->selRect.bottom - te->viewRect.bottom)));
+    }
+}
+
+pascal void ui_text_scrolling_track(ControlHandle control, short part)
+{
+    UIScrollingText *area = (UIScrollingText *)(control ? (Ptr) GetControlReference(control) : NULL);
+    short value = (short)(control ? GetControlValue(control) : 0);
+    short newValue = value;
+    short lineStep = 0;
+    short pageStep = 0;
+    short max = control ? GetControlMaximum(control) : 0;
+
+    if (area && area->field.handle)
+    {
+        TEPtr te = *area->field.handle;
+        if (te)
+        {
+            lineStep = te->lineHeight;
+            pageStep = (short)(ui_text_view_height(area->field.handle) - te->lineHeight);
+        }
+    }
+
+    if (lineStep <= 0)
+        lineStep = 1;
+    if (pageStep <= 0)
+        pageStep = lineStep;
+
+    switch (part)
+    {
+        case inUpButton:
+            newValue = (short)(value - lineStep);
+            break;
+        case inDownButton:
+            newValue = (short)(value + lineStep);
+            break;
+        case inPageUp:
+            newValue = (short)(value - pageStep);
+            break;
+        case inPageDown:
+            newValue = (short)(value + pageStep);
+            break;
+        case inThumb:
+            newValue = GetControlValue(control);
+            break;
+        default:
+            return;
+    }
+
+    if (newValue < 0)
+        newValue = 0;
+    if (newValue > max)
+        newValue = max;
+
+    if (newValue != value)
+        SetControlValue(control, newValue);
+
+    ui_text_scrolling_apply_scroll(area, newValue);
+}
+
+void ui_text_field_update(const UITextField *field, WindowPtr window)
+{
+    Rect view;
+
+    if (!field || !field->handle || !window)
+        return;
+
+    ui_text_set_colors();
+    view = (**field->handle).viewRect;
+    TEUpdate(&view, field->handle);
+}
+
+static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window, char c)
+{
+    TEPtr te;
+    Boolean isBackspace;
+
+    if (!handle)
+        return false;
+
+    te = *handle;
+    if (!te)
+        return false;
+
+    isBackspace = (Boolean)(c == 0x08 || c == 0x7F);
+
+    if (te->crOnly)
+    {
+        Boolean isReturn = (Boolean)(c == '\r' || c == '\n');
+
+        if (isReturn)
+            return false;
+
+        if (!isBackspace)
+        {
+            short available = (short)(te->viewRect.right - te->viewRect.left - 2);
+            short prefix    = te->selStart;
+            short suffixLen = (short)(te->teLength - te->selEnd);
+            short newLen    = (short)(prefix + 1 + suffixLen);
+
+            if (newLen > 0 && newLen < 512)
+            {
+                char buffer[512];
+                GrafPtr savePort = NULL;
+                GrafPtr targetPort = te->inPort ? te->inPort : window;
+                Ptr text = *(te->hText);
+
+                BlockMoveData(text, buffer, prefix);
+                buffer[prefix] = c;
+                if (suffixLen > 0)
+                    BlockMoveData(text + te->selEnd, buffer + prefix + 1, suffixLen);
+
+                GetPort(&savePort);
+                if (targetPort)
+                    SetPort(targetPort);
+
+                if (TextWidth(buffer, 0, newLen) > available)
+                {
+                    if (savePort)
+                        SetPort(savePort);
+                    return false;
+                }
+
+                if (savePort)
+                    SetPort(savePort);
+            }
+        }
+    }
+
+    return true;
+}
+
+Boolean ui_text_field_key(UITextField *field, WindowPtr window, char c)
+{
+    GrafPtr savePort;
+
+    if (!field || !field->handle || !window)
+        return false;
+
+    if (!ui_text_should_accept_character(field->handle, window, c))
+        return true;
+
+    GetPort(&savePort);
+    SetPort(window);
+    ui_text_set_colors();
+    TEKey(c, field->handle);
+    if (savePort)
+        SetPort(savePort);
+
+    return true;
+}
+
+void ui_text_field_idle(const UITextField *field, WindowPtr window)
+{
+    GrafPtr savePort;
+
+    if (!field || !field->handle || !window)
+        return;
+
+    GetPort(&savePort);
+    SetPort(window);
+    ui_text_set_colors();
+    TEIdle(field->handle);
+    if (savePort)
+        SetPort(savePort);
+}
+
+Boolean ui_text_scrolling_handle_key(UIScrollingText *area, WindowPtr window, char c)
+{
+    Boolean handled = ui_text_field_key(&area->field, window, c);
+
+    if (handled)
+    {
+        ui_text_scrolling_update_scrollbar(area);
+        ui_text_scrolling_scroll_selection_into_view(area);
+    }
+
+    return handled;
+}
+
+void ui_text_scrolling_init(UIScrollingText *area, WindowPtr window, const Rect *frame, const Rect *scrollRect, const char *text)
+{
+    if (!area)
+        return;
+
+    area->field.handle = NULL;
+    area->field.singleLine = false;
+    area->scroll = NULL;
+    area->scrollOffset = 0;
+
+    ui_text_field_init(&area->field, window, frame, text, false, true);
+
+    if (window && scrollRect)
+    {
+        area->scroll = NewControl(window, scrollRect, "\p", true, 0, 0, 0, scrollBarProc, 0);
+        if (area->scroll)
+            SetControlReference(area->scroll, (long)area);
+    }
+
+    if (area->field.handle)
+        ui_text_scrolling_update_scrollbar(area);
+}
