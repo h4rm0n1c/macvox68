@@ -50,6 +50,8 @@ When we achieve a major fix or discovery, record it in the `docs/` folder so it 
   - QuickDraw update regions
   - no threads, no modern FS APIs, no UTF-8-by-default assumptions
 - When unsure: consult local docs in `/opt` before guessing.
+- Keep the `docs/` directory lively: when you learn a reusable UI/layout/speech pattern, add a short note under `docs/` so the
+  next task can reuse it. Favor concise, “how we did it here” bullets over long essays.
 
 ---
 
