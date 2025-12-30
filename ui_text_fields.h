@@ -21,6 +21,7 @@ typedef struct UIScrollingText
     UITextField   field;
     ControlHandle scroll;
     short         scrollOffset;
+    WindowPtr     window;
 } UIScrollingText;
 
 void ui_text_field_scroll_rect(const Rect *frame, Rect *outScrollRect);

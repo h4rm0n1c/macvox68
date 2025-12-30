@@ -77,12 +77,10 @@ void ui_app_init(void)
 
     mainHandlers.onMouseDown = main_window_handle_mouse_down;
     mainHandlers.onKeyDown   = main_window_handle_key;
-    mainHandlers.onMouseWheel = main_window_handle_mouse_wheel;
     mainHandlers.onUpdate    = main_window_handle_update;
 
     aboutHandlers.onMouseDown = window_ui_about_mouse;
     aboutHandlers.onKeyDown   = NULL;
-    aboutHandlers.onMouseWheel = NULL;
     aboutHandlers.onUpdate    = window_ui_about_update;
 
     ui_input_dispatcher_init(&gInputDispatcher, &mainHandlers);

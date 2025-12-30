@@ -191,7 +191,7 @@ void ui_text_scrolling_apply_scroll(UIScrollingText *area, short offset)
     if (!area || !area->field.handle)
         return;
 
-    savePort = ui_text_set_active_port(area->field.handle, NULL);
+    savePort = ui_text_set_active_port(area->field.handle, area->window);
 
     TECalText(area->field.handle);
 
@@ -221,7 +221,7 @@ void ui_text_scrolling_update_scrollbar(UIScrollingText *area)
     if (!area || !area->field.handle || !area->scroll)
         return;
 
-    savePort = ui_text_set_active_port(area->field.handle, NULL);
+    savePort = ui_text_set_active_port(area->field.handle, area->window);
 
     TECalText(area->field.handle);
 
@@ -250,7 +250,7 @@ void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
     if (!area || !area->field.handle)
         return;
 
-    savePort = ui_text_set_active_port(area->field.handle, NULL);
+    savePort = ui_text_set_active_port(area->field.handle, area->window);
 
     te = *area->field.handle;
     if (!te)
@@ -521,6 +521,7 @@ void ui_text_scrolling_init(UIScrollingText *area, WindowPtr window, const Rect 
     area->field.singleLine = false;
     area->scroll = NULL;
     area->scrollOffset = 0;
+    area->window = window;
 
     ui_text_field_init(&area->field, window, frame, text, false, true);
 

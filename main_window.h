@@ -9,7 +9,6 @@
 void main_window_create(void);
 void main_window_handle_update(const InputEvent *ev);
 Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit);
-Boolean main_window_handle_mouse_wheel(const InputEvent *ev, Boolean *outQuit);
 Boolean main_window_handle_key(const InputEvent *ev, Boolean *outQuit);
 void main_window_idle(void);
 WindowPtr main_window_get(void);
