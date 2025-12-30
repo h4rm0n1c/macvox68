@@ -6,13 +6,12 @@
 #include <ControlDefinitions.h>
 #include <Events.h>
 #include <Menus.h>
-#include <Memory.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
-#include <string.h>
 
 #include "about_box.h"
 #include "main_window.h"
+#include "ui_text_fields.h"
 
 #ifndef kClassicPushButtonProc
     #define kClassicPushButtonProc 0
@@ -23,25 +22,8 @@
 #ifndef kControlSliderProc
     #define kControlSliderProc 48
 #endif
-#ifndef inUpButton
-    #define inUpButton 20
-#endif
-#ifndef inDownButton
-    #define inDownButton 21
-#endif
-#ifndef inPageUp
-    #define inPageUp 22
-#endif
-#ifndef inPageDown
-    #define inPageDown 23
-#endif
-#ifndef inThumb
-    #define inThumb 129
-#endif
-
 enum
 {
-    kTextEditID       = 1,
     kSpeakStopBtnID   = 3
 };
 
@@ -90,7 +72,6 @@ typedef enum
 
 static WindowPtr      gMainWin  = NULL;
 static ControlHandle  gSpeakBtn = NULL;
-static ControlHandle  gTextScroll = NULL;
 static ControlHandle  gProsodyClean = NULL;
 static ControlHandle  gProsodyLQ    = NULL;
 static ControlHandle  gVolumeSlider = NULL;
@@ -98,11 +79,10 @@ static ControlHandle  gRateSlider   = NULL;
 static ControlHandle  gPitchSlider  = NULL;
 static ControlHandle  gStartBtn     = NULL;
 static ControlHandle  gQuitBtn      = NULL;
-static TEHandle       gTextEdit     = NULL;
-static TEHandle       gHostEdit     = NULL;
-static TEHandle       gPortEdit     = NULL;
+static UIScrollingText gTextArea;
+static UITextField     gHostField;
+static UITextField     gPortField;
 static TEHandle       gActiveEdit   = NULL;
-static short          gTextScrollOffset = 0;
 static UILayout       gLayout;
 static const LayoutMetrics kLayoutMetrics = {
     8,   /* margin */
@@ -123,10 +103,6 @@ static const LayoutMetrics kLayoutMetrics = {
 
 static const RGBColor kSettingsGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
 
-static const short kTextInsetH = 6;
-static const short kTextInsetV = 4;
-static const short kTextScrollbarW = 15;
-static const short kMaxTextDestGrowth = 30000;
 static const short kStartButtonW = 104;
 static const short kButtonInset = 5;
 
@@ -150,16 +126,6 @@ static void main_window_switch_active_edit(TEHandle h)
 
     if (gActiveEdit)
         TEActivate(gActiveEdit);
-}
-
-static Rect main_window_text_scroll_rect(const Rect *frame)
-{
-    Rect r = *frame;
-
-    InsetRect(&r, kTextInsetH, kTextInsetV);
-    r.left = (short)(r.right - kTextScrollbarW);
-
-    return r;
 }
 
 static void main_window_plan_layout(void)
@@ -193,7 +159,7 @@ static void main_window_plan_layout(void)
             startY,
             content.right - m->margin,
             startY + m->textAreaH);
-    gLayout.editScroll = main_window_text_scroll_rect(&gLayout.editText);
+    ui_text_field_scroll_rect(&gLayout.editText, &gLayout.editScroll);
 
     /* Section sequencing mirrors the Windows UI rows. */
     y = gLayout.editText.bottom + m->gutter;
@@ -324,247 +290,6 @@ static void main_window_update_control_enabling(SpeechUIState state)
     }
 }
 
-static TEHandle main_window_create_text_field(const Rect *frame, const char *text, Boolean singleLine)
-{
-    Rect viewRect;
-    Rect destRect;
-    TEHandle handle = NULL;
-
-    viewRect = *frame;
-    InsetRect(&viewRect, kTextInsetH, kTextInsetV);
-
-    if (!singleLine)
-        viewRect.right = (short)(viewRect.right - kTextScrollbarW);
-
-    destRect = viewRect;
-    destRect.bottom = (short)(destRect.top + kMaxTextDestGrowth);
-    if (destRect.bottom < destRect.top)
-        destRect.bottom = 32767;
-
-    SetPort(gMainWin);
-    BackColor(whiteColor);
-    ForeColor(blackColor);
-
-    handle = TENew(&destRect, &viewRect);
-    if (handle)
-    {
-        (**handle).viewRect = viewRect;
-
-        if (singleLine)
-        {
-            Rect singleRect = viewRect;
-            short lineH    = (**handle).lineHeight;
-            short slack    = (singleRect.bottom - singleRect.top) - lineH;
-
-            if (slack > 0)
-            {
-                singleRect.top += slack / 2;
-                singleRect.bottom = singleRect.top + lineH;
-            }
-            else
-            {
-                singleRect.bottom = singleRect.top + lineH;
-            }
-
-            (**handle).destRect = singleRect;
-            (**handle).viewRect = singleRect;
-            (**handle).crOnly   = true;
-        }
-        else
-        {
-            (**handle).destRect = destRect;
-            (**handle).viewRect = viewRect;
-        }
-
-        if (text)
-            TEInsert(text, strlen(text), handle);
-    }
-
-    return handle;
-}
-
-static short main_window_view_height(TEHandle handle)
-{
-    TEPtr te;
-
-    if (!handle)
-        return 0;
-
-    te = *handle;
-    if (!te)
-        return 0;
-
-    return (short)(te->viewRect.bottom - te->viewRect.top);
-}
-
-static short main_window_text_height(TEHandle handle)
-{
-    TEPtr te;
-
-    if (!handle)
-        return 0;
-
-    te = *handle;
-    if (!te)
-        return 0;
-
-    return (short)(te->nLines * te->lineHeight);
-}
-
-static short main_window_scroll_max(void)
-{
-    short viewH;
-    short textH;
-    short max;
-
-    if (!gTextEdit)
-        return 0;
-
-    viewH = main_window_view_height(gTextEdit);
-    textH = main_window_text_height(gTextEdit);
-    max   = (short)(textH - viewH);
-
-    return (max > 0) ? max : 0;
-}
-
-static void main_window_apply_scroll(short offset)
-{
-    short max;
-
-    if (!gTextEdit)
-        return;
-
-    max = main_window_scroll_max();
-    if (offset < 0)
-        offset = 0;
-    if (offset > max)
-        offset = max;
-
-    if (offset != gTextScrollOffset)
-    {
-        TEPinScroll(0, (short)(gTextScrollOffset - offset), gTextEdit);
-        gTextScrollOffset = offset;
-    }
-
-    if (gTextScroll)
-        SetControlValue(gTextScroll, gTextScrollOffset);
-}
-
-static void main_window_update_scrollbar(void)
-{
-    short max;
-
-    if (!gTextEdit || !gTextScroll)
-        return;
-
-    TECalText(gTextEdit);
-
-    max = main_window_scroll_max();
-    SetControlMaximum(gTextScroll, max);
-
-    if (gTextScrollOffset > max)
-        main_window_apply_scroll(max);
-    else
-        SetControlValue(gTextScroll, gTextScrollOffset);
-}
-
-static void main_window_scroll_selection_into_view(void)
-{
-    TEPtr te;
-
-    if (!gTextEdit)
-        return;
-
-    te = *gTextEdit;
-    if (!te)
-        return;
-
-    if (te->selRect.top < te->viewRect.top)
-    {
-        main_window_apply_scroll((short)(gTextScrollOffset + (te->selRect.top - te->viewRect.top)));
-    }
-    else if (te->selRect.bottom > te->viewRect.bottom)
-    {
-        main_window_apply_scroll((short)(gTextScrollOffset + (te->selRect.bottom - te->viewRect.bottom)));
-    }
-}
-
-static pascal void main_window_track_text_scroll(ControlHandle control, short part)
-{
-    short value = (short)(gTextScroll ? GetControlValue(gTextScroll) : 0);
-    short newValue = value;
-    short lineStep = 0;
-    short pageStep = 0;
-    short max = control ? GetControlMaximum(control) : 0;
-
-    if (gTextEdit)
-    {
-        TEPtr te = *gTextEdit;
-        if (te)
-        {
-            lineStep = te->lineHeight;
-            pageStep = (short)(main_window_view_height(gTextEdit) - te->lineHeight);
-        }
-    }
-
-    if (lineStep <= 0)
-        lineStep = 1;
-    if (pageStep <= 0)
-        pageStep = lineStep;
-
-    switch (part)
-    {
-        case inUpButton:
-            newValue = (short)(value - lineStep);
-            break;
-        case inDownButton:
-            newValue = (short)(value + lineStep);
-            break;
-        case inPageUp:
-            newValue = (short)(value - pageStep);
-            break;
-        case inPageDown:
-            newValue = (short)(value + pageStep);
-            break;
-        case inThumb:
-            newValue = GetControlValue(control);
-            break;
-        default:
-            return;
-    }
-
-    if (newValue < 0)
-        newValue = 0;
-    if (newValue > max)
-        newValue = max;
-
-    if (newValue != value)
-        SetControlValue(control, newValue);
-
-    main_window_apply_scroll(newValue);
-}
-
-static void main_window_set_text_colors(void)
-{
-    static const RGBColor kText = { 0x0000, 0x0000, 0x0000 };
-    static const RGBColor kTextBack = { 0xFFFF, 0xFFFF, 0xFFFF };
-
-    RGBForeColor(&kText);
-    RGBBackColor(&kTextBack);
-}
-
-static void main_window_update_text(TEHandle handle)
-{
-    Rect view;
-
-    if (!handle)
-        return;
-
-    main_window_set_text_colors();
-    view = (**handle).viewRect;
-    TEUpdate(&view, handle);
-}
-
 static void main_window_create_text_edit(void)
 {
     static const char kInitialText[] =
@@ -575,27 +300,18 @@ static void main_window_create_text_edit(void)
     if (!gMainWin)
         return;
 
-    gTextEdit = main_window_create_text_field(&gLayout.editText, kInitialText, false);
-    gHostEdit = main_window_create_text_field(&gLayout.hostField, "127.0.0.1", true);
-    gPortEdit = main_window_create_text_field(&gLayout.portField, "5555", true);
+    ui_text_scrolling_init(&gTextArea, gMainWin, &gLayout.editText, &gLayout.editScroll, kInitialText);
+    ui_text_field_init(&gHostField, gMainWin, &gLayout.hostField, "127.0.0.1", true, false);
+    ui_text_field_init(&gPortField, gMainWin, &gLayout.portField, "5555", true, false);
 
-    gTextScrollOffset = 0;
-
-    if (gTextEdit)
-        main_window_switch_active_edit(gTextEdit);
+    if (gTextArea.field.handle)
+        main_window_switch_active_edit(gTextArea.field.handle);
 }
 
 static void main_window_create_controls(void)
 {
     if (!gMainWin)
         return;
-
-    if (!gTextScroll)
-    {
-        Rect scrollRect = gLayout.editScroll;
-        gTextScroll = NewControl(gMainWin, &scrollRect, "\p", true,
-                                 0, 0, 0, scrollBarProc, 0);
-    }
 
     gSpeakBtn = NewControl(gMainWin, &gLayout.speakStopButton, "\pSpeak", true,
                            0, 0, 0, pushButProc, kSpeakStopBtnID);
@@ -631,8 +347,6 @@ static void main_window_create_controls(void)
 
     gQuitBtn = NewControl(gMainWin, &gLayout.quitButton, "\pQuit", true,
                           0, 0, 0, pushButProc, 0);
-
-    main_window_update_scrollbar();
 }
 
 static void main_window_draw_text_field(const Rect *frame)
@@ -725,9 +439,9 @@ static void main_window_draw_contents(WindowPtr w)
 
     RGBForeColor(&kText);
     RGBBackColor(&kWindowFill);
-    if (gTextEdit)
-        main_window_update_scrollbar();
-    main_window_update_text(gTextEdit);
+    if (gTextArea.field.handle)
+        ui_text_scrolling_update_scrollbar(&gTextArea);
+    ui_text_field_update(&gTextArea.field, gMainWin);
 
     /* Prosody group */
     main_window_draw_group(&gLayout.prosodyGroup, "\pProsody/Enunciation");
@@ -768,14 +482,14 @@ static void main_window_draw_contents(WindowPtr w)
     main_window_draw_text_field(&hostFrame);
     main_window_draw_text_field(&portFrame);
 
-    main_window_update_text(gHostEdit);
-    main_window_update_text(gPortEdit);
+    ui_text_field_update(&gHostField, gMainWin);
+    ui_text_field_update(&gPortField, gMainWin);
 
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
 
-    if (gTextScroll)
-        Draw1Control(gTextScroll);
+    if (gTextArea.scroll)
+        Draw1Control(gTextArea.scroll);
 
     RGBBackColor(&kGroupFill);
     if (gVolumeSlider)
@@ -936,8 +650,8 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     if (setGroupFill)
                         RGBBackColor(&kSettingsGroupFill);
 
-                    if (c == gTextScroll)
-                        (void)TrackControl(c, local, (ControlActionUPP)main_window_track_text_scroll);
+                    if (c == gTextArea.scroll)
+                        (void)TrackControl(c, local, (ControlActionUPP)ui_text_scrolling_track);
                     else
                         (void)TrackControl(c, local, NULL);
 
@@ -946,41 +660,41 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     return true;
                 }
 
-                if (gTextEdit)
+                if (gTextArea.field.handle)
                 {
                     Rect textRect = gLayout.editText;
 
                     if (PtInRect(local, &textRect))
                     {
-                        main_window_switch_active_edit(gTextEdit);
-                        main_window_set_text_colors();
-                        TEClick(local, (ev->modifiers & shiftKey) != 0, gTextEdit);
+                        main_window_switch_active_edit(gTextArea.field.handle);
+                        ui_text_fields_set_colors();
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gTextArea.field.handle);
                         return true;
                     }
                 }
 
-                if (gHostEdit)
+                if (gHostField.handle)
                 {
                     Rect hostRect = gLayout.hostField;
 
                     if (PtInRect(local, &hostRect))
                     {
-                        main_window_switch_active_edit(gHostEdit);
-                        main_window_set_text_colors();
-                        TEClick(local, (ev->modifiers & shiftKey) != 0, gHostEdit);
+                        main_window_switch_active_edit(gHostField.handle);
+                        ui_text_fields_set_colors();
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gHostField.handle);
                         return true;
                     }
                 }
 
-                if (gPortEdit)
+                if (gPortField.handle)
                 {
                     Rect portRect = gLayout.portField;
 
                     if (PtInRect(local, &portRect))
                     {
-                        main_window_switch_active_edit(gPortEdit);
-                        main_window_set_text_colors();
-                        TEClick(local, (ev->modifiers & shiftKey) != 0, gPortEdit);
+                        main_window_switch_active_edit(gPortField.handle);
+                        ui_text_fields_set_colors();
+                        TEClick(local, (ev->modifiers & shiftKey) != 0, gPortField.handle);
                         return true;
                     }
                 }
@@ -995,7 +709,6 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
 Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 {
     char c = (char)(ev->message & charCodeMask);
-    Boolean isBackspace = (c == 0x08 || c == 0x7F);
 
     (void)outQuit;
 
@@ -1004,86 +717,18 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 
     if (gActiveEdit)
     {
-        TEPtr te = *gActiveEdit;
-        Boolean isReturn = (c == '\r' || c == '\n');
-
-        if (te->crOnly)
-        {
-            if (isReturn)
-                return true;
-
-            if (!isBackspace)
-            {
-                short available = te->viewRect.right - te->viewRect.left - 2;
-                short prefix    = te->selStart;
-                short suffixLen = te->teLength - te->selEnd;
-                short newLen    = prefix + 1 + suffixLen;
-
-                if (newLen > 0 && newLen < 512)
-                {
-                    char buffer[512];
-                    GrafPtr savePort = NULL;
-                    GrafPtr targetPort = te->inPort ? te->inPort : gMainWin;
-                    Ptr text = *(te->hText);
-
-                    BlockMoveData(text, buffer, prefix);
-                    buffer[prefix] = c;
-                    if (suffixLen > 0)
-                        BlockMoveData(text + te->selEnd, buffer + prefix + 1, suffixLen);
-
-                    GetPort(&savePort);
-                    if (targetPort)
-                        SetPort(targetPort);
-
-                    if (TextWidth(buffer, 0, newLen) > available)
-                    {
-                        if (savePort)
-                            SetPort(savePort);
-                        return true;
-                    }
-
-                    if (savePort)
-                        SetPort(savePort);
-                }
-            }
-        }
-        else
-        {
-            (void)isReturn;
-        }
-
-        {
-            GrafPtr savePort;
-            GetPort(&savePort);
-            SetPort(gMainWin);
-            main_window_set_text_colors();
-            TEKey(c, gActiveEdit);
-            SetPort(savePort);
-        }
-
-        if (gActiveEdit == gTextEdit)
-        {
-            main_window_update_scrollbar();
-            main_window_scroll_selection_into_view();
-        }
-        return true;
+        if (gActiveEdit == gTextArea.field.handle)
+            return ui_text_scrolling_handle_key(&gTextArea, gMainWin, c);
+        if (gActiveEdit == gHostField.handle)
+            return ui_text_field_key(&gHostField, gMainWin, c);
+        if (gActiveEdit == gPortField.handle)
+            return ui_text_field_key(&gPortField, gMainWin, c);
     }
 
-    if (gTextEdit)
+    if (gTextArea.field.handle)
     {
-        main_window_switch_active_edit(gTextEdit);
-        {
-            GrafPtr savePort;
-            GetPort(&savePort);
-            SetPort(gMainWin);
-            main_window_set_text_colors();
-            TEKey(c, gTextEdit);
-            SetPort(savePort);
-        }
-
-        main_window_update_scrollbar();
-        main_window_scroll_selection_into_view();
-        return true;
+        main_window_switch_active_edit(gTextArea.field.handle);
+        return ui_text_scrolling_handle_key(&gTextArea, gMainWin, c);
     }
 
     return false;
@@ -1091,17 +736,14 @@ Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
 
 void main_window_idle(void)
 {
-    TEHandle target = gActiveEdit ? gActiveEdit : gTextEdit;
+    TEHandle target = gActiveEdit ? gActiveEdit : gTextArea.field.handle;
 
-    if (target)
-    {
-        GrafPtr savePort;
-        GetPort(&savePort);
-        SetPort(gMainWin);
-        main_window_set_text_colors();
-        TEIdle(target);
-        SetPort(savePort);
-    }
+    if (target == gTextArea.field.handle)
+        ui_text_field_idle(&gTextArea.field, gMainWin);
+    else if (target == gHostField.handle)
+        ui_text_field_idle(&gHostField, gMainWin);
+    else if (target == gPortField.handle)
+        ui_text_field_idle(&gPortField, gMainWin);
 }
 
 WindowPtr main_window_get(void)
