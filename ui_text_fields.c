@@ -318,6 +318,10 @@ static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window
 {
     TEPtr te;
     Boolean isBackspace;
+    Boolean isReturn;
+    Boolean isTab;
+    Boolean isPrintable;
+    unsigned char uc;
 
     if (!handle)
         return false;
@@ -326,12 +330,17 @@ static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window
     if (!te)
         return false;
 
+    uc         = (unsigned char)c;
     isBackspace = (Boolean)(c == 0x08 || c == 0x7F);
+    isReturn    = (Boolean)(c == '\r' || c == '\n');
+    isTab       = (Boolean)(c == '\t');
+    isPrintable = (Boolean)(uc >= 0x20);
+
+    if (!isBackspace && !isReturn && !isTab && !isPrintable)
+        return false;
 
     if (te->crOnly)
     {
-        Boolean isReturn = (Boolean)(c == '\r' || c == '\n');
-
         if (isReturn)
             return false;
 
