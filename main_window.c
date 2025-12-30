@@ -567,7 +567,8 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
         }
 
         case inSysWindow:
-            return SystemClick(&ev->raw, ev->raw.modifiers);
+            SystemClick(&ev->raw, w);
+            return true;
 
         case inDrag:
             DragWindow(w, ev->global, &qd.screenBits.bounds);
