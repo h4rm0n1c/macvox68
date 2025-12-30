@@ -9,7 +9,10 @@
 
 #include "about_box.h"
 #include "main_window.h"
+#include "ui_input.h"
 #include "ui_app.h"
+
+static InputDispatcher gInputDispatcher;
 
 static void ui_init_toolbox(void)
 {
@@ -44,10 +47,44 @@ static void ui_init_menus_codeonly(void)
     DrawMenuBar();
 }
 
+static Boolean window_ui_about_mouse(const InputEvent *ev, Boolean *outQuit)
+{
+    EventRecord raw;
+
+    (void)outQuit;
+
+    if (!ev)
+        return false;
+
+    raw = ev->raw;
+    return about_box_handle_mouse_down(&raw);
+}
+
+static void window_ui_about_update(const InputEvent *ev)
+{
+    if (ev && ev->window)
+        about_box_handle_update(ev->window);
+}
+
 void ui_app_init(void)
 {
+    InputWindowHandlers mainHandlers;
+    InputWindowHandlers aboutHandlers;
+
     ui_init_toolbox();
     ui_init_menus_codeonly();
+
+    mainHandlers.onMouseDown = main_window_handle_mouse_down;
+    mainHandlers.onKeyDown   = main_window_handle_key;
+    mainHandlers.onUpdate    = main_window_handle_update;
+
+    aboutHandlers.onMouseDown = window_ui_about_mouse;
+    aboutHandlers.onKeyDown   = NULL;
+    aboutHandlers.onUpdate    = window_ui_about_update;
+
+    ui_input_dispatcher_init(&gInputDispatcher, &mainHandlers);
+    ui_input_dispatcher_set_overlay(&gInputDispatcher, about_box_is_window, &aboutHandlers);
+
     main_window_create();
 }
 
@@ -58,37 +95,7 @@ Boolean ui_app_pump_events(void)
 
     if (WaitNextEvent(everyEvent, &ev, 30, NULL))
     {
-        switch (ev.what)
-        {
-            case mouseDown:
-                if (!about_box_handle_mouse_down(&ev))
-                    (void)main_window_handle_mouse_down(&ev, &quit);
-                break;
-
-            case updateEvt:
-                if (about_box_is_window((WindowPtr)ev.message))
-                    about_box_handle_update((WindowPtr)ev.message);
-                else
-                    main_window_handle_update((WindowPtr)ev.message);
-                break;
-
-            case keyDown:
-            case autoKey:
-                /* Cmd-Q quit shortcut (matches the menu item) */
-                if ((ev.modifiers & cmdKey) != 0)
-                {
-                    char c = (char)(ev.message & charCodeMask);
-                    if (c == 'q' || c == 'Q')
-                        quit = true;
-                }
-
-                if (!quit)
-                    (void)main_window_handle_key(&ev, &quit);
-                break;
-
-            default:
-                break;
-        }
+        (void)ui_input_dispatcher_handle_event(&gInputDispatcher, &ev, &quit);
     }
 
     main_window_idle();

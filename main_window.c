@@ -8,9 +8,12 @@
 #include <Menus.h>
 #include <TextEdit.h>
 #include <ToolUtils.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "about_box.h"
 #include "main_window.h"
+#include "ui_input.h"
 #include "ui_text_fields.h"
 
 #ifndef kClassicPushButtonProc
@@ -105,6 +108,42 @@ static const RGBColor kSettingsGroupFill = { 0xF2F2, 0xF2F2, 0xF2F2 };
 
 static const short kStartButtonW = 104;
 static const short kButtonInset = 5;
+
+static void main_window_demo_log_event(const InputEvent *ev, const char *context)
+{
+    char buffer[96];
+
+    if (!ev || !context)
+        return;
+
+    if (!ev->optionDown || !gTextArea.field.handle || !gMainWin)
+        return;
+
+    buffer[0] = '\0';
+
+    if (ev->type == kInputEventMouseDown)
+    {
+        snprintf(buffer, sizeof(buffer), "[demo] %s mouse (%d,%d)", context,
+                 ev->local.h, ev->local.v);
+    }
+    else if (ev->type == kInputEventKeyDown)
+    {
+        snprintf(buffer, sizeof(buffer), "[demo] %s key '%c'%s", context,
+                 ev->keyChar, ev->commandDown ? " +Cmd" : "");
+    }
+
+    if (buffer[0])
+    {
+        TEHandle te = gTextArea.field.handle;
+        long end = (**te).teLength;
+
+        SetPort(gMainWin);
+        TESetSelect(end, end, te);
+        TEInsert(buffer, strlen(buffer), te);
+        TEInsert("\r", 1, te);
+        ui_text_scrolling_scroll_selection_into_view(&gTextArea);
+    }
+}
 
 static short main_window_layout_height(const LayoutMetrics *m)
 {
@@ -585,9 +624,14 @@ void main_window_create(void)
     ShowWindow(gMainWin);
 }
 
-void main_window_handle_update(WindowPtr w)
+void main_window_handle_update(const InputEvent *ev)
 {
     GrafPtr savePort;
+    WindowPtr w = ev ? ev->window : NULL;
+
+    if (!w)
+        return;
+
     GetPort(&savePort);
     SetPort(w);
 
@@ -598,27 +642,39 @@ void main_window_handle_update(WindowPtr w)
     SetPort(savePort);
 }
 
-Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
+Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
 {
     WindowPtr w;
-    short part = FindWindow(ev->where, &w);
+    short part;
+    Point local;
+
+    if (!ev)
+        return false;
+
+    part = FindWindow(ev->global, &w);
+    local = ev->local;
+
+    if (!w)
+        return false;
+
+    main_window_demo_log_event(ev, "main");
 
     switch (part)
     {
         case inMenuBar:
         {
-            long choice = MenuSelect(ev->where);
+            long choice = MenuSelect(ev->global);
             if (choice)
                 main_window_handle_menu(choice, outQuit);
             return true;
         }
 
         case inDrag:
-            DragWindow(w, ev->where, &qd.screenBits.bounds);
+            DragWindow(w, ev->global, &qd.screenBits.bounds);
             return true;
 
         case inGoAway:
-            if (TrackGoAway(w, ev->where))
+            if (TrackGoAway(w, ev->global))
                 *outQuit = true;
             return true;
 
@@ -632,10 +688,8 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
             {
                 ControlHandle c;
                 short cpart;
-                Point local = ev->where;
 
                 SetPort(w);
-                GlobalToLocal(&local);
 
                 cpart = FindControl(local, w, &c);
                 if (cpart)
@@ -668,7 +722,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     {
                         main_window_switch_active_edit(gTextArea.field.handle);
                         ui_text_fields_set_colors();
-                        TEClick(local, (ev->modifiers & shiftKey) != 0, gTextArea.field.handle);
+                        TEClick(local, ev->shiftDown, gTextArea.field.handle);
                         return true;
                     }
                 }
@@ -681,7 +735,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     {
                         main_window_switch_active_edit(gHostField.handle);
                         ui_text_fields_set_colors();
-                        TEClick(local, (ev->modifiers & shiftKey) != 0, gHostField.handle);
+                        TEClick(local, ev->shiftDown, gHostField.handle);
                         return true;
                     }
                 }
@@ -694,7 +748,7 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
                     {
                         main_window_switch_active_edit(gPortField.handle);
                         ui_text_fields_set_colors();
-                        TEClick(local, (ev->modifiers & shiftKey) != 0, gPortField.handle);
+                        TEClick(local, ev->shiftDown, gPortField.handle);
                         return true;
                     }
                 }
@@ -706,14 +760,21 @@ Boolean main_window_handle_mouse_down(EventRecord *ev, Boolean *outQuit)
     }
 }
 
-Boolean main_window_handle_key(EventRecord *ev, Boolean *outQuit)
+Boolean main_window_handle_key(const InputEvent *ev, Boolean *outQuit)
 {
-    char c = (char)(ev->message & charCodeMask);
+    char c;
 
     (void)outQuit;
 
-    if ((ev->modifiers & cmdKey) != 0)
+    if (!ev)
         return false;
+
+    main_window_demo_log_event(ev, "main");
+
+    if (ev->commandDown)
+        return false;
+
+    c = ev->keyChar;
 
     if (gActiveEdit)
     {
