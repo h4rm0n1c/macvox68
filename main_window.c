@@ -554,9 +554,6 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
     part = FindWindow(ev->global, &w);
     local = ev->local;
 
-    if (!w)
-        return false;
-
     main_window_demo_log_event(ev, "main");
 
     switch (part)
@@ -568,6 +565,9 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                 main_window_handle_menu(choice, outQuit);
             return true;
         }
+
+        case inSysWindow:
+            return SystemClick(&ev->raw, ev->raw.modifiers);
 
         case inDrag:
             DragWindow(w, ev->global, &qd.screenBits.bounds);
@@ -592,6 +592,7 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                     const RGBColor *sliderBg = sTheme ? &sTheme->colors.groupFill : &ui_theme_get()->colors.groupFill;
                     UIControlTrackingSpec specs[] = {
                         { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL },
+                        { gSpeakBtn, NULL, NULL },
                         { gVolumeSlider, NULL, sliderBg },
                         { gRateSlider, NULL, sliderBg },
                         { gPitchSlider, NULL, sliderBg },
