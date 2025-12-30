@@ -96,6 +96,7 @@ static void main_window_append_line(const char *text)
     TESetSelect((**te).teLength, (**te).teLength, te);
     TEInsert(text, strlen(text), te);
     TEInsert("\r", 1, te);
+    ui_text_scrolling_update_scrollbar(&gTextArea);
     ui_text_scrolling_scroll_selection_into_view(&gTextArea);
 }
 
