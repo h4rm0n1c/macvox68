@@ -124,12 +124,25 @@ void about_box_show(void)
 
 void about_box_close(void)
 {
+    GrafPtr aboutPort = NULL;
+
     if (!gAboutWin)
         return;
+
+    aboutPort = (GrafPtr)gAboutWin;
 
     DisposeWindow(gAboutWin);
     gAboutWin = NULL;
     gOkButton = NULL;
+
+    /* If the About box was the current port, move QuickDraw to a valid window so
+       later draws (e.g., network logging) aren't handed a freed GrafPort. */
+    if (aboutPort == qd.thePort)
+    {
+        WindowPtr front = FrontWindow();
+        if (front)
+            SetPort(front);
+    }
 }
 
 void about_box_handle_update(WindowPtr w)
