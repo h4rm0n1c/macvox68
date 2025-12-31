@@ -49,8 +49,37 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
     get_filename_component(_retro68_target_root "${_retro68_cmake_dir}/.." ABSOLUTE)
     get_filename_component(_retro68_root "${_retro68_target_root}/.." ABSOLUTE)
 
-    target_link_directories(MacVox68 PRIVATE "${_retro68_root}/ImportLibraries")
-    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet -lSpeechLib)
+    set(_speech_import_dirs)
+
+    # Allow the operator to override the Speech Manager import library location.
+    if(SPEECH_IMPORT_LIB_DIR)
+        list(APPEND _speech_import_dirs "${SPEECH_IMPORT_LIB_DIR}")
+    endif()
+
+    # Common Retro68 installation layouts.
+    list(APPEND _speech_import_dirs
+        "${_retro68_root}/ImportLibraries"
+        "${_retro68_target_root}/ImportLibraries"
+        "/opt/Retro68/ImportLibraries"
+    )
+
+    if(DEFINED ENV{RETRO68_ROOT} AND NOT "$ENV{RETRO68_ROOT}" STREQUAL "")
+        list(APPEND _speech_import_dirs "$ENV{RETRO68_ROOT}/ImportLibraries")
+    endif()
+
+    list(REMOVE_DUPLICATES _speech_import_dirs)
+
+    find_library(SPEECHLIB_LIBRARY SpeechLib
+        HINTS ${_speech_import_dirs}
+        NO_DEFAULT_PATH
+    )
+
+    if(NOT SPEECHLIB_LIBRARY)
+        message(FATAL_ERROR "Speech Manager import library 'libSpeechLib.a' not found. Install Retro68 ImportLibraries with SpeechLib or set SPEECH_IMPORT_LIB_DIR to its location.")
+    endif()
+
+    target_link_directories(MacVox68 PRIVATE ${_speech_import_dirs})
+    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet ${SPEECHLIB_LIBRARY})
 endif()
 
 if(APPEARANCE_SDK_ROOT)
