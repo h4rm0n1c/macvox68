@@ -40,7 +40,7 @@ Boolean speech_is_busy(void)
 
 static Boolean speech_speak_pascal(const char *text)
 {
-    unsigned char pascal[256];
+    unsigned char pascalText[256];
     size_t len;
 
     if (!gSpeechPresent || !text)
@@ -50,10 +50,10 @@ static Boolean speech_speak_pascal(const char *text)
     if (len > 255)
         len = 255;
 
-    pascal[0] = (unsigned char)len;
-    BlockMoveData(text, &pascal[1], len);
+    pascalText[0] = (unsigned char)len;
+    BlockMoveData(text, &pascalText[1], len);
 
-    return SpeakString(pascal) == noErr;
+    return SpeakString(pascalText) == noErr;
 }
 
 Boolean speech_speak_test_phrase(void)
