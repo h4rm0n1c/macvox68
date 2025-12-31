@@ -42,12 +42,14 @@ static int check_speech_manager_translation(void)
 {
     int errors = 0;
     const char *input = "Hello there.";
-    Handle h = vox_format_text_mode(input, true, true);
+    Handle h = vox_format_text(input, true);
     if (!h || !*h)
         return 1;
     char *buf = (char *)(*h);
     errors += assert_contains("speech-manager", buf, "[[vers 1]]");
     errors += assert_contains("speech-manager", buf, "[[slnc 250]]");
+    if (strstr(buf, "\\!br"))
+        errors += assert_contains("speech-manager", buf, "(no flex escapes expected)");
     free(*h);
     free(h);
     return errors;

@@ -19,21 +19,13 @@ extern "C" {
 
 /*
  * Format a UTF-8/ASCII text buffer into a Speech Manager-ready Handle.
- * The current implementation focuses on translating FlexTalk-style
- * breaks and envelope markers into embedded commands while keeping
- * the original text intact for the classic Mac OS Speech Manager.
+ * The VOX prosody pipeline (sentence split, “thee” heuristic, lead-in
+ * breaks, time/number expansion, beat construction, letter normalization,
+ * tidy/wrap) runs first, then FlexTalk markers are translated into
+ * Speech Manager embedded commands. FlexTalk escape emission is no longer
+ * exposed; only Speech Manager metadata is returned.
  */
 Handle vox_format_text(const char *text, Boolean wrap_with_version);
-
-/*
- * Full pipeline with selectable output style. When `speech_manager_mode`
- * is false, the returned handle contains the raw FlexTalk-compatible
- * markers (for parity checking against the upstream VOX parser). When true,
- * the handle contains embedded Speech Manager commands.
- */
-Handle vox_format_text_mode(const char *text,
-                            Boolean wrap_with_version,
-                            Boolean speech_manager_mode);
 
 #ifdef VOX_PARSER_STANDALONE
 /* Convenience for host-side checks: returns a heap string that must be freed. */

@@ -1143,39 +1143,36 @@ static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *s
     if (tok_len == 4 && strncmp(tok, "\\!wH0", 4) == 0)
         return emit_comment(sb, "vox-end");
 
-    return sb_append_str(sb, tok);
+    /* Unknown FlexTalk escape: drop it so only Speech Manager metadata remains. */
+    return true;
 }
 
-static Handle emit_text_with_mode(const char *text, Boolean wrap_with_version, Boolean speech_manager_mode)
+static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_version)
 {
     Handle h = NULL;
     StringBuilder sb;
     sb_init(&sb);
 
-    if (wrap_with_version && speech_manager_mode) {
+    if (wrap_with_version) {
         if (!emit_version_prefix(&sb))
             goto done;
     }
 
-    if (speech_manager_mode) {
-        const char *p = text;
-        while (*p) {
-            if (p[0] == '\\' && p[1] == '!') {
-                const char *start = p;
-                p += 2;
-                while (*p && *p != ' ' && *p != '\t' && *p != '\n' && *p != '\r')
-                    ++p;
-                if (!translate_token(start, (size_t)(p - start), &sb))
-                    goto done;
-                continue;
-            }
-            sb_append_char(&sb, *p);
-            ++p;
+    const char *p = text;
+    while (*p) {
+        if (p[0] == '\\' && p[1] == '!') {
+            const char *start = p;
+            p += 2;
+            while (*p && *p != ' ' && *p != '\t' && *p != '\n' && *p != '\r')
+                ++p;
+            if (!translate_token(start, (size_t)(p - start), &sb))
+                goto done;
+            continue;
         }
-        emit_break(&sb);
-    } else {
-        sb_append_str(&sb, text);
+        sb_append_char(&sb, *p);
+        ++p;
     }
+    emit_break(&sb);
 
     h = NewHandle(sb.len + 1);
     if (h && *h)
@@ -1186,20 +1183,15 @@ done:
     return h;
 }
 
-Handle vox_format_text_mode(const char *text, Boolean wrap_with_version, Boolean speech_manager_mode)
+Handle vox_format_text(const char *text, Boolean wrap_with_version)
 {
     if (!text)
         return NULL;
     char *vox = vox_process_buffer(text, true);
     if (!vox)
         return NULL;
-    Handle h = emit_text_with_mode(vox, wrap_with_version, speech_manager_mode);
+    Handle h = emit_speech_manager_text(vox, wrap_with_version);
     free(vox);
     return h;
-}
-
-Handle vox_format_text(const char *text, Boolean wrap_with_version)
-{
-    return vox_format_text_mode(text, wrap_with_version, true);
 }
 
