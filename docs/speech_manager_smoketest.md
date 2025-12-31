@@ -12,7 +12,7 @@ MacVox68 now carries a minimal Speech Manager hook so we can verify MacinTalk is
 - Speech code lives in `speech.c` / `speech.h` and is driven from the main event loop via `speech_pump()`.
 - Speech text is copied into a temporary Handle and released once `SpeechBusy()` reports idle so the Speech Manager always owns stable memory during playback.
 - The UI polls `speech_is_busy()` during `main_window_idle()` to keep the Speak button label synced (Speak vs. Stop) and to gray the button when no Speech Manager channel is available.
-- The Retro68 target must link against `-lSpeech` in `CMakeLists.txt` so the Speech Manager calls (`InitSpeech`, `SpeechBusySystemTask`, `StopSpeechChannel`) resolve.
+- The Retro68 target must link against `-lSpeechLib` in `CMakeLists.txt` (with `ImportLibraries/` on the link path) so the Speech Manager calls (`InitSpeech`, `SpeechBusySystemTask`, `StopSpeechChannel`) resolve.
 
 ## Quick checklist for host testing
 1. Ensure **MacinTalk/Speech Manager** is installed in the System Folder inside BasiliskII.

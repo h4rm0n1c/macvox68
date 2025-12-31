@@ -45,7 +45,12 @@ add_application(MacVox68
     )
 
 if(CMAKE_SYSTEM_NAME MATCHES Retro68)
-    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet -lSpeech)
+    get_filename_component(_retro68_cmake_dir "${CMAKE_TOOLCHAIN_FILE}" DIRECTORY)
+    get_filename_component(_retro68_target_root "${_retro68_cmake_dir}/.." ABSOLUTE)
+    get_filename_component(_retro68_root "${_retro68_target_root}/.." ABSOLUTE)
+
+    target_link_directories(MacVox68 PRIVATE "${_retro68_root}/ImportLibraries")
+    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet -lSpeechLib)
 endif()
 
 if(APPEARANCE_SDK_ROOT)
