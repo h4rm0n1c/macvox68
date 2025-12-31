@@ -76,6 +76,29 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
         "${_retro68_root}/Interfaces and Libraries/Libraries/Shared Libraries"
     )
 
+    # Some Retro68 setups keep an MPW InterfacesAndLibraries tree alongside the
+    # toolchain folder (e.g. .../Retro68/toolchain-full + .../Retro68/Interfaces
+    # and Libraries) or nested under a second Retro68 checkout. Cover those
+    # parent/sibling layouts so users with a symlinked MPW tree do not have to
+    # pass SPEECH_IMPORT_LIB_DIR.
+    get_filename_component(_retro68_root_parent "${_retro68_root}/.." ABSOLUTE)
+    list(APPEND _speech_import_dirs
+        "${_retro68_root_parent}/ImportLibraries"
+        "${_retro68_root_parent}/Interfaces&Libraries/Libraries"
+        "${_retro68_root_parent}/Interfaces&Libraries/Libraries/SharedLibraries"
+        "${_retro68_root_parent}/InterfacesAndLibraries/Libraries"
+        "${_retro68_root_parent}/InterfacesAndLibraries/Libraries/SharedLibraries"
+        "${_retro68_root_parent}/Interfaces and Libraries/Libraries"
+        "${_retro68_root_parent}/Interfaces and Libraries/Libraries/Shared Libraries"
+        "${_retro68_root_parent}/Retro68/ImportLibraries"
+        "${_retro68_root_parent}/Retro68/Interfaces&Libraries/Libraries"
+        "${_retro68_root_parent}/Retro68/Interfaces&Libraries/Libraries/SharedLibraries"
+        "${_retro68_root_parent}/Retro68/InterfacesAndLibraries/Libraries"
+        "${_retro68_root_parent}/Retro68/InterfacesAndLibraries/Libraries/SharedLibraries"
+        "${_retro68_root_parent}/Retro68/Interfaces and Libraries/Libraries"
+        "${_retro68_root_parent}/Retro68/Interfaces and Libraries/Libraries/Shared Libraries"
+    )
+
     if(DEFINED ENV{RETRO68_ROOT} AND NOT "$ENV{RETRO68_ROOT}" STREQUAL "")
         list(APPEND _speech_import_dirs "$ENV{RETRO68_ROOT}/ImportLibraries")
         list(APPEND _speech_import_dirs
@@ -105,9 +128,45 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
         NO_DEFAULT_PATH
     )
 
+    # If the import library uses an MPW-style name without lib*/.a decoration,
+    # fall back to a manual scan using common 68K basenames.
+    if(NOT SPEECHLIB_LIBRARY)
+        set(_speechlib_candidates
+            libSpeechLib.a SpeechLib.a SpeechLib SpeechSynthesis.a SpeechSynthesis
+            SpeechLib68K.a SpeechLib68K
+            libSpeechSynthesis.a libSpeechLib68K.a
+        )
+
+        foreach(_search_dir IN LISTS _speech_import_dirs)
+            foreach(_suffix "" 68k 68K m68k Libraries Libraries/SharedLibraries "Shared Libraries" powerpc PowerPC PPC)
+                foreach(_lib_name IN LISTS _speechlib_candidates)
+                    set(_candidate "${_search_dir}/${_suffix}")
+                    if(NOT "${_candidate}" STREQUAL "${_search_dir}/")
+                        set(_candidate "${_candidate}/${_lib_name}")
+                    else()
+                        set(_candidate "${_search_dir}/${_lib_name}")
+                    endif()
+
+                    if(EXISTS "${_candidate}" AND NOT IS_DIRECTORY "${_candidate}")
+                        set(SPEECHLIB_LIBRARY "${_candidate}")
+                        break()
+                    endif()
+                endforeach()
+
+                if(SPEECHLIB_LIBRARY)
+                    break()
+                endif()
+            endforeach()
+
+            if(SPEECHLIB_LIBRARY)
+                break()
+            endif()
+        endforeach()
+    endif()
+
     if(NOT SPEECHLIB_LIBRARY)
         message(STATUS "Speech Manager import library search paths:\n        ${_speech_import_dirs_bulleted}")
-        message(FATAL_ERROR "Speech Manager import library not found. Expected one of: ${_speechlib_names_joined}. Install Retro68/MPW Interfaces&Libraries/ImportLibraries that include the 68K SpeechLib/SpeechSynthesis import archive or set SPEECH_IMPORT_LIB_DIR to its location.")
+        message(FATAL_ERROR "Speech Manager import library not found. Expected one of: ${_speechlib_names_joined} (68K import archives). Install Retro68/MPW Interfaces&Libraries/ImportLibraries that include the 68K SpeechLib/SpeechSynthesis import archive or set SPEECH_IMPORT_LIB_DIR to its location.")
     else()
         message(STATUS "Speech Manager import library: ${SPEECHLIB_LIBRARY}")
     endif()
