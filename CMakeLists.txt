@@ -69,13 +69,17 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
 
     list(REMOVE_DUPLICATES _speech_import_dirs)
 
-    find_library(SPEECHLIB_LIBRARY SpeechLib
+    # Search common import library layouts and accept either 68K or PPC archives
+    # (the import library only carries symbol stubs so PPC is usable for 68K).
+    find_library(SPEECHLIB_LIBRARY
+        NAMES SpeechLib SpeechLibPPC Speech
         HINTS ${_speech_import_dirs}
+        PATH_SUFFIXES "" 68k 68K m68k powerpc PowerPC PPC
         NO_DEFAULT_PATH
     )
 
     if(NOT SPEECHLIB_LIBRARY)
-        message(FATAL_ERROR "Speech Manager import library 'libSpeechLib.a' not found. Install Retro68 ImportLibraries with SpeechLib or set SPEECH_IMPORT_LIB_DIR to its location.")
+        message(FATAL_ERROR "Speech Manager import library 'libSpeechLib.a' not found. Install Retro68 ImportLibraries with SpeechLib (68K or PPC import archive) or set SPEECH_IMPORT_LIB_DIR to its location.")
     endif()
 
     target_link_directories(MacVox68 PRIVATE ${_speech_import_dirs})
