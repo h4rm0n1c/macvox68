@@ -113,20 +113,15 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
 
     list(REMOVE_DUPLICATES _speech_import_dirs)
 
-    set(_speechlib_names SpeechLib Speech SpeechSynthesis SpeechLib68K)
-    set(_speechlib_candidates
-        libSpeechLib.a SpeechLib.a SpeechLib SpeechSynthesis.a SpeechSynthesis
-        SpeechLib68K.a SpeechLib68K
-        libSpeechSynthesis.a libSpeechLib68K.a
-        Speech.a
-    )
+    # Stick to the classic System 7 68K import archives that ship with MPW 3.6
+    # (Speech.a / SpeechSynthesis.a). The PPC/OS 8 era SpeechLib variants are
+    # not valid for this project.
+    set(_speechlib_names Speech SpeechSynthesis)
+    set(_speechlib_candidates Speech.a SpeechSynthesis.a Speech SpeechSynthesis)
     list(JOIN _speech_import_dirs "\n        " _speech_import_dirs_bulleted)
     list(JOIN _speechlib_candidates ", " _speechlib_names_joined)
 
     # Search common import library layouts for the classic 68K import archive.
-    #
-    # Classic MPW distributions sometimes name this import archive `SpeechSynthesis.a`
-    # instead of `SpeechLib.a`, so include both families of names here.
     find_library(SPEECHLIB_LIBRARY
         NAMES ${_speechlib_names}
         HINTS ${_speech_import_dirs}
@@ -135,7 +130,7 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
     )
 
     # If the import library uses an MPW-style name without lib*/.a decoration,
-    # fall back to a manual scan using common 68K basenames.
+    # fall back to a manual scan using the 68K Speech/SpeechSynthesis basenames.
     if(NOT SPEECHLIB_LIBRARY)
         foreach(_search_dir IN LISTS _speech_import_dirs)
             foreach(_suffix "" 68k 68K m68k Libraries Libraries/SharedLibraries "Shared Libraries" powerpc PowerPC PPC)
@@ -166,7 +161,7 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
 
     if(NOT SPEECHLIB_LIBRARY)
         message(STATUS "Speech Manager import library search paths:\n        ${_speech_import_dirs_bulleted}")
-        message(FATAL_ERROR "Speech Manager import library not found. Expected one of: ${_speechlib_names_joined} (68K import archives). Install Retro68/MPW Interfaces&Libraries/ImportLibraries that include the 68K SpeechLib/SpeechSynthesis import archive or set SPEECH_IMPORT_LIB_DIR to its location.")
+        message(FATAL_ERROR "Speech Manager import library not found. Expected one of: ${_speechlib_names_joined} (68K import archives). Install MPW/Retro68 Interfaces&Libraries/ImportLibraries that include Speech.a or SpeechSynthesis.a (68K stubs) or set SPEECH_IMPORT_LIB_DIR to its location.")
     else()
         message(STATUS "Speech Manager import library: ${SPEECHLIB_LIBRARY}")
     endif()
