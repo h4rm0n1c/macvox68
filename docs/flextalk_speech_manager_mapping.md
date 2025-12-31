@@ -2,6 +2,8 @@
 
 This note maps FlexTalk's `\!` escape-sequence conventions to classic Macintosh Speech Manager embedded commands (the `[[command]]` syntax used by MacinTalk). It is written for re-implementing the NetTTS prosody encoder logic so that it emits Speech Manager markup directly, using FlexTalk's feature set as the reference for behavior.
 
+This is the second pass now that we have the Speech Manager trap path working in MacVox68. The goal is to keep the VOX prosody engine logic but swap the emission target from FlexTalk escapes to Speech Manager commands as we bring the Mac speech stack online.
+
 ## Speech Manager vs. MacinTalk
 
 - **Speech Manager is the OS API** that accepts embedded commands and routes text to whichever synthesizer is installed. It defines the command grammar (`[[rate]]`, `[[slnc]]`, etc.), manages voices, and abstracts queueing/audio output.
@@ -28,6 +30,15 @@ This note maps FlexTalk's `\!` escape-sequence conventions to classic Macintosh 
 | Comments in stream | `\!C<string>` | `[[cmnt any text]]` | Purely ignored by both engines; safe to drop or convert verbatim. |
 | Force sentence break | `\!br` | Insert explicit punctuation and optionally `[[slnc …]]` | Speech Manager derives phrasing from punctuation; insert period/semicolon and a short silence to mimic FlexTalk's forced break. |
 
+## Where to read about Speech Manager embedded commands
+
+- **Inside Macintosh: Sound, Chapter 4 (Speech Manager)** — The canonical Toolbox description of the embedded-command grammar (delimiters, `[[vers]]`, `[[rate]]`, `[[pbas]]`, `[[pmod]]`, `[[slnc]]`, `[[dlim]]`, etc.), callback rules, and voice selection. Find it in the local overlay at `/opt/MacDevDocs/1994-12-DevCD-RL/Inside Macintosh/Sound/IM_Sound.pdf`.
+- **Tech Note HW09 “Speech Manager”** — A concise summary of the same grammar plus edge cases for delimiters and command parsing. In `/opt/Latest Notes From Apple/Hardware/HW 09 - Speech Manager`.
+- **Headers that reflect the grammar** — `Speech.h` / `SpeechSynthesis.h` in `/opt/Interfaces&Libraries/Interfaces/CIncludes/` show the Speech Manager constants and comments for embedded commands (including the `[[vers 1]]` recommendation and the `[[cmnt]]` behavior). Useful when tuning the encoder for traps instead of PPC SpeechLib.
+- **PlainTalk User’s Guide (optional)** — Provides MacinTalk voice-side notes on how punctuation and emphasis are treated; good for sanity-checking phrasing when our markup is light. Look under `/opt/MacDevDocs/1997-09-DevCD/Development_Platforms/PlainTalk/`.
+
+These are all read-only references; do not copy them into the repo. Use them to confirm the command spellings and parameter formats when porting the VOX prosody output.
+
 ## Practical translation tips
 - Keep delimiters consistent: surround Speech Manager commands with `[[` and `]]`, and consider starting strings with `[[vers 1]]` to avoid parser ambiguity.
 - Speech Manager commands apply until overridden; emit "phrase-scoped" equivalents by resetting afterward (for example, `[[rate 180]] ... [[rate -0]]` to restore default if the synthesizer honors relative zero).
@@ -39,8 +50,8 @@ This note maps FlexTalk's `\!` escape-sequence conventions to classic Macintosh 
 
 1. **Fork the logic, not the syntax**: Reuse FlexTalk's prosody heuristics as the behavioral template, but emit Speech Manager commands directly instead of producing `\!` escapes.
 2. **Map every decision point**: For each place the FlexTalk encoder would write an escape (rate change, silence, emphasis, pitch tweak, forced break), write the Speech Manager equivalent from the table above. Drop or approximate features with no analog.
-3. **Cache defaults**: Track baseline speaking rate (WPM) and pitch so relative FlexTalk ratios have an anchor; restore defaults after phrase-scoped adjustments.
+3. **Cache defaults**: Track baseline speaking rate (WPM) and pitch so relative FlexTalk ratios have an anchor; restore defaults after phrase-scoped adjustments. Emit `[[vers 1]]` early to lock the parser version and avoid synthesizer defaults changing expectations.
 4. **Normalize text classes**: Where the encoder would have relied on FlexTalk detectors (`\!n*`, acronym/proofread modes), run your own pre-normalization pass to insert spaces/punctuation that Speech Manager will parse naturally.
 5. **Pad missing prosody with punctuation**: When FlexTalk signaled break strength (`\!br`, trailing de-accent codes), inject punctuation and `[[slnc …]]` to create similar phrasing.
-6. **Voice selection**: Map FlexTalk gender/tract hints to the closest installed Speech Manager voice via the API rather than embedded commands, unless a vendor-specific `[[xtnd]]` capability exists.
-7. **Debugging**: Wrap emitted commands with `[[cmnt ...]]` during bring-up to verify placements without affecting audio output.
+6. **Voice selection**: Map FlexTalk gender/tract hints to the closest installed Speech Manager voice via the API rather than embedded commands, unless a vendor-specific `[[xtnd]]` capability exists. Cache the selected channel so follow-on `[[pbas]]`/`[[pmod]]` adjustments remain channel-local.
+7. **Debugging with live speech**: Wrap emitted commands with `[[cmnt ...]]` during bring-up to verify placements without affecting audio output. Now that the Speech Manager trap path is available, exercise the encoder against BasiliskII/PlainTalk and log which embedded commands are honored to refine the mapping table.
