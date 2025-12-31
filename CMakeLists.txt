@@ -45,6 +45,13 @@ add_application(MacVox68
     CREATOR MV68
     )
 
+if(NOT CMAKE_SYSTEM_NAME MATCHES Retro68)
+    add_executable(vox_parser_host_checks
+        tests/vox_parser_host_checks.c
+        vox_parser.c)
+    target_compile_definitions(vox_parser_host_checks PRIVATE VOX_PARSER_STANDALONE)
+endif()
+
 if(CMAKE_SYSTEM_NAME MATCHES Retro68)
     target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet)
 endif()
