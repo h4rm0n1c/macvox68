@@ -16,6 +16,7 @@
 #include "about_box.h"
 #include "main_window.h"
 #include "network.h"
+#include "speech.h"
 #include "ui_input.h"
 #include "ui_layout.h"
 #include "ui_text_fields.h"
@@ -80,6 +81,7 @@ static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
 static const UITheme *sTheme = NULL;
 static Boolean        gServerSuggested = false;
+static SpeechUIState  gSpeechState = kSpeechIdleState;
 
 static void main_window_append_line(const char *text)
 {
@@ -409,12 +411,17 @@ static void main_window_plan_layout(void)
     }
 }
 
-static void main_window_update_control_enabling(SpeechUIState state)
+static void main_window_update_control_enabling(SpeechUIState state, Boolean speechAvailable)
 {
     /* Controls respond to speech activity. Menu-based Quit remains available. */
     if (gSpeakBtn)
     {
-        if (state == kSpeechSpeakingState)
+        if (!speechAvailable)
+        {
+            SetControlTitle(gSpeakBtn, "\pSpeak");
+            HiliteControl(gSpeakBtn, 255);
+        }
+        else if (state == kSpeechSpeakingState)
         {
             SetControlTitle(gSpeakBtn, "\pStop");
             HiliteControl(gSpeakBtn, 0);
@@ -424,6 +431,88 @@ static void main_window_update_control_enabling(SpeechUIState state)
             SetControlTitle(gSpeakBtn, "\pSpeak");
             HiliteControl(gSpeakBtn, 0);
         }
+    }
+}
+
+static Boolean main_window_copy_text_area(char *buffer, Size bufferLen, Size *outLen)
+{
+    TEHandle te;
+    Size len;
+
+    if (!buffer || bufferLen <= 1)
+        return false;
+
+    te = gTextArea.field.handle;
+    if (!te)
+        return false;
+
+    len = (**te).teLength;
+    if (len >= bufferLen)
+        len = bufferLen - 1;
+
+    HLock((Handle)(**te).hText);
+    BlockMove(*((**te).hText), buffer, len);
+    HUnlock((Handle)(**te).hText);
+
+    buffer[len] = '\0';
+
+    if (outLen)
+        *outLen = len;
+
+    return len > 0;
+}
+
+static void main_window_toggle_speech(void)
+{
+    Size len = 0;
+    Boolean started = false;
+    Boolean attemptedSpeak = false;
+    char buffer[512];
+
+    if (!speech_is_available())
+    {
+        main_window_append_line("Speech Manager is not available on this system.");
+        main_window_update_control_enabling(kSpeechIdleState, false);
+        return;
+    }
+
+    if (speech_is_busy())
+    {
+        speech_stop();
+        main_window_append_line("Speech stopped.");
+    }
+    else if (main_window_copy_text_area(buffer, sizeof(buffer), &len))
+    {
+        attemptedSpeak = true;
+        started = speech_speak_text(buffer, len);
+
+        if (started)
+            main_window_append_line("Speech Manager is speaking the main log text.");
+    }
+    else
+    {
+        static const char kDefaultText[] = "[[vers 1]]MacVox68 speech smoke test. This exercises the Speech Manager channel.";
+
+        attemptedSpeak = true;
+        started = speech_speak_text(kDefaultText, (Size)strlen(kDefaultText));
+
+        if (started)
+            main_window_append_line("Speech Manager is speaking a built-in test phrase.");
+    }
+
+    if (attemptedSpeak && !started && !speech_is_busy())
+        main_window_append_line("Speech Manager could not start a speech request.");
+}
+
+static void main_window_refresh_speech_ui(void)
+{
+    Boolean available = speech_is_available();
+    SpeechUIState state = speech_is_busy() ? kSpeechSpeakingState : kSpeechIdleState;
+
+    if (gSpeechState != state || !available)
+    {
+        gSpeechState = state;
+        main_window_update_control_enabling(state, available);
     }
 }
 
@@ -661,8 +750,11 @@ void main_window_create(void)
     network_set_handlers(main_window_handle_network_data, main_window_handle_network_log);
 
     /* Speech-related controls will be updated once the engine is present. */
-    main_window_update_control_enabling(kSpeechIdleState);
+    main_window_update_control_enabling(kSpeechIdleState, speech_is_available());
     main_window_update_start_button();
+
+    if (!speech_is_available())
+        main_window_append_line("Speech Manager not detected; install MacinTalk to enable Speak.");
 
     ShowWindow(gMainWin);
 }
@@ -742,7 +834,12 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
 
                     if (ui_windows_track_hit_control(w, local, specs, (short)(sizeof(specs) / sizeof(specs[0])), &hitControl, &hitPart))
                     {
-                        if (hitControl == gStartBtn && hitPart != 0)
+                        if (hitControl == gSpeakBtn && hitPart != 0)
+                        {
+                            main_window_toggle_speech();
+                            main_window_refresh_speech_ui();
+                        }
+                        else if (hitControl == gStartBtn && hitPart != 0)
                             main_window_toggle_server();
                         else if (hitControl == gQuitBtn && hitPart != 0 && outQuit)
                             *outQuit = true;
@@ -841,6 +938,8 @@ void main_window_idle(void)
         ui_text_field_idle(&gHostField, gMainWin);
     else if (target == gPortField.handle)
         ui_text_field_idle(&gPortField, gMainWin);
+
+    main_window_refresh_speech_ui();
 }
 
 WindowPtr main_window_get(void)
