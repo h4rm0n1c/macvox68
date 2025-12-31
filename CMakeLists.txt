@@ -45,7 +45,7 @@ add_application(MacVox68
     )
 
 if(CMAKE_SYSTEM_NAME MATCHES Retro68)
-    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet)
+    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet -lSpeech)
 endif()
 
 if(APPEARANCE_SDK_ROOT)
