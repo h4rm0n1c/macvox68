@@ -4,6 +4,10 @@ This note captures how to carry the existing VOX text-normalization/prosody pipe
 
 ## Reference implementation snapshot
 
+Behavioral source of truth lives in NetTTS (`src/vox_parser.cpp` on the `main` branch). Use the raw view while porting so naming and token ordering stay faithful to the shipping Windows build:
+
+- Raw file: https://raw.githubusercontent.com/h4rm0n1c/NetTTS/refs/heads/main/src/vox_parser.cpp
+
 Key stages from the current C++ pipeline (`vox_process` and helpers):
 
 - **Pre-normalization utilities**: trimming, lowercase conversion, digit checks, titlecase detection, trailing punctuation strip, `\!br` detection.
@@ -33,6 +37,10 @@ The existing logic emits FlexTalk `\!` escapes. When ported, the same prosody de
   - Converting wide/UTF-16 uses to simple 8-bit char buffers (System 7 Roman). The original `std::wstring` operations become plain `char`/`Str255` manipulations with manual bounds checks.
   - Replacing `std::regex` with manual pattern checks (prefix/suffix tests) to avoid C++11 dependencies. The outlined heuristics are mostly finite-state and can be expressed with scanning loops.
   - Keeping token lists in small fixed arrays to avoid dynamic allocation where possible.
+- Track porting progress against the reference source instead of prose summaries:
+  - Mirror function boundaries: start by porting `split_sentences`, `apply_thee_rule`, `apply_leadin_break`, `apply_time_numbers_degrees`, `build_beats`, `normalize_letter_tokens`, and `tidy` as discrete C functions. Preserve the call order used in `vox_process` so later validation can diff strings against the Windows build.
+  - Keep temporary instrumentation that can emit both FlexTalk escapes and Speech Manager markup from the same C code path. Toggling the target (FlexTalk vs. Speech Manager) with a flag makes it easier to diff outputs against the upstream executable until the Speech Manager-only build stabilizes.
+  - Match the `\!br` placement logic exactly before swapping the emission target. Prosody drift typically comes from missing breaks rather than text differences; port break insertion first, then swap escapes for `[[slnc ...]]`/punctuation.
 - Provide a **formatter hook** that accepts a raw C string and returns a newly allocated `Handle` or `Ptr` ready for `SpeakText`/`SpeakString`, already containing Speech Manager commands. This keeps `speech.c` thin: it asks the parser to format text, then hands the result to Speech Manager.
 - Begin with a **literal command passthrough mode**: emit the same text plus `[[vers 1]]` and `[[cmnt porting]]` decorations so we can validate parsing in BasiliskII without committing to every heuristic at once. Gradually enable the time/number and break insertion stages as they are reimplemented.
 - Keep a **unit test harness** in the host/Linux environment that feeds sample phrases through the C port and inspects the resulting markup (no audio required). Align test cases with the original C++ outputs to verify behavioral parity before layering Speech Manager-specific tweaks.

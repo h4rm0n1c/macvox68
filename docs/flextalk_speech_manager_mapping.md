@@ -2,7 +2,7 @@
 
 This note maps FlexTalk's `\!` escape-sequence conventions to classic Macintosh Speech Manager embedded commands (the `[[command]]` syntax used by MacinTalk). It is written for re-implementing the NetTTS prosody encoder logic so that it emits Speech Manager markup directly, using FlexTalk's feature set as the reference for behavior.
 
-This is the second pass now that we have the Speech Manager trap path working in MacVox68. The goal is to keep the VOX prosody engine logic but swap the emission target from FlexTalk escapes to Speech Manager commands as we bring the Mac speech stack online. A deeper porting plan that mirrors the existing `vox_process` pipeline lives in `docs/vox_parser_porting_notes.md`.
+This is the second pass now that we have the Speech Manager trap path working in MacVox68. The goal is to keep the VOX prosody engine logic but swap the emission target from FlexTalk escapes to Speech Manager commands as we bring the Mac speech stack online. A deeper porting plan that mirrors the existing `vox_process` pipeline lives in `docs/vox_parser_porting_notes.md`; use it alongside the upstream behavioral reference at `NetTTS/src/vox_parser.cpp` so conversion decisions stay anchored to the shipping parser.
 
 ## Speech Manager vs. MacinTalk
 
