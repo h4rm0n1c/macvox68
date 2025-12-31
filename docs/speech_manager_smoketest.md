@@ -12,7 +12,7 @@ MacVox68 now carries a minimal Speech Manager hook so we can verify MacinTalk is
 - Speech code lives in `speech.c` / `speech.h` and is driven from the main event loop via `speech_pump()`.
 - Speech text is copied into a temporary Handle and released once `SpeechBusy()` reports idle so the Speech Manager always owns stable memory during playback.
 - The UI polls `speech_is_busy()` during `main_window_idle()` to keep the Speak button label synced (Speak vs. Stop) and to gray the button when no Speech Manager channel is available.
-- The Retro68 target must link against `libSpeechLib` from the Retro68 ImportLibraries set so the Speech Manager calls (`InitSpeech`, `SpeechBusySystemTask`, `StopSpeechChannel`) resolve. If your toolchain is missing it, point `-DSPEECH_IMPORT_LIB_DIR=/path/to/ImportLibraries` at a copy that contains `libSpeechLib.a` (for example, from the Retro68 ImportLibraries download). The PPC import archive works for 68K builds because it only carries symbol stubs; either variant is fine.
+- The Retro68 target must link against the Speech Manager import archive so `InitSpeech`, `SpeechBusySystemTask`, and `StopSpeechChannel` resolve. Some kits name it `libSpeechLib.a` (Retro68 import libraries), while MPW 3.x era kits often ship it as `SpeechSynthesis.a`; both are valid and can be pointed to with `-DSPEECH_IMPORT_LIB_DIR=/path/to/ImportLibraries`. The PPC import archive works for 68K builds because it only carries symbol stubs; either variant is fine.
 
 ## Quick checklist for host testing
 1. Ensure **MacinTalk/Speech Manager** is installed in the System Folder inside BasiliskII.
