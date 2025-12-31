@@ -29,6 +29,34 @@
 #endif
 
 static const short kMaxTextDestGrowth = 30000;
+
+GrafPtr ui_text_set_active_port(TEHandle handle, WindowPtr fallback)
+{
+    GrafPtr savePort = NULL;
+    GrafPtr target   = fallback;
+
+    if (handle)
+    {
+        TEPtr te = *handle;
+
+        if (te && te->inPort)
+            target = te->inPort;
+    }
+
+    if (target)
+    {
+        GetPort(&savePort);
+        SetPort(target);
+    }
+
+    return savePort;
+}
+
+void ui_text_restore_port(GrafPtr savePort)
+{
+    if (savePort)
+        SetPort(savePort);
+}
 static void ui_text_set_colors(void)
 {
     ui_theme_apply_field_colors();
@@ -158,9 +186,14 @@ static short ui_text_scroll_max(const UIScrollingText *area)
 void ui_text_scrolling_apply_scroll(UIScrollingText *area, short offset)
 {
     short max;
+    GrafPtr savePort;
 
     if (!area || !area->field.handle)
         return;
+
+    savePort = ui_text_set_active_port(area->field.handle, area->window);
+
+    TECalText(area->field.handle);
 
     max = ui_text_scroll_max(area);
     if (offset < 0)
@@ -176,14 +209,19 @@ void ui_text_scrolling_apply_scroll(UIScrollingText *area, short offset)
 
     if (area->scroll)
         SetControlValue(area->scroll, area->scrollOffset);
+
+    ui_text_restore_port(savePort);
 }
 
 void ui_text_scrolling_update_scrollbar(UIScrollingText *area)
 {
     short max;
+    GrafPtr savePort;
 
     if (!area || !area->field.handle || !area->scroll)
         return;
+
+    savePort = ui_text_set_active_port(area->field.handle, area->window);
 
     TECalText(area->field.handle);
 
@@ -194,27 +232,53 @@ void ui_text_scrolling_update_scrollbar(UIScrollingText *area)
         ui_text_scrolling_apply_scroll(area, max);
     else
         SetControlValue(area->scroll, area->scrollOffset);
+
+    ui_text_restore_port(savePort);
 }
 
 void ui_text_scrolling_scroll_selection_into_view(UIScrollingText *area)
 {
     TEPtr te;
+    short viewH;
+    Point caret;
+    short caretTop;
+    short caretBottom;
+    short contentTop;
+    short contentBottom;
+    GrafPtr savePort;
 
     if (!area || !area->field.handle)
         return;
 
+    savePort = ui_text_set_active_port(area->field.handle, area->window);
+
     te = *area->field.handle;
     if (!te)
+    {
+        ui_text_restore_port(savePort);
         return;
+    }
 
-    if (te->selRect.top < te->viewRect.top)
+    TECalText(area->field.handle);
+    caret = TEGetPoint(te->selEnd, area->field.handle);
+    viewH = ui_text_view_height(area->field.handle);
+
+    caretTop = (short)(caret.v + area->scrollOffset - te->lineHeight);
+    caretBottom = (short)(caret.v + area->scrollOffset + te->lineHeight);
+
+    contentTop = area->scrollOffset;
+    contentBottom = (short)(contentTop + viewH);
+
+    if (caretTop < contentTop)
     {
-        ui_text_scrolling_apply_scroll(area, (short)(area->scrollOffset + (te->selRect.top - te->viewRect.top)));
+        ui_text_scrolling_apply_scroll(area, caretTop);
     }
-    else if (te->selRect.bottom > te->viewRect.bottom)
+    else if (caretBottom > contentBottom)
     {
-        ui_text_scrolling_apply_scroll(area, (short)(area->scrollOffset + (te->selRect.bottom - te->viewRect.bottom)));
+        ui_text_scrolling_apply_scroll(area, (short)(caretBottom - viewH));
     }
+
+    ui_text_restore_port(savePort);
 }
 
 pascal void ui_text_scrolling_track(ControlHandle control, short part)
@@ -276,19 +340,65 @@ pascal void ui_text_scrolling_track(ControlHandle control, short part)
 void ui_text_field_update(const UITextField *field, WindowPtr window)
 {
     Rect view;
+    GrafPtr savePort;
 
     if (!field || !field->handle || !window)
         return;
 
+    savePort = ui_text_set_active_port(field->handle, window);
+
     ui_text_set_colors();
     view = (**field->handle).viewRect;
     TEUpdate(&view, field->handle);
+
+    ui_text_restore_port(savePort);
+}
+
+Boolean ui_text_field_get_text(const UITextField *field, char *buffer, short maxLen)
+{
+    TEPtr te;
+    long len;
+    Ptr text;
+
+    if (!field || !field->handle || !buffer || maxLen <= 0)
+        return false;
+
+    te = *field->handle;
+    if (!te)
+        return false;
+
+    len = te->teLength;
+    if (len >= maxLen)
+        len = maxLen - 1;
+
+    text = *(te->hText);
+    if (!text)
+        return false;
+
+    HLock(te->hText);
+    BlockMove(text, buffer, len);
+    HUnlock(te->hText);
+
+    buffer[len] = '\0';
+    return true;
+}
+
+static Boolean ui_text_is_navigation_character(char c)
+{
+    unsigned char uc = (unsigned char)c;
+
+    return (Boolean)((uc >= 0x1C && uc <= 0x1F));
 }
 
 static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window, char c)
 {
     TEPtr te;
     Boolean isBackspace;
+    Boolean isReturn;
+    Boolean isTab;
+    Boolean isPrintable;
+    Boolean isNavigation;
+    unsigned char uc;
 
     if (!handle)
         return false;
@@ -297,12 +407,21 @@ static Boolean ui_text_should_accept_character(TEHandle handle, WindowPtr window
     if (!te)
         return false;
 
-    isBackspace = (Boolean)(c == 0x08 || c == 0x7F);
+    uc         = (unsigned char)c;
+    isBackspace  = (Boolean)(c == 0x08 || c == 0x7F);
+    isReturn     = (Boolean)(c == '\r' || c == '\n');
+    isTab        = (Boolean)(c == '\t');
+    isPrintable  = (Boolean)(uc >= 0x20);
+    isNavigation = ui_text_is_navigation_character(c);
+
+    if (!isBackspace && !isReturn && !isTab && !isPrintable && !isNavigation)
+        return false;
+
+    if (isNavigation)
+        return true;
 
     if (te->crOnly)
     {
-        Boolean isReturn = (Boolean)(c == '\r' || c == '\n');
-
         if (isReturn)
             return false;
 
@@ -402,6 +521,7 @@ void ui_text_scrolling_init(UIScrollingText *area, WindowPtr window, const Rect 
     area->field.singleLine = false;
     area->scroll = NULL;
     area->scrollOffset = 0;
+    area->window = window;
 
     ui_text_field_init(&area->field, window, frame, text, false, true);
 

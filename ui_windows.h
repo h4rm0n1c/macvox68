@@ -37,7 +37,8 @@ ControlHandle ui_windows_new_slider(WindowPtr window, const Rect *frame,
                                     short initial, short min, short max);
 
 Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
-                                     const UIControlTrackingSpec *specs, short count);
+                                     const UIControlTrackingSpec *specs, short count,
+                                     ControlHandle *outHit, short *outPart);
 
 #ifdef __cplusplus
 }

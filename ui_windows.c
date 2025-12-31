@@ -100,13 +100,19 @@ ControlHandle ui_windows_new_slider(WindowPtr window, const Rect *frame,
 }
 
 Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
-                                     const UIControlTrackingSpec *specs, short count)
+                                     const UIControlTrackingSpec *specs, short count,
+                                     ControlHandle *outHit, short *outPart)
 {
     ControlHandle c;
     short part;
 
     if (!window || !specs || count <= 0)
         return false;
+
+    if (outHit)
+        *outHit = NULL;
+    if (outPart)
+        *outPart = 0;
 
     part = FindControl(local, window, &c);
     if (!part || !c)
@@ -126,10 +132,15 @@ Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
                 restoreColor = true;
             }
 
-            (void)TrackControl(c, local, specs->action);
+            part = TrackControl(c, local, specs->action);
 
             if (restoreColor)
                 RGBBackColor(&prevBack);
+
+            if (outHit)
+                *outHit = c;
+            if (outPart)
+                *outPart = part;
 
             return true;
         }

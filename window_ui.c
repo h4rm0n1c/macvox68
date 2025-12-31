@@ -11,6 +11,7 @@
 #include "main_window.h"
 #include "ui_input.h"
 #include "ui_app.h"
+#include "network.h"
 
 static InputDispatcher gInputDispatcher;
 
@@ -99,6 +100,8 @@ Boolean ui_app_pump_events(void)
     }
 
     main_window_idle();
+
+    network_poll();
 
     /* Integration point:
        Later, call tcp_poll() and speech_pump() here (nonblocking), while the loop stays responsive. */

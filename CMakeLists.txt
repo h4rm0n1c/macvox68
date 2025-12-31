@@ -30,6 +30,8 @@ add_application(MacVox68
     about_box.c
     main.c
     main_window.c
+    network.c
+    network_backend_ot.c
     ui_input.c
     ui_layout.c
     ui_theme.c
@@ -40,6 +42,10 @@ add_application(MacVox68
     TYPE APPL
     CREATOR MV68
     )
+
+if(CMAKE_SYSTEM_NAME MATCHES Retro68)
+    target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet)
+endif()
 
 if(APPEARANCE_SDK_ROOT)
     target_include_directories(MacVox68 PRIVATE
