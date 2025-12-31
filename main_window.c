@@ -18,6 +18,7 @@
 #include "network.h"
 #include "ui_input.h"
 #include "ui_layout.h"
+#include "speech.h"
 #include "ui_text_fields.h"
 #include "ui_theme.h"
 #include "ui_windows.h"
@@ -80,6 +81,9 @@ static TEHandle       gActiveEdit   = NULL;
 static UILayout       gLayout;
 static const UITheme *sTheme = NULL;
 static Boolean        gServerSuggested = false;
+static SpeechUIState  gSpeechState = kSpeechIdleState;
+
+static void main_window_set_speech_state(SpeechUIState state);
 
 static void main_window_append_line(const char *text)
 {
@@ -411,6 +415,8 @@ static void main_window_plan_layout(void)
 
 static void main_window_update_control_enabling(SpeechUIState state)
 {
+    gSpeechState = state;
+
     /* Controls respond to speech activity. Menu-based Quit remains available. */
     if (gSpeakBtn)
     {
@@ -425,6 +431,38 @@ static void main_window_update_control_enabling(SpeechUIState state)
             HiliteControl(gSpeakBtn, 0);
         }
     }
+}
+
+static void main_window_handle_speak_toggle(void)
+{
+    if (!speech_available())
+    {
+        main_window_append_line("Speech Manager is unavailable.");
+        main_window_set_speech_state(kSpeechIdleState);
+        return;
+    }
+
+    if (speech_is_busy())
+    {
+        speech_stop();
+        main_window_set_speech_state(kSpeechIdleState);
+        return;
+    }
+
+    if (speech_speak_test_phrase())
+    {
+        main_window_set_speech_state(kSpeechSpeakingState);
+    }
+    else
+    {
+        main_window_append_line("SpeakString trap failed.");
+        main_window_set_speech_state(kSpeechIdleState);
+    }
+}
+
+static void main_window_set_speech_state(SpeechUIState state)
+{
+    main_window_update_control_enabling(state);
 }
 
 static void main_window_create_text_edit(void)
@@ -658,10 +696,11 @@ void main_window_create(void)
     main_window_plan_layout();
     main_window_create_text_edit();
     main_window_create_controls();
+    speech_init();
     network_set_handlers(main_window_handle_network_data, main_window_handle_network_log);
 
     /* Speech-related controls will be updated once the engine is present. */
-    main_window_update_control_enabling(kSpeechIdleState);
+    main_window_set_speech_state(kSpeechIdleState);
     main_window_update_start_button();
 
     ShowWindow(gMainWin);
@@ -742,7 +781,9 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
 
                     if (ui_windows_track_hit_control(w, local, specs, (short)(sizeof(specs) / sizeof(specs[0])), &hitControl, &hitPart))
                     {
-                        if (hitControl == gStartBtn && hitPart != 0)
+                        if (hitControl == gSpeakBtn && hitPart != 0)
+                            main_window_handle_speak_toggle();
+                        else if (hitControl == gStartBtn && hitPart != 0)
                             main_window_toggle_server();
                         else if (hitControl == gQuitBtn && hitPart != 0 && outQuit)
                             *outQuit = true;
@@ -834,6 +875,9 @@ Boolean main_window_handle_key(const InputEvent *ev, Boolean *outQuit)
 void main_window_idle(void)
 {
     TEHandle target = gActiveEdit ? gActiveEdit : gTextArea.field.handle;
+
+    if (gSpeechState == kSpeechSpeakingState && !speech_is_busy())
+        main_window_set_speech_state(kSpeechIdleState);
 
     if (target == gTextArea.field.handle)
         ui_text_field_idle(&gTextArea.field, gMainWin);
