@@ -17,6 +17,7 @@ This document tracks where to pull authoritative information when filling in Mac
 
 ## Lookup plan by feature area
 - **Speech Manager hookup**
+  - **Stay 68K-trap only.** Ignore PPC-era `SpeechLib` import stubs; rely on the toolbox traps in `SpeechSynthesis.h` / `Speech.h`. See `docs/speech_manager_trap_notes.md` for the quick reminder.
   - Pull routine signatures and initialization order from Inside Macintosh (Sound/Speech) in `/opt/MacDevDocs`.
   - Cross-check handle/queue management in the System 7.1 sources under `/opt/sys71src` (search for Speech Manager units and `Snd` routines) to confirm memory handling in cooperative multitasking.
   - Use sample code hits in `/opt/MacExamples_TextOnly` to see how real apps schedule speech completion callbacks alongside UI events.
