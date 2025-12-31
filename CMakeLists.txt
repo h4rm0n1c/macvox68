@@ -39,6 +39,7 @@ add_application(MacVox68
     ui_text_fields.c
     ui_windows.c
     window_ui.c
+    vox_parser.c
     macvox68_icon.r
     TYPE APPL
     CREATOR MV68
