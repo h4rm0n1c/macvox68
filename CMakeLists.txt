@@ -65,12 +65,15 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
 
     # MPW kits are sometimes unpacked into Interfaces&Libraries/Libraries
     # instead of ImportLibraries. Cover both spellings (with and without the
-    # ampersand) and common subfolders.
+    # ampersand) and common subfolders, plus “Interfaces and Libraries” with
+    # spaces.
     list(APPEND _speech_import_dirs
         "${_retro68_root}/Interfaces&Libraries/Libraries"
         "${_retro68_root}/Interfaces&Libraries/Libraries/SharedLibraries"
         "${_retro68_root}/InterfacesAndLibraries/Libraries"
         "${_retro68_root}/InterfacesAndLibraries/Libraries/SharedLibraries"
+        "${_retro68_root}/Interfaces and Libraries/Libraries"
+        "${_retro68_root}/Interfaces and Libraries/Libraries/Shared Libraries"
     )
 
     if(DEFINED ENV{RETRO68_ROOT} AND NOT "$ENV{RETRO68_ROOT}" STREQUAL "")
@@ -80,17 +83,18 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
             "$ENV{RETRO68_ROOT}/Interfaces&Libraries/Libraries/SharedLibraries"
             "$ENV{RETRO68_ROOT}/InterfacesAndLibraries/Libraries"
             "$ENV{RETRO68_ROOT}/InterfacesAndLibraries/Libraries/SharedLibraries"
+            "$ENV{RETRO68_ROOT}/Interfaces and Libraries/Libraries"
+            "$ENV{RETRO68_ROOT}/Interfaces and Libraries/Libraries/Shared Libraries"
         )
     endif()
 
     list(REMOVE_DUPLICATES _speech_import_dirs)
 
-    set(_speechlib_names SpeechLib SpeechLibPPC Speech SpeechSynthesis)
+    set(_speechlib_names SpeechLib Speech SpeechSynthesis SpeechLib68K)
     list(JOIN _speech_import_dirs "\n        " _speech_import_dirs_bulleted)
     list(JOIN _speechlib_names ", " _speechlib_names_joined)
 
-    # Search common import library layouts and accept either 68K or PPC archives
-    # (the import library only carries symbol stubs so PPC is usable for 68K).
+    # Search common import library layouts for the classic 68K import archive.
     #
     # Classic MPW distributions sometimes name this import archive `SpeechSynthesis.a`
     # instead of `SpeechLib.a`, so include both families of names here.
@@ -103,7 +107,7 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
 
     if(NOT SPEECHLIB_LIBRARY)
         message(STATUS "Speech Manager import library search paths:\n        ${_speech_import_dirs_bulleted}")
-        message(FATAL_ERROR "Speech Manager import library not found. Expected one of: ${_speechlib_names_joined}. Install Retro68/MPW Interfaces&Libraries/ImportLibraries that include SpeechLib/SpeechSynthesis (68K or PPC import archive) or set SPEECH_IMPORT_LIB_DIR to its location.")
+        message(FATAL_ERROR "Speech Manager import library not found. Expected one of: ${_speechlib_names_joined}. Install Retro68/MPW Interfaces&Libraries/ImportLibraries that include the 68K SpeechLib/SpeechSynthesis import archive or set SPEECH_IMPORT_LIB_DIR to its location.")
     else()
         message(STATUS "Speech Manager import library: ${SPEECHLIB_LIBRARY}")
     endif()
