@@ -114,8 +114,14 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
     list(REMOVE_DUPLICATES _speech_import_dirs)
 
     set(_speechlib_names SpeechLib Speech SpeechSynthesis SpeechLib68K)
+    set(_speechlib_candidates
+        libSpeechLib.a SpeechLib.a SpeechLib SpeechSynthesis.a SpeechSynthesis
+        SpeechLib68K.a SpeechLib68K
+        libSpeechSynthesis.a libSpeechLib68K.a
+        Speech.a
+    )
     list(JOIN _speech_import_dirs "\n        " _speech_import_dirs_bulleted)
-    list(JOIN _speechlib_names ", " _speechlib_names_joined)
+    list(JOIN _speechlib_candidates ", " _speechlib_names_joined)
 
     # Search common import library layouts for the classic 68K import archive.
     #
@@ -131,12 +137,6 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
     # If the import library uses an MPW-style name without lib*/.a decoration,
     # fall back to a manual scan using common 68K basenames.
     if(NOT SPEECHLIB_LIBRARY)
-        set(_speechlib_candidates
-            libSpeechLib.a SpeechLib.a SpeechLib SpeechSynthesis.a SpeechSynthesis
-            SpeechLib68K.a SpeechLib68K
-            libSpeechSynthesis.a libSpeechLib68K.a
-        )
-
         foreach(_search_dir IN LISTS _speech_import_dirs)
             foreach(_suffix "" 68k 68K m68k Libraries Libraries/SharedLibraries "Shared Libraries" powerpc PowerPC PPC)
                 foreach(_lib_name IN LISTS _speechlib_candidates)
