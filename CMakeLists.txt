@@ -63,11 +63,31 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
         "/opt/Retro68/ImportLibraries"
     )
 
+    # MPW kits are sometimes unpacked into Interfaces&Libraries/Libraries
+    # instead of ImportLibraries. Cover both spellings (with and without the
+    # ampersand) and common subfolders.
+    list(APPEND _speech_import_dirs
+        "${_retro68_root}/Interfaces&Libraries/Libraries"
+        "${_retro68_root}/Interfaces&Libraries/Libraries/SharedLibraries"
+        "${_retro68_root}/InterfacesAndLibraries/Libraries"
+        "${_retro68_root}/InterfacesAndLibraries/Libraries/SharedLibraries"
+    )
+
     if(DEFINED ENV{RETRO68_ROOT} AND NOT "$ENV{RETRO68_ROOT}" STREQUAL "")
         list(APPEND _speech_import_dirs "$ENV{RETRO68_ROOT}/ImportLibraries")
+        list(APPEND _speech_import_dirs
+            "$ENV{RETRO68_ROOT}/Interfaces&Libraries/Libraries"
+            "$ENV{RETRO68_ROOT}/Interfaces&Libraries/Libraries/SharedLibraries"
+            "$ENV{RETRO68_ROOT}/InterfacesAndLibraries/Libraries"
+            "$ENV{RETRO68_ROOT}/InterfacesAndLibraries/Libraries/SharedLibraries"
+        )
     endif()
 
     list(REMOVE_DUPLICATES _speech_import_dirs)
+
+    set(_speechlib_names SpeechLib SpeechLibPPC Speech SpeechSynthesis)
+    list(JOIN _speech_import_dirs "\n        " _speech_import_dirs_bulleted)
+    list(JOIN _speechlib_names ", " _speechlib_names_joined)
 
     # Search common import library layouts and accept either 68K or PPC archives
     # (the import library only carries symbol stubs so PPC is usable for 68K).
@@ -75,14 +95,17 @@ if(CMAKE_SYSTEM_NAME MATCHES Retro68)
     # Classic MPW distributions sometimes name this import archive `SpeechSynthesis.a`
     # instead of `SpeechLib.a`, so include both families of names here.
     find_library(SPEECHLIB_LIBRARY
-        NAMES SpeechLib SpeechLibPPC Speech SpeechSynthesis
+        NAMES ${_speechlib_names}
         HINTS ${_speech_import_dirs}
-        PATH_SUFFIXES "" 68k 68K m68k powerpc PowerPC PPC
+        PATH_SUFFIXES "" 68k 68K m68k powerpc PowerPC PPC Libraries Libraries/SharedLibraries
         NO_DEFAULT_PATH
     )
 
     if(NOT SPEECHLIB_LIBRARY)
-        message(FATAL_ERROR "Speech Manager import library not found. Install Retro68/MPW ImportLibraries that include SpeechLib/SpeechSynthesis (68K or PPC import archive) or set SPEECH_IMPORT_LIB_DIR to its location.")
+        message(STATUS "Speech Manager import library search paths:\n        ${_speech_import_dirs_bulleted}")
+        message(FATAL_ERROR "Speech Manager import library not found. Expected one of: ${_speechlib_names_joined}. Install Retro68/MPW Interfaces&Libraries/ImportLibraries that include SpeechLib/SpeechSynthesis (68K or PPC import archive) or set SPEECH_IMPORT_LIB_DIR to its location.")
+    else()
+        message(STATUS "Speech Manager import library: ${SPEECHLIB_LIBRARY}")
     endif()
 
     target_link_directories(MacVox68 PRIVATE ${_speech_import_dirs})
