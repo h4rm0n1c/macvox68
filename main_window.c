@@ -83,6 +83,8 @@ static const UITheme *sTheme = NULL;
 static Boolean        gServerSuggested = false;
 static SpeechUIState  gSpeechState = kSpeechIdleState;
 
+static void main_window_set_speech_state(SpeechUIState state);
+
 static void main_window_append_line(const char *text)
 {
     TEHandle te;
