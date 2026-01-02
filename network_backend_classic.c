@@ -21,9 +21,8 @@ static void network_classic_shutdown(void)
 
 static Boolean network_classic_start(const char *hostString, UInt16 port, const NetworkCallbacks *callbacks)
 {
-    AlertStdAlertParamRec params = {kStdAlertOKButton, false, false, kNilIfHandle, kNilIfHandle, kStdOkItemIndex, 0, 0};
-    short                  itemHit = 0;
-    OSStatus               status;
+    short    itemHit = 0;
+    OSStatus status;
 
     (void)hostString;
     (void)port;
@@ -34,7 +33,7 @@ static Boolean network_classic_start(const char *hostString, UInt16 port, const 
         kAlertStopAlert,
         "\pThis Application does not support Classic Networking, please install or activate Open Transport in the Network Software Selector Application.",
         NULL,
-        &params,
+        NULL,
         &itemHit);
 
     (void)itemHit;
