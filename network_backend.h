@@ -25,6 +25,7 @@ typedef struct NetworkBackend
 } NetworkBackend;
 
 const NetworkBackend *network_backend_ot(void);
+const NetworkBackend *network_backend_classic(void);
 
 #ifdef __cplusplus
 }

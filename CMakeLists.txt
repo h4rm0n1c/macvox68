@@ -31,6 +31,7 @@ add_application(MacVox68
     main.c
     main_window.c
     network.c
+    network_backend_classic.c
     network_backend_ot.c
     speech.c
     ui_input.c
