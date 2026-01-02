@@ -2,13 +2,42 @@
 
 #include "network_backend.h"
 
+#include <Gestalt.h>
+
 static NetworkCallbacks        gCallbacks;
 static const NetworkBackend   *gBackend = NULL;
+
+static Boolean network_supports_open_transport(void)
+{
+    OSErr err;
+    long  response = 0;
+
+#ifdef gestaltOpenTpt
+    err = Gestalt(gestaltOpenTpt, &response);
+    if (err == noErr && response != 0)
+        return true;
+#endif
+
+    err = Gestalt(FOUR_CHAR_CODE('otan'), &response);
+    if (err == noErr && response != 0)
+        return true;
+
+    err = Gestalt(FOUR_CHAR_CODE('otvr'), &response);
+    if (err == noErr && response != 0)
+        return true;
+
+    return false;
+}
 
 static void network_select_backend(void)
 {
     if (!gBackend)
-        gBackend = network_backend_ot();
+    {
+        if (network_supports_open_transport())
+            gBackend = network_backend_ot();
+        else
+            gBackend = network_backend_classic();
+    }
 }
 
 void network_init(void)
