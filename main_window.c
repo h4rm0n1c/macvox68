@@ -21,6 +21,7 @@
 #include "speech.h"
 #include "ui_text_fields.h"
 #include "ui_theme.h"
+#include "ui_radio.h"
 #include "ui_windows.h"
 
 #ifndef kClassicPushButtonProc
@@ -69,6 +70,8 @@ static WindowPtr      gMainWin  = NULL;
 static ControlHandle  gSpeakBtn = NULL;
 static ControlHandle  gProsodyClean = NULL;
 static ControlHandle  gProsodyLQ    = NULL;
+static ControlHandle  gProsodyButtons[2];
+static UIRadioGroup   gProsodyGroup;
 static ControlHandle  gVolumeSlider = NULL;
 static ControlHandle  gRateSlider   = NULL;
 static ControlHandle  gPitchSlider  = NULL;
@@ -490,8 +493,13 @@ static void main_window_create_controls(void)
 
     gSpeakBtn = ui_windows_new_button(gMainWin, &gLayout.speakStopButton, "\pSpeak", true, kSpeakStopBtnID);
 
-    gProsodyClean = ui_windows_new_radio(gMainWin, &gLayout.prosodyClean, "\pClean", 1);
-    gProsodyLQ = ui_windows_new_radio(gMainWin, &gLayout.prosodyLQ, "\pHL VOX Prosody", 0);
+    gProsodyClean = ui_radio_create(gMainWin, &gLayout.prosodyClean, "\pClean", 1);
+    gProsodyLQ = ui_radio_create(gMainWin, &gLayout.prosodyLQ, "\pHL VOX Prosody", 0);
+
+    gProsodyButtons[0] = gProsodyClean;
+    gProsodyButtons[1] = gProsodyLQ;
+    ui_radio_group_init(&gProsodyGroup, gProsodyButtons, 2);
+    ui_radio_set_selected(&gProsodyGroup, gProsodyClean);
 
     gVolumeSlider = ui_windows_new_slider(gMainWin, &gLayout.volumeSlider, 100, 0, 100);
     gRateSlider = ui_windows_new_slider(gMainWin, &gLayout.rateSlider, 10, -10, 10);
@@ -791,6 +799,11 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                             main_window_toggle_server();
                         else if (hitControl == gQuitBtn && hitPart != 0 && outQuit)
                             *outQuit = true;
+                        else if (hitControl == gProsodyClean || hitControl == gProsodyLQ)
+                        {
+                            if (hitPart != 0)
+                                ui_radio_handle_hit(&gProsodyGroup, hitControl, hitPart);
+                        }
                         return true;
                     }
                 }

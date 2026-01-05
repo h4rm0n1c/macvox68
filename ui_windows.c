@@ -87,12 +87,6 @@ ControlHandle ui_windows_new_button(WindowPtr window, const Rect *frame,
     return h;
 }
 
-ControlHandle ui_windows_new_radio(WindowPtr window, const Rect *frame,
-                                   ConstStr255Param title, short initialValue)
-{
-    return NewControl(window, frame, title, true, initialValue, 0, 0, radioButProc, 0);
-}
-
 ControlHandle ui_windows_new_slider(WindowPtr window, const Rect *frame,
                                     short initial, short min, short max)
 {

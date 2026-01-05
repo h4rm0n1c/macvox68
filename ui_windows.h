@@ -31,8 +31,6 @@ void ui_windows_draw(WindowPtr window, UIWindowDrawProc drawProc, void *refCon);
 
 ControlHandle ui_windows_new_button(WindowPtr window, const Rect *frame,
                                     ConstStr255Param title, Boolean isDefault, short controlID);
-ControlHandle ui_windows_new_radio(WindowPtr window, const Rect *frame,
-                                   ConstStr255Param title, short initialValue);
 ControlHandle ui_windows_new_slider(WindowPtr window, const Rect *frame,
                                     short initial, short min, short max);
 
