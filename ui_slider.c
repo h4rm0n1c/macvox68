@@ -5,6 +5,7 @@
 #include <ControlDefinitions.h>
 #include <Memory.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ui_windows.h"
 
