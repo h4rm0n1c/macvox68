@@ -22,6 +22,7 @@ typedef struct UIControlTrackingSpec
     ControlHandle control;
     ControlActionUPP action;
     const RGBColor *background;
+    Boolean snapToClick;
 } UIControlTrackingSpec;
 
 typedef void (*UIWindowDrawProc)(WindowPtr window, void *refCon);

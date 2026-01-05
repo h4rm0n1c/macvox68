@@ -22,6 +22,7 @@
 #include "ui_text_fields.h"
 #include "ui_theme.h"
 #include "ui_radio.h"
+#include "ui_slider.h"
 #include "ui_windows.h"
 
 #ifndef kClassicPushButtonProc
@@ -72,9 +73,9 @@ static ControlHandle  gProsodyClean = NULL;
 static ControlHandle  gProsodyLQ    = NULL;
 static ControlHandle  gProsodyButtons[2];
 static UIRadioGroup   gProsodyGroup;
-static ControlHandle  gVolumeSlider = NULL;
-static ControlHandle  gRateSlider   = NULL;
-static ControlHandle  gPitchSlider  = NULL;
+static UISliderRow    gVolumeSlider;
+static UISliderRow    gRateSlider;
+static UISliderRow    gPitchSlider;
 static ControlHandle  gStartBtn     = NULL;
 static ControlHandle  gQuitBtn      = NULL;
 static UIScrollingText gTextArea;
@@ -87,6 +88,10 @@ static Boolean        gServerSuggested = false;
 static SpeechUIState  gSpeechState = kSpeechIdleState;
 
 static void main_window_set_speech_state(SpeechUIState state);
+static Boolean main_window_setup_slider(UISliderRow *slider, const Rect *frame,
+                                        ConstStr255Param label, short baseline,
+                                        UISliderValueFormat format,
+                                        short initial, short min, short max);
 
 static void main_window_append_line(const char *text)
 {
@@ -468,6 +473,27 @@ static void main_window_set_speech_state(SpeechUIState state)
     main_window_update_control_enabling(state);
 }
 
+static Boolean main_window_setup_slider(UISliderRow *slider, const Rect *frame,
+                                        ConstStr255Param label, short baseline,
+                                        UISliderValueFormat format,
+                                        short initial, short min, short max)
+{
+    Point labelPos;
+    Point valuePos;
+
+    if (!frame)
+        return false;
+
+    labelPos.h = (short)(gLayout.settingsGroup.left + 36);
+    labelPos.v = baseline;
+
+    valuePos.h = (short)(frame->right + 10);
+    valuePos.v = baseline;
+
+    return ui_slider_init(slider, gMainWin, frame, label, labelPos, valuePos,
+                          initial, min, max, format);
+}
+
 static void main_window_create_text_edit(void)
 {
     static const char kInitialText[] =
@@ -501,9 +527,17 @@ static void main_window_create_controls(void)
     ui_radio_group_init(&gProsodyGroup, gProsodyButtons, 2);
     ui_radio_set_selected(&gProsodyGroup, gProsodyClean);
 
-    gVolumeSlider = ui_windows_new_slider(gMainWin, &gLayout.volumeSlider, 100, 0, 100);
-    gRateSlider = ui_windows_new_slider(gMainWin, &gLayout.rateSlider, 10, -10, 10);
-    gPitchSlider = ui_windows_new_slider(gMainWin, &gLayout.pitchSlider, 0, -10, 10);
+    main_window_setup_slider(&gVolumeSlider, &gLayout.volumeSlider, "\pVolume",
+                             (short)(gLayout.settingsGroup.top + 30),
+                             kUISliderValuePercent, 100, 0, 100);
+
+    main_window_setup_slider(&gRateSlider, &gLayout.rateSlider, "\pRate",
+                             (short)(gLayout.settingsGroup.top + 60),
+                             kUISliderValueHundredths, 100, 0, 200);
+
+    main_window_setup_slider(&gPitchSlider, &gLayout.pitchSlider, "\pPitch",
+                             (short)(gLayout.settingsGroup.top + 90),
+                             kUISliderValueHundredths, 100, 0, 200);
 
     gStartBtn = ui_windows_new_button(gMainWin, &gLayout.startButton, "\pStart Server", true, 0);
 
@@ -603,21 +637,7 @@ static void main_window_draw_contents(WindowPtr w)
     /* Settings group */
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
     RGBForeColor(&theme->colors.text);
-    RGBBackColor(&theme->colors.windowFill);
-    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 30);
-    DrawString("\pVolume");
-    MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
-    DrawString("\p100%");
-
-    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 60);
-    DrawString("\pRate");
-    MoveTo(gLayout.rateSlider.right + 10, gLayout.settingsGroup.top + 60);
-    DrawString("\p1.00");
-
-    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 90);
-    DrawString("\pPitch");
-    MoveTo(gLayout.pitchSlider.right + 10, gLayout.settingsGroup.top + 90);
-    DrawString("\p1.00");
+    RGBBackColor(&theme->colors.groupFill);
 
     /* TCP group */
     main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
@@ -640,16 +660,16 @@ static void main_window_draw_contents(WindowPtr w)
     /* Draw controls after the background/text so chrome paints over the framing. */
     DrawControls(w);
 
+    RGBForeColor(&theme->colors.text);
+    RGBBackColor(&theme->colors.groupFill);
+    ui_slider_draw(&gVolumeSlider, theme);
+    ui_slider_draw(&gRateSlider, theme);
+    ui_slider_draw(&gPitchSlider, theme);
+
     if (gTextArea.scroll)
         Draw1Control(gTextArea.scroll);
 
     RGBBackColor(&theme->colors.groupFill);
-    if (gVolumeSlider)
-        Draw1Control(gVolumeSlider);
-    if (gRateSlider)
-        Draw1Control(gRateSlider);
-    if (gPitchSlider)
-        Draw1Control(gPitchSlider);
     if (gProsodyClean)
         Draw1Control(gProsodyClean);
     if (gProsodyLQ)
@@ -778,15 +798,15 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                 {
                     const RGBColor *sliderBg = sTheme ? &sTheme->colors.groupFill : &ui_theme_get()->colors.groupFill;
                     UIControlTrackingSpec specs[] = {
-                        { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL },
-                        { gSpeakBtn, NULL, NULL },
-                        { gVolumeSlider, NULL, sliderBg },
-                        { gRateSlider, NULL, sliderBg },
-                        { gPitchSlider, NULL, sliderBg },
-                        { gStartBtn, NULL, NULL },
-                        { gQuitBtn, NULL, NULL },
-                        { gProsodyClean, NULL, NULL },
-                        { gProsodyLQ, NULL, NULL }
+                        { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL, false },
+                        { gSpeakBtn, NULL, NULL, false },
+                        { gVolumeSlider.control, NULL, sliderBg, true },
+                        { gRateSlider.control, NULL, sliderBg, true },
+                        { gPitchSlider.control, NULL, sliderBg, true },
+                        { gStartBtn, NULL, NULL, false },
+                        { gQuitBtn, NULL, NULL, false },
+                        { gProsodyClean, NULL, NULL, false },
+                        { gProsodyLQ, NULL, NULL, false }
                     };
                     ControlHandle hitControl = NULL;
                     short hitPart = 0;
@@ -803,6 +823,12 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                         {
                             if (hitPart != 0)
                                 ui_radio_handle_hit(&gProsodyGroup, hitControl, hitPart);
+                        }
+                        else if (ui_slider_matches(&gVolumeSlider, hitControl) ||
+                                 ui_slider_matches(&gRateSlider, hitControl) ||
+                                 ui_slider_matches(&gPitchSlider, hitControl))
+                        {
+                            InvalRect(&gLayout.settingsGroup);
                         }
                         return true;
                     }

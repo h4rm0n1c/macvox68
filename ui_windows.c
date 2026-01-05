@@ -4,6 +4,10 @@
 #include <Menus.h>
 #include <ControlDefinitions.h>
 
+#ifndef kControlIndicatorPart
+    #define kControlIndicatorPart 129
+#endif
+
 WindowPtr ui_windows_create_standard(const UIWindowSpec *spec)
 {
     Rect screenBounds;
@@ -124,6 +128,27 @@ Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
                 GetBackColor(&prevBack);
                 RGBBackColor(specs->background);
                 restoreColor = true;
+            }
+
+            if (specs->snapToClick && part != kControlIndicatorPart)
+            {
+                Rect r = (**c).contrlRect;
+                short width = (short)(r.right - r.left);
+
+                if (width > 0)
+                {
+                    short min    = GetControlMinimum(c);
+                    short max    = GetControlMaximum(c);
+                    long range   = (long)max - (long)min;
+                    short offset = (short)(local.h - r.left);
+
+                    if (offset < 0)
+                        offset = 0;
+                    if (offset > width)
+                        offset = width;
+
+                    SetControlValue(c, (short)(min + ((range * offset + (width / 2)) / width)));
+                }
             }
 
             part = TrackControl(c, local, specs->action);
