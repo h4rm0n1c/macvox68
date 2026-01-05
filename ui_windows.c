@@ -149,14 +149,8 @@ Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
 
                     SetControlValue(c, (short)(min + ((range * offset + (width / 2)) / width)));
 
-                    if (!specs->action)
-                    {
-                        if (outHit)
-                            *outHit = c;
-                        if (outPart)
-                            *outPart = kControlIndicatorPart;
-                        return true;
-                    }
+                    local.h = (short)(r.left + offset);
+                    local.v = (short)(r.top + (r.bottom - r.top) / 2);
                 }
             }
 
