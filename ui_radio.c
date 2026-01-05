@@ -5,7 +5,7 @@
 ControlHandle ui_radio_create(WindowPtr window, const Rect *frame,
                               ConstStr255Param title, short initialValue)
 {
-    return NewControl(window, frame, title, true, initialValue, 0, 0, radioButProc, 0);
+    return NewControl(window, frame, title, true, initialValue, 0, 1, radioButProc, 0);
 }
 
 void ui_radio_group_init(UIRadioGroup *group, ControlHandle *buttons, short count)
