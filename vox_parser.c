@@ -28,10 +28,6 @@ static Handle NewHandle(size_t size)
 #include <Memory.h>
 #endif
 
-#ifndef Boolean
-#define Boolean int
-#endif
-
 #define ARRAY_GROWTH 8
 
 typedef struct {
