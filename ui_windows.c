@@ -130,7 +130,7 @@ Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
                 restoreColor = true;
             }
 
-            if (specs->snapToClick && part != kControlIndicatorPart)
+            if (specs->snapToClick)
             {
                 Rect r = (**c).contrlRect;
                 short width = (short)(r.right - r.left);
