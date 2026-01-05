@@ -704,6 +704,10 @@ void main_window_create(void)
     main_window_update_start_button();
 
     ShowWindow(gMainWin);
+
+    /* Force the menu bar to paint immediately on launch so it is visible
+       before the user interacts with it. */
+    DrawMenuBar();
 }
 
 void main_window_handle_update(const InputEvent *ev)
