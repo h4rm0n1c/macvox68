@@ -34,6 +34,7 @@ static short ui_windows_track_slider(ControlHandle c)
     short lastValue;
 
     GetMouse(&mouse);
+    GlobalToLocal(&mouse);
     lastValue = ui_windows_value_from_point(c, mouse);
     SetControlValue(c, lastValue);
     Draw1Control(c);
@@ -41,6 +42,7 @@ static short ui_windows_track_slider(ControlHandle c)
     while (StillDown())
     {
         GetMouse(&mouse);
+        GlobalToLocal(&mouse);
 
         {
             short newValue = ui_windows_value_from_point(c, mouse);
