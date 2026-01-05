@@ -148,6 +148,15 @@ Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
                         offset = width;
 
                     SetControlValue(c, (short)(min + ((range * offset + (width / 2)) / width)));
+
+                    if (!specs->action)
+                    {
+                        if (outHit)
+                            *outHit = c;
+                        if (outPart)
+                            *outPart = kControlIndicatorPart;
+                        return true;
+                    }
                 }
             }
 
