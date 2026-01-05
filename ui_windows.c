@@ -3,6 +3,58 @@
 #include <Quickdraw.h>
 #include <Menus.h>
 #include <ControlDefinitions.h>
+#include <Events.h>
+
+static short ui_windows_value_from_point(ControlHandle c, Point local)
+{
+    Rect r = (**c).contrlRect;
+    short width = (short)(r.right - r.left);
+
+    if (width <= 0)
+        return GetControlValue(c);
+
+    {
+        short min    = GetControlMinimum(c);
+        short max    = GetControlMaximum(c);
+        long range   = (long)max - (long)min;
+        short offset = (short)(local.h - r.left);
+
+        if (offset < 0)
+            offset = 0;
+        if (offset > width)
+            offset = width;
+
+        return (short)(min + ((range * offset + (width / 2)) / width));
+    }
+}
+
+static short ui_windows_track_slider(ControlHandle c)
+{
+    Point mouse;
+    short lastValue;
+
+    GetMouse(&mouse);
+    lastValue = ui_windows_value_from_point(c, mouse);
+    SetControlValue(c, lastValue);
+    Draw1Control(c);
+
+    while (StillDown())
+    {
+        GetMouse(&mouse);
+
+        {
+            short newValue = ui_windows_value_from_point(c, mouse);
+            if (newValue != lastValue)
+            {
+                lastValue = newValue;
+                SetControlValue(c, newValue);
+                Draw1Control(c);
+            }
+        }
+    }
+
+    return kControlIndicatorPart;
+}
 
 #ifndef kControlIndicatorPart
     #define kControlIndicatorPart 129
@@ -130,31 +182,38 @@ Boolean ui_windows_track_hit_control(WindowPtr window, Point local,
                 restoreColor = true;
             }
 
-            if (specs->snapToClick)
+            if (specs->snapToClick && !specs->action)
             {
-                Rect r = (**c).contrlRect;
-                short width = (short)(r.right - r.left);
-
-                if (width > 0)
-                {
-                    short min    = GetControlMinimum(c);
-                    short max    = GetControlMaximum(c);
-                    long range   = (long)max - (long)min;
-                    short offset = (short)(local.h - r.left);
-
-                    if (offset < 0)
-                        offset = 0;
-                    if (offset > width)
-                        offset = width;
-
-                    SetControlValue(c, (short)(min + ((range * offset + (width / 2)) / width)));
-
-                    local.h = (short)(r.left + offset);
-                    local.v = (short)(r.top + (r.bottom - r.top) / 2);
-                }
+                part = ui_windows_track_slider(c);
             }
+            else
+            {
+                if (specs->snapToClick)
+                {
+                    Rect r = (**c).contrlRect;
+                    short width = (short)(r.right - r.left);
 
-            part = TrackControl(c, local, specs->action);
+                    if (width > 0)
+                    {
+                        short min    = GetControlMinimum(c);
+                        short max    = GetControlMaximum(c);
+                        long range   = (long)max - (long)min;
+                        short offset = (short)(local.h - r.left);
+
+                        if (offset < 0)
+                            offset = 0;
+                        if (offset > width)
+                            offset = width;
+
+                        SetControlValue(c, (short)(min + ((range * offset + (width / 2)) / width)));
+
+                        local.h = (short)(r.left + offset);
+                        local.v = (short)(r.top + (r.bottom - r.top) / 2);
+                    }
+                }
+
+                part = TrackControl(c, local, specs->action);
+            }
 
             if (restoreColor)
                 RGBBackColor(&prevBack);
