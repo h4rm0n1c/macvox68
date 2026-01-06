@@ -22,6 +22,7 @@
 #include "ui_text_fields.h"
 #include "ui_theme.h"
 #include "ui_radio.h"
+#include "ui_slider.h"
 #include "ui_windows.h"
 
 #ifndef kClassicPushButtonProc
@@ -72,9 +73,9 @@ static ControlHandle  gProsodyClean = NULL;
 static ControlHandle  gProsodyLQ    = NULL;
 static ControlHandle  gProsodyButtons[2];
 static UIRadioGroup   gProsodyGroup;
-static ControlHandle  gVolumeSlider = NULL;
-static ControlHandle  gRateSlider   = NULL;
-static ControlHandle  gPitchSlider  = NULL;
+static UISlider       gVolumeSlider;
+static UISlider       gRateSlider;
+static UISlider       gPitchSlider;
 static ControlHandle  gStartBtn     = NULL;
 static ControlHandle  gQuitBtn      = NULL;
 static UIScrollingText gTextArea;
@@ -501,9 +502,12 @@ static void main_window_create_controls(void)
     ui_radio_group_init(&gProsodyGroup, gProsodyButtons, 2);
     ui_radio_set_selected(&gProsodyGroup, gProsodyClean);
 
-    gVolumeSlider = ui_windows_new_slider(gMainWin, &gLayout.volumeSlider, 100, 0, 100);
-    gRateSlider = ui_windows_new_slider(gMainWin, &gLayout.rateSlider, 10, -10, 10);
-    gPitchSlider = ui_windows_new_slider(gMainWin, &gLayout.pitchSlider, 0, -10, 10);
+    ui_slider_init(&gVolumeSlider, gMainWin, &gLayout.volumeSlider, "\pVolume", 100, 0, 100,
+                   kUISliderValuePercent, 100);
+    ui_slider_init(&gRateSlider, gMainWin, &gLayout.rateSlider, "\pRate", 100, 0, 200,
+                   kUISliderValueFixed2, 100);
+    ui_slider_init(&gPitchSlider, gMainWin, &gLayout.pitchSlider, "\pPitch", 100, 0, 200,
+                   kUISliderValueFixed2, 100);
 
     gStartBtn = ui_windows_new_button(gMainWin, &gLayout.startButton, "\pStart Server", true, 0);
 
@@ -604,20 +608,9 @@ static void main_window_draw_contents(WindowPtr w)
     main_window_draw_group(&gLayout.settingsGroup, "\pSettings");
     RGBForeColor(&theme->colors.text);
     RGBBackColor(&theme->colors.windowFill);
-    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 30);
-    DrawString("\pVolume");
-    MoveTo(gLayout.volumeSlider.right + 10, gLayout.settingsGroup.top + 30);
-    DrawString("\p100%");
-
-    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 60);
-    DrawString("\pRate");
-    MoveTo(gLayout.rateSlider.right + 10, gLayout.settingsGroup.top + 60);
-    DrawString("\p1.00");
-
-    MoveTo(gLayout.settingsGroup.left + 36, gLayout.settingsGroup.top + 90);
-    DrawString("\pPitch");
-    MoveTo(gLayout.pitchSlider.right + 10, gLayout.settingsGroup.top + 90);
-    DrawString("\p1.00");
+    ui_slider_draw(&gVolumeSlider, theme);
+    ui_slider_draw(&gRateSlider, theme);
+    ui_slider_draw(&gPitchSlider, theme);
 
     /* TCP group */
     main_window_draw_group(&gLayout.tcpGroup, "\pNetCat Receiver/TCP Server");
@@ -644,12 +637,12 @@ static void main_window_draw_contents(WindowPtr w)
         Draw1Control(gTextArea.scroll);
 
     RGBBackColor(&theme->colors.groupFill);
-    if (gVolumeSlider)
-        Draw1Control(gVolumeSlider);
-    if (gRateSlider)
-        Draw1Control(gRateSlider);
-    if (gPitchSlider)
-        Draw1Control(gPitchSlider);
+    if (ui_slider_get_handle(&gVolumeSlider))
+        Draw1Control(ui_slider_get_handle(&gVolumeSlider));
+    if (ui_slider_get_handle(&gRateSlider))
+        Draw1Control(ui_slider_get_handle(&gRateSlider));
+    if (ui_slider_get_handle(&gPitchSlider))
+        Draw1Control(ui_slider_get_handle(&gPitchSlider));
     if (gProsodyClean)
         Draw1Control(gProsodyClean);
     if (gProsodyLQ)
@@ -780,9 +773,9 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                     UIControlTrackingSpec specs[] = {
                         { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL },
                         { gSpeakBtn, NULL, NULL },
-                        { gVolumeSlider, NULL, sliderBg },
-                        { gRateSlider, NULL, sliderBg },
-                        { gPitchSlider, NULL, sliderBg },
+                        { ui_slider_get_handle(&gVolumeSlider), ui_slider_get_action(&gVolumeSlider), sliderBg },
+                        { ui_slider_get_handle(&gRateSlider), ui_slider_get_action(&gRateSlider), sliderBg },
+                        { ui_slider_get_handle(&gPitchSlider), ui_slider_get_action(&gPitchSlider), sliderBg },
                         { gStartBtn, NULL, NULL },
                         { gQuitBtn, NULL, NULL },
                         { gProsodyClean, NULL, NULL },
