@@ -10,7 +10,7 @@ MacVox68 is a Classic Mac OS 7.x (68k) application targeting Mac OS 7.5.3 and bu
 - **Application signature**: Type `APPL`, Creator `MV68`.
 
 ## Build expectations
-MacVox68 is built with Retro68 and depends on the MPW Interfaces & Libraries headers. On the host machine, builds are performed out-of-tree via CMake and Ninja with the Retro68 toolchain file. The maintainer drives these builds on a Linux host (not in the Codex container), so avoid container-specific tweaks and keep configuration changes aligned with the host workflow.
+MacVox68 is built with Retro68 and depends on the MPW Interfaces & Libraries headers (Built against 3.6!). On the host machine, builds are performed out-of-tree via CMake and Ninja with the Retro68 toolchain file. The maintainer drives these builds on a Linux host (not in the Codex container), so avoid container-specific tweaks and keep configuration changes aligned with the host workflow.
 
 ### Optional Appearance SDK headers
 If you need Appearance Manager headers, pass `APPEARANCE_SDK_ROOT` when configuring. It should point at the Appearance SDK headers directory that contains `CIncludes` and `RIncludes` (the project stays opt-in so local paths are not baked into the repo).
