@@ -102,8 +102,8 @@ void ui_slider_init(UISlider *slider, WindowPtr window, const Rect *frame,
 
     slider->valueRect.left   = (short)(frame->right + kUISliderValueGap - 2);
     slider->valueRect.right  = (short)(slider->valueRect.left + kUISliderValueWidth);
-    slider->valueRect.top    = (short)(frame->top + 4);
-    slider->valueRect.bottom = (short)(frame->bottom - 4);
+    slider->valueRect.top    = frame->top;
+    slider->valueRect.bottom = frame->bottom;
 }
 
 void ui_slider_draw(const UISlider *slider, const UITheme *theme)
