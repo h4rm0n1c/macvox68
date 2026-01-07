@@ -8,7 +8,7 @@
 #include <ControlDefinitions.h>
 #include <Icons.h>
 
-#include "about_box.h"
+#include "ui/about_box.h"
 
 enum
 {

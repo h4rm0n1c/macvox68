@@ -6,8 +6,8 @@
 #include <Memory.h>
 #include <string.h>
 
-#include "ui_text_fields.h"
-#include "ui_theme.h"
+#include "ui/ui_text_fields.h"
+#include "ui/ui_theme.h"
 
 #ifndef kControlSliderProc
     #define kControlSliderProc 48
