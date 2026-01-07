@@ -7,10 +7,10 @@
 #include <TextEdit.h>
 #include <ToolUtils.h>
 
-#include "about_box.h"
-#include "main_window.h"
-#include "ui_input.h"
-#include "ui_app.h"
+#include "ui/about_box.h"
+#include "ui/main_window.h"
+#include "ui/ui_input.h"
+#include "ui/ui_app.h"
 #include "network.h"
 
 static InputDispatcher gInputDispatcher;

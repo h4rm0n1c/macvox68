@@ -4,7 +4,7 @@
 #include <Controls.h>
 #include <Types.h>
 
-#include "ui_theme.h"
+#include "ui/ui_theme.h"
 
 #ifdef __cplusplus
 extern "C" {
