@@ -124,6 +124,11 @@ void ui_slider_draw(const UISlider *slider, const UITheme *theme)
         return;
 
     ui_slider_format_value(slider, value);
+    RGBForeColor(&useTheme->colors.groupFill);
+    RGBBackColor(&useTheme->colors.groupFill);
+    EraseRect(&slider->valueRect);
+    RGBForeColor(&useTheme->colors.text);
+    RGBBackColor(&useTheme->colors.groupFill);
     MoveTo((short)(slider->frame.right + kUISliderValueGap), ui_slider_baseline(slider));
     DrawString(value);
 }
