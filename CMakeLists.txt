@@ -36,6 +36,7 @@ add_application(MacVox68
     speech.c
     ui_radio.c
     ui_input.c
+    ui_slider.c
     ui_layout.c
     ui_theme.c
     ui_text_fields.c

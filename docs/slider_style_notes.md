@@ -23,6 +23,7 @@ These notes capture what we learned while inspecting the System 7.5.3 Speech con
 - **Use `kControlSliderProc`** for volume/rate/pitch sliders to avoid end‑button scroll bars.
 - **Custom‑draw the track/ticks/labels** around the slider in `main_window_draw_contents` if we want the Speech CP look.
 - **Set the background color before drawing sliders**: classic sliders pick up the current `RGBBackColor`. Use the group fill color so the slider well isn’t white.
+- **Invalidate value labels after tracking** instead of relying on a custom action proc if dragging the knob is unstable; a post‑track `InvalRect` keeps the display current without risking Control Manager callback issues.
 
 ## When someone asks for “that Speech slider look”
 
