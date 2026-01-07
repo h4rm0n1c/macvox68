@@ -773,9 +773,9 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                     UIControlTrackingSpec specs[] = {
                         { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL },
                         { gSpeakBtn, NULL, NULL },
-                        { ui_slider_get_handle(&gVolumeSlider), ui_slider_get_action(&gVolumeSlider), sliderBg },
-                        { ui_slider_get_handle(&gRateSlider), ui_slider_get_action(&gRateSlider), sliderBg },
-                        { ui_slider_get_handle(&gPitchSlider), ui_slider_get_action(&gPitchSlider), sliderBg },
+                        { ui_slider_get_handle(&gVolumeSlider), NULL, sliderBg },
+                        { ui_slider_get_handle(&gRateSlider), NULL, sliderBg },
+                        { ui_slider_get_handle(&gPitchSlider), NULL, sliderBg },
                         { gStartBtn, NULL, NULL },
                         { gQuitBtn, NULL, NULL },
                         { gProsodyClean, NULL, NULL },
@@ -792,6 +792,21 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
                             main_window_toggle_server();
                         else if (hitControl == gQuitBtn && hitPart != 0 && outQuit)
                             *outQuit = true;
+                        else if (hitControl == ui_slider_get_handle(&gVolumeSlider))
+                        {
+                            if (hitPart != 0)
+                                ui_slider_invalidate_value(&gVolumeSlider);
+                        }
+                        else if (hitControl == ui_slider_get_handle(&gRateSlider))
+                        {
+                            if (hitPart != 0)
+                                ui_slider_invalidate_value(&gRateSlider);
+                        }
+                        else if (hitControl == ui_slider_get_handle(&gPitchSlider))
+                        {
+                            if (hitPart != 0)
+                                ui_slider_invalidate_value(&gPitchSlider);
+                        }
                         else if (hitControl == gProsodyClean || hitControl == gProsodyLQ)
                         {
                             if (hitPart != 0)

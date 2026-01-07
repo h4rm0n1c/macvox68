@@ -34,10 +34,10 @@ void ui_slider_init(UISlider *slider, WindowPtr window, const Rect *frame,
 void ui_slider_draw(const UISlider *slider, const UITheme *theme);
 
 ControlHandle ui_slider_get_handle(const UISlider *slider);
-ControlActionUPP ui_slider_get_action(const UISlider *slider);
 
 short ui_slider_get_value(const UISlider *slider);
 void ui_slider_set_value(UISlider *slider, short value);
+void ui_slider_invalidate_value(const UISlider *slider);
 
 #ifdef __cplusplus
 }
