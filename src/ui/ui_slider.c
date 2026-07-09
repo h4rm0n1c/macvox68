@@ -1,4 +1,4 @@
-#include "ui_slider.h"
+#include "ui/ui_slider.h"
 
 #include <Quickdraw.h>
 #include <Controls.h>

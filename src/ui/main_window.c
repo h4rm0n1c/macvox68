@@ -13,17 +13,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "about_box.h"
-#include "main_window.h"
+#include "ui/about_box.h"
+#include "ui/main_window.h"
 #include "network.h"
-#include "ui_input.h"
-#include "ui_layout.h"
+#include "ui/ui_input.h"
+#include "ui/ui_layout.h"
 #include "speech.h"
-#include "ui_text_fields.h"
-#include "ui_theme.h"
-#include "ui_radio.h"
-#include "ui_slider.h"
-#include "ui_windows.h"
+#include "ui/ui_text_fields.h"
+#include "ui/ui_theme.h"
+#include "ui/ui_radio.h"
+#include "ui/ui_slider.h"
+#include "ui/ui_windows.h"
 
 #ifndef kClassicPushButtonProc
     #define kClassicPushButtonProc 0

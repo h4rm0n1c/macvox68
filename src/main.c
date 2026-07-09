@@ -1,6 +1,6 @@
 #include <Types.h>
 
-#include "ui_app.h"
+#include "ui/ui_app.h"
 #include "network.h"
 
 int main(void)

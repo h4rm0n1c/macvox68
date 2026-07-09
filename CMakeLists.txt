@@ -27,22 +27,22 @@ project(MacVox68 C)
 set(APPEARANCE_SDK_ROOT "" CACHE PATH "Path to Appearance SDK headers root (contains CIncludes and RIncludes)")
 
 add_application(MacVox68
-    about_box.c
-    main.c
-    main_window.c
-    network.c
-    network_backend_classic.c
-    network_backend_ot.c
-    speech.c
-    ui_radio.c
-    ui_input.c
-    ui_slider.c
-    ui_layout.c
-    ui_theme.c
-    ui_text_fields.c
-    ui_windows.c
-    window_ui.c
-    vox_parser.c
+    src/main.c
+    src/network.c
+    src/network_backend_classic.c
+    src/network_backend_ot.c
+    src/speech.c
+    src/vox_parser.c
+    src/ui/about_box.c
+    src/ui/main_window.c
+    src/ui/ui_input.c
+    src/ui/ui_layout.c
+    src/ui/ui_radio.c
+    src/ui/ui_slider.c
+    src/ui/ui_text_fields.c
+    src/ui/ui_theme.c
+    src/ui/ui_windows.c
+    src/ui/window_ui.c
     macvox68_icon.r
     TYPE APPL
     CREATOR MV68
@@ -51,7 +51,7 @@ add_application(MacVox68
 if(NOT CMAKE_SYSTEM_NAME MATCHES Retro68)
     add_executable(vox_parser_host_checks
         tests/vox_parser_host_checks.c
-        vox_parser.c)
+        src/vox_parser.c)
     target_compile_definitions(vox_parser_host_checks PRIVATE VOX_PARSER_STANDALONE)
 endif()
 
@@ -61,8 +61,19 @@ endif()
 
 if(APPEARANCE_SDK_ROOT)
     target_include_directories(MacVox68 PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${APPEARANCE_SDK_ROOT}/CIncludes"
         "${APPEARANCE_SDK_ROOT}/RIncludes"
+    )
+else()
+    target_include_directories(MacVox68 PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    )
+endif()
+
+if(NOT CMAKE_SYSTEM_NAME MATCHES Retro68)
+    target_include_directories(vox_parser_host_checks PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
     )
 endif()
 
