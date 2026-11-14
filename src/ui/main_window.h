@@ -4,7 +4,7 @@
 #include <Types.h>
 #include <Windows.h>
 
-#include "ui_input.h"
+#include "ui/ui_input.h"
 
 void main_window_create(void);
 void main_window_handle_update(const InputEvent *ev);
