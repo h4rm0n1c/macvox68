@@ -1,3 +1,13 @@
+> Cadence correction (2026-11-15): the vendor manual defines br as forced
+> sentence termination, not fixed silence; wH controls aspiration, not word
+> emphasis. The adapter now uses deduplicated sentence boundaries and retains
+> explicit sf milliseconds. Older proposed mappings below are historical.
+
+> Correction, 2026-11-15: the sfN final-silence values used by the reference
+> parser are plain milliseconds, not centiseconds. sf500 maps to slnc 500.
+> See hl_vox_speech.md for the implemented subset and live validation. The
+> broader conversion proposals below remain historical plans, not proven APIs.
+
 # FlexTalk Escape Sequences vs. Macintosh Speech Manager Embedded Commands
 
 This note maps FlexTalk's `\!` escape-sequence conventions to classic Macintosh Speech Manager embedded commands (the `[[command]]` syntax used by MacinTalk). It is written for re-implementing the NetTTS prosody encoder logic so that it emits Speech Manager markup directly, using FlexTalk's feature set as the reference for behavior.

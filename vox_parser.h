@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 /*
- * Format a UTF-8/ASCII text buffer into a Speech Manager-ready Handle.
+ * Format a NUL-terminated MacRoman/ASCII text buffer into a Speech Manager-ready Handle.
  * The VOX prosody pipeline (sentence split, “thee” heuristic, lead-in
  * breaks, time/number expansion, beat construction, letter normalization,
  * tidy/wrap) runs first, then FlexTalk markers are translated into

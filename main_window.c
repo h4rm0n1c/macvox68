@@ -439,29 +439,42 @@ static void main_window_update_control_enabling(SpeechUIState state)
 
 static void main_window_handle_speak_toggle(void)
 {
+    OSErr err;
+    Handle text;
+    SignedByte state;
+    long length;
+    char message[80];
+
     if (!speech_available())
     {
         main_window_append_line("Speech Manager is unavailable.");
-        main_window_set_speech_state(kSpeechIdleState);
         return;
     }
-
     if (speech_is_busy())
     {
-        speech_stop();
-        main_window_set_speech_state(kSpeechIdleState);
-        return;
-    }
-
-    if (speech_speak_test_phrase())
-    {
-        main_window_set_speech_state(kSpeechSpeakingState);
+        err = speech_stop();
     }
     else
     {
-        main_window_append_line("SpeakString trap failed.");
-        main_window_set_speech_state(kSpeechIdleState);
+        if (!gTextArea.field.handle)
+            return;
+        length = (**gTextArea.field.handle).teLength;
+        text = TEGetText(gTextArea.field.handle);
+        if (!text)
+            return;
+        state = HGetState(text);
+        HLock(text);
+        err = GetControlValue(gProsodyLQ)
+            ? speech_speak_vox(*text, length)
+            : speech_speak_text(*text, length);
+        HSetState(text, state);
     }
+    if (err != noErr)
+    {
+        sprintf(message, "Speech error: %d", (int)err);
+        main_window_append_line(message);
+    }
+    main_window_set_speech_state(speech_is_busy() ? kSpeechSpeakingState : kSpeechIdleState);
 }
 
 static void main_window_set_speech_state(SpeechUIState state)

@@ -2,6 +2,7 @@
 
 #include "ui_app.h"
 #include "network.h"
+#include "speech.h"
 
 int main(void)
 {
@@ -9,9 +10,10 @@ int main(void)
 
     while (ui_app_pump_events())
     {
-        /* Future: tcp_poll(); speech_pump(); */
+        /* The UI event loop polls networking and our speech channel. */
     }
 
+    (void)speech_shutdown();
     network_shutdown();
 
     return 0;

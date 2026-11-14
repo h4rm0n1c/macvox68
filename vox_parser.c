@@ -111,6 +111,14 @@ static char *str_trim(const char *s)
     return dup_slice(a, (size_t)(b - a));
 }
 
+/* Consume a heap buffer, including when allocating the trimmed copy fails. */
+static char *str_trim_owned(char *s)
+{
+    char *trimmed = str_trim(s);
+    free(s);
+    return trimmed;
+}
+
 static void str_to_lower(char *s)
 {
     if (!s)
@@ -913,7 +921,7 @@ static char *build_beats(const char *sentence)
 #undef RESET_AFTER_BREAK
 
     vec_free(&v);
-    return str_trim(sb_steal(&out));
+    return str_trim_owned(sb_steal(&out));
 }
 
 static char *tidy(char *s)
@@ -950,7 +958,7 @@ static char *tidy(char *s)
     }
     vec_free(&tok);
     free(mid);
-    return str_trim(sb_steal(&sb));
+    return str_trim_owned(sb_steal(&sb));
 }
 
 static char *normalize_letter_tokens(char *s)
@@ -1073,7 +1081,7 @@ char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
 
     vec_free(&sents);
 
-    char *result = str_trim(sb_steal(&out));
+    char *result = str_trim_owned(sb_steal(&out));
     if (result && *result) {
         if (wrap_vox_tags) {
             StringBuilder wrapped;
@@ -1098,7 +1106,18 @@ char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
 
 static Boolean emit_break(StringBuilder *sb)
 {
-    return sb_append_str(sb, "[[slnc 250]] ");
+    /* FlexTalk br forces sentence termination, not a timed silence.
+       Let the Mac voice supply phrase-final lengthening and intonation. */
+    while (sb->len && isspace((unsigned char)sb->data[sb->len - 1]))
+        sb->data[--sb->len] = '\0';
+    if (!sb->len) return true;
+    char last = sb->data[sb->len - 1];
+    if (last == ',' || last == ';' || last == ':') {
+        sb->data[sb->len - 1] = '.';
+    } else if (last != '.' && last != '!' && last != '?') {
+        if (!sb_append_char(sb, '.')) return false;
+    }
+    return sb_append_char(sb, ' ');
 }
 
 static Boolean emit_version_prefix(StringBuilder *sb)
@@ -1113,30 +1132,39 @@ static Boolean emit_comment(StringBuilder *sb, const char *tag)
     return sb_append_str(sb, "[[cmnt ") && sb_append_str(sb, tag) && sb_append_str(sb, "]] ");
 }
 
-static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *sb)
+static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *sb, Boolean *phrase_has_text)
 {
     if (tok_len == 0)
         return true;
 
-    if (tok_len == 4 && strncmp(tok, "\\!br", 4) == 0)
-        return emit_break(sb);
+    if (tok_len == 4 && strncmp(tok, "\\!br", 4) == 0) {
+        Boolean ok = !*phrase_has_text || emit_break(sb);
+        *phrase_has_text = false;
+        return ok;
+    }
 
     if (tok_len >= 4 && strncmp(tok, "\\!sf", 4) == 0) {
+        /* End the spoken phrase before applying its explicit final silence.
+           A following br must not create a second boundary or extra pause. */
+        if (*phrase_has_text && !emit_break(sb)) return false;
+        *phrase_has_text = false;
         long millis = 0;
         const char *p = tok + 4;
-        while (*p >= '0' && *p <= '9') {
-            millis = (millis * 10) + (*p - '0');
+        while (p < tok + tok_len && *p >= '0' && *p <= '9') {
+            /* Match the reference field's 1000 ms cap; avoid integer overflow. */
+            if (millis < 1000) millis = (millis * 10) + (*p - '0');
+            if (millis > 1000) millis = 1000;
             ++p;
         }
-        millis *= 10;
+        /* Reference engine uses plain milliseconds for the final-silence field. */
         char tmp[32];
         snprintf(tmp, sizeof(tmp), "[[slnc %ld]] ", millis);
         return sb_append_str(sb, tmp);
     }
 
-    if (tok_len == 4 && strncmp(tok, "\\!wH1", 4) == 0)
+    if (tok_len == 5 && strncmp(tok, "\\!wH1", 5) == 0)
         return emit_comment(sb, "vox-start");
-    if (tok_len == 4 && strncmp(tok, "\\!wH0", 4) == 0)
+    if (tok_len == 5 && strncmp(tok, "\\!wH0", 5) == 0)
         return emit_comment(sb, "vox-end");
 
     /* Unknown FlexTalk escape: drop it so only Speech Manager metadata remains. */
@@ -1154,6 +1182,7 @@ static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_versi
             goto done;
     }
 
+    Boolean phrase_has_text = false;
     const char *p = text;
     while (*p) {
         if (p[0] == '\\' && p[1] == '!') {
@@ -1161,15 +1190,20 @@ static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_versi
             p += 2;
             while (*p && *p != ' ' && *p != '\t' && *p != '\n' && *p != '\r')
                 ++p;
-            if (!translate_token(start, (size_t)(p - start), &sb))
+            if (!translate_token(start, (size_t)(p - start), &sb, &phrase_has_text))
                 goto done;
             continue;
         }
-        sb_append_char(&sb, *p);
+        if (!isspace((unsigned char)*p)) phrase_has_text = true;
+        /* User text must not inject Speech Manager commands into generated markup. */
+        if (*p == '[') {
+            if (!sb_append_str(&sb, "[ ")) goto done;
+            ++p;
+            continue;
+        }
+        if (!sb_append_char(&sb, *p)) goto done;
         ++p;
     }
-    emit_break(&sb);
-
     h = NewHandle(sb.len + 1);
     if (h && *h)
         BlockMoveData(sb.data, *h, sb.len + 1);

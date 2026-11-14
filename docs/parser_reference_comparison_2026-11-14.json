@@ -1,0 +1,636 @@
+{
+  "scope": "ASCII preprocessing only, both wrapper settings",
+  "sha256": {
+    "macvox": "6922f7093bb468158b5e1583813377e57563f9947f349cb6ed97b4fed542a148",
+    "nettts": "620ca06bab5bea153b9f27fb43893d15dd9bd8251ca6b20bb1c300fcd02d7d2b",
+    "voxtalk": "7d51b258a66d78a024b36ed93530e1d0e66efa2701edf9a67a4e9893ca93bf88"
+  },
+  "differences": [
+    {
+      "input": "",
+      "wrap": 0,
+      "outputs": {
+        "macvox": null,
+        "nettts": "",
+        "voxtalk": ""
+      }
+    },
+    {
+      "input": "",
+      "wrap": 1,
+      "outputs": {
+        "macvox": null,
+        "nettts": "",
+        "voxtalk": ""
+      }
+    },
+    {
+      "input": " ",
+      "wrap": 0,
+      "outputs": {
+        "macvox": null,
+        "nettts": "",
+        "voxtalk": ""
+      }
+    },
+    {
+      "input": " ",
+      "wrap": 1,
+      "outputs": {
+        "macvox": null,
+        "nettts": "",
+        "voxtalk": ""
+      }
+    },
+    {
+      "input": "Hello there.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Hello there.\\!sf500 \\!br ",
+        "nettts": "Hello there. \\!sf500 \\!br ",
+        "voxtalk": "Hello there. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Hello there.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Hello there.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Hello there. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Hello there. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "The time is 8:47 AM.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "The time \\!br is \\!br 8 \\!br \\!br 47 \\!br \\!br Ay: \\!br \\!br M: \\!br\\!sf500 \\!br ",
+        "nettts": "The time \\!br is \\!br 8 \\!br 47 \\!br Ay: \\!br M: \\!sf500 \\!br ",
+        "voxtalk": "The time \\!br is \\!br 8 \\!br 47 \\!br Ay: \\!br M: \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "The time is 8:47 AM.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 The time \\!br is \\!br 8 \\!br \\!br 47 \\!br \\!br Ay: \\!br \\!br M: \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 The time \\!br is \\!br 8 \\!br 47 \\!br Ay: \\!br M: \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 The time \\!br is \\!br 8 \\!br 47 \\!br Ay: \\!br M: \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "On behalf of The Board, please wait.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "On behalf \\!br of \\!br \\!br thee Board, \\!br please wait.\\!sf500 \\!br ",
+        "nettts": "On behalf \\!br of \\!br thee Board, \\!br please wait. \\!sf500 \\!br ",
+        "voxtalk": "On behalf \\!br of \\!br thee Board, \\!br please wait. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "On behalf of The Board, please wait.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 On behalf \\!br of \\!br \\!br thee Board, \\!br please wait.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 On behalf \\!br of \\!br thee Board, \\!br please wait. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 On behalf \\!br of \\!br thee Board, \\!br please wait. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Now boarding.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Now \\!br boarding. \\!br\\!sf500 \\!br ",
+        "nettts": "Now \\!br boarding. \\!sf500 \\!br ",
+        "voxtalk": "Now \\!br boarding. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Now boarding.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Now \\!br boarding. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Now \\!br boarding. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Now \\!br boarding. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Please stand by.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Please \\!br stand \\!br by. \\!br\\!sf500 \\!br ",
+        "nettts": "Please \\!br stand \\!br by. \\!br \\!sf500 \\!br ",
+        "voxtalk": "Please \\!br stand \\!br by. \\!br \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Please stand by.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Please \\!br stand \\!br by. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Please \\!br stand \\!br by. \\!br \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Please \\!br stand \\!br by. \\!br \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "A reminder to all personnel.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Ay: reminder \\!br to \\!br all personnel. \\!br\\!sf500 \\!br ",
+        "nettts": "Ay: reminder \\!br to \\!br all \\!br personnel. \\!sf500 \\!br ",
+        "voxtalk": "Ay: reminder \\!br to \\!br all \\!br personnel. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "A reminder to all personnel.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Ay: reminder \\!br to \\!br all personnel. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Ay: reminder \\!br to \\!br all \\!br personnel. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Ay: reminder \\!br to \\!br all \\!br personnel. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Good morning everyone.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Good morning \\!br everyone. \\!br\\!sf500 \\!br ",
+        "nettts": "Good morning \\!br everyone. \\!sf500 \\!br ",
+        "voxtalk": "Good morning \\!br everyone. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Good morning everyone.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Good morning \\!br everyone. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Good morning \\!br everyone. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Good morning \\!br everyone. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Good evening everyone.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Good evening \\!br everyone. \\!br\\!sf500 \\!br ",
+        "nettts": "Good evening \\!br everyone. \\!sf500 \\!br ",
+        "voxtalk": "Good evening \\!br everyone. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Good evening everyone.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Good evening \\!br everyone. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Good evening \\!br everyone. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Good evening \\!br everyone. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "This automated train is arriving.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "This automated train \\!br is arriving.\\!sf500 \\!br ",
+        "nettts": "This automated train \\!br is arriving. \\!sf500 \\!br ",
+        "voxtalk": "This automated train \\!br is arriving. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "This automated train is arriving.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 This automated train \\!br is arriving.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 This automated train \\!br is arriving. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 This automated train \\!br is arriving. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "This tram is departing.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "This tram \\!br is departing. \\!br\\!sf500 \\!br ",
+        "nettts": "This tram \\!br is \\!br departing. \\!sf500 \\!br ",
+        "voxtalk": "This tram \\!br is \\!br departing. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "This tram is departing.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 This tram \\!br is departing. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 This tram \\!br is \\!br departing. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 This tram \\!br is \\!br departing. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "The Board is ready.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "thee Board is ready.\\!sf500 \\!br ",
+        "nettts": "thee Board is ready. \\!sf500 \\!br ",
+        "voxtalk": "thee Board is ready. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "The Board is ready.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 thee Board is ready.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 thee Board is ready. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 thee Board is ready. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "the apple is on the table.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "the apple is \\!br on \\!br thee table. \\!br\\!sf500 \\!br ",
+        "nettts": "the apple is \\!br on \\!br thee \\!br table. \\!sf500 \\!br ",
+        "voxtalk": "the apple is \\!br on \\!br thee \\!br table. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "the apple is on the table.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 the apple is \\!br on \\!br thee table. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 the apple is \\!br on \\!br thee \\!br table. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 the apple is \\!br on \\!br thee \\!br table. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Welcome to the Black Mesa Research Facility.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Welcome to thee \\!br Black \\!br Mesa \\!br Research \\!br Facility. \\!br\\!sf500 \\!br ",
+        "nettts": "Welcome to thee \\!br Black \\!br Mesa \\!br Research \\!br Facility. \\!br \\!sf500 \\!br ",
+        "voxtalk": "Welcome to thee \\!br Black \\!br Mesa \\!br Research \\!br Facility. \\!br \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Welcome to the Black Mesa Research Facility.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Welcome to thee \\!br Black \\!br Mesa \\!br Research \\!br Facility. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Welcome to thee \\!br Black \\!br Mesa \\!br Research \\!br Facility. \\!br \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Welcome to thee \\!br Black \\!br Mesa \\!br Research \\!br Facility. \\!br \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "At 08:00 hours, report to Sector C.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "At 08:00 hours, \\!br report \\!br to \\!br Sector \\!br C:. \\!br\\!sf500 \\!br ",
+        "nettts": "At 08:00 \\!br hours, \\!br report \\!br to \\!br Sector \\!br C:. \\!br \\!sf500 \\!br ",
+        "voxtalk": "At 08:00 \\!br hours, \\!br report \\!br to \\!br Sector \\!br C:. \\!br \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "At 08:00 hours, report to Sector C.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 At 08:00 hours, \\!br report \\!br to \\!br Sector \\!br C:. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 At 08:00 \\!br hours, \\!br report \\!br to \\!br Sector \\!br C:. \\!br \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 At 08:00 \\!br hours, \\!br report \\!br to \\!br Sector \\!br C:. \\!br \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "The time is 12:05 PM.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "The time \\!br is \\!br 12 \\!br \\!br 5 \\!br \\!br P: \\!br \\!br M: \\!br\\!sf500 \\!br ",
+        "nettts": "The time \\!br is \\!br 12 \\!br 05 \\!br P: \\!br M: \\!sf500 \\!br ",
+        "voxtalk": "The time \\!br is \\!br 12 \\!br 05 \\!br P: \\!br M: \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "The time is 12:05 PM.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 The time \\!br is \\!br 12 \\!br \\!br 5 \\!br \\!br P: \\!br \\!br M: \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 The time \\!br is \\!br 12 \\!br 05 \\!br P: \\!br M: \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 The time \\!br is \\!br 12 \\!br 05 \\!br P: \\!br M: \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Meet at 3:15 am.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Meet at 3 \\!br \\!br 15 \\!br \\!br Ay: \\!br \\!br M: \\!br\\!sf500 \\!br ",
+        "nettts": "Meet at \\!br 3 \\!br 15 \\!br Ay: \\!br M: \\!sf500 \\!br ",
+        "voxtalk": "Meet at \\!br 3 \\!br 15 \\!br Ay: \\!br M: \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Meet at 3:15 am.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Meet at 3 \\!br \\!br 15 \\!br \\!br Ay: \\!br \\!br M: \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Meet at \\!br 3 \\!br 15 \\!br Ay: \\!br M: \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Meet at \\!br 3 \\!br 15 \\!br Ay: \\!br M: \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "It is 1300 hours.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "It is 1300 \\!br hours. \\!br\\!sf500 \\!br ",
+        "nettts": "It is \\!br 13 \\!br hundred \\!br hours. \\!sf500 \\!br ",
+        "voxtalk": "It is \\!br 13 \\!br hundred \\!br hours. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "It is 1300 hours.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 It is 1300 \\!br hours. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 It is \\!br 13 \\!br hundred \\!br hours. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 It is \\!br 13 \\!br hundred \\!br hours. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Temperature is 100 degrees.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Temperature is 100 \\!br \\!br degrees \\!br \\!br.\\!sf500 \\!br ",
+        "nettts": "Temperature is \\!br 100 \\!br degrees \\!br. \\!sf500 \\!br ",
+        "voxtalk": "Temperature is \\!br 100 \\!br degrees \\!br. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Temperature is 100 degrees.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Temperature is 100 \\!br \\!br degrees \\!br \\!br.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Temperature is \\!br 100 \\!br degrees \\!br. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Temperature is \\!br 100 \\!br degrees \\!br. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "It is 23 degrees Celsius.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "It is 23 \\!br \\!br degrees \\!br \\!br Celsius. \\!br\\!sf500 \\!br ",
+        "nettts": "It is \\!br 23 \\!br degrees \\!br Celsius. \\!sf500 \\!br ",
+        "voxtalk": "It is \\!br 23 \\!br degrees \\!br Celsius. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "It is 23 degrees Celsius.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 It is 23 \\!br \\!br degrees \\!br \\!br Celsius. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 It is \\!br 23 \\!br degrees \\!br Celsius. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 It is \\!br 23 \\!br degrees \\!br Celsius. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "123 456 789 100 101 999 1000.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "100 \\!br and \\!br \\!br 23 \\!br 400 \\!br \\!br and \\!br \\!br 56 \\!br 700 \\!br \\!br and \\!br \\!br 89 \\!br 100 \\!br 100 \\!br \\!br and \\!br \\!br 1 \\!br 900 \\!br \\!br and \\!br \\!br 99 \\!br 1000. \\!br\\!sf500 \\!br ",
+        "nettts": "100 \\!br and \\!br 23 \\!br 400 \\!br and \\!br 56 \\!br 700 \\!br and \\!br 89 \\!br 100 \\!br 100 \\!br and \\!br 1 \\!br 900 \\!br and \\!br 99 \\!br 1000. \\!sf500 \\!br ",
+        "voxtalk": "100 \\!br and \\!br 23 \\!br 400 \\!br and \\!br 56 \\!br 700 \\!br and \\!br 89 \\!br 100 \\!br 100 \\!br and \\!br 1 \\!br 900 \\!br and \\!br 99 \\!br 1000. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "123 456 789 100 101 999 1000.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 100 \\!br and \\!br \\!br 23 \\!br 400 \\!br \\!br and \\!br \\!br 56 \\!br 700 \\!br \\!br and \\!br \\!br 89 \\!br 100 \\!br 100 \\!br \\!br and \\!br \\!br 1 \\!br 900 \\!br \\!br and \\!br \\!br 99 \\!br 1000. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 100 \\!br and \\!br 23 \\!br 400 \\!br and \\!br 56 \\!br 700 \\!br and \\!br 89 \\!br 100 \\!br 100 \\!br and \\!br 1 \\!br 900 \\!br and \\!br 99 \\!br 1000. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 100 \\!br and \\!br 23 \\!br 400 \\!br and \\!br 56 \\!br 700 \\!br and \\!br 89 \\!br 100 \\!br 100 \\!br and \\!br 1 \\!br 900 \\!br and \\!br 99 \\!br 1000. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "A B C D E F G.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Ay: \\!br B: \\!br C: \\!br D: \\!br E: \\!br F: \\!br G:. \\!br\\!sf500 \\!br ",
+        "nettts": "Ay: \\!br B: \\!br C: \\!br D: \\!br E: \\!br F: \\!br G:. \\!br \\!sf500 \\!br ",
+        "voxtalk": "Ay: \\!br B: \\!br C: \\!br D: \\!br E: \\!br F: \\!br G:. \\!br \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "A B C D E F G.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Ay: \\!br B: \\!br C: \\!br D: \\!br E: \\!br F: \\!br G:. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Ay: \\!br B: \\!br C: \\!br D: \\!br E: \\!br F: \\!br G:. \\!br \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Ay: \\!br B: \\!br C: \\!br D: \\!br E: \\!br F: \\!br G:. \\!br \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Sector A and Sector B.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Sector \\!br Ay: \\!br and \\!br Sector \\!br B:. \\!br\\!sf500 \\!br ",
+        "nettts": "Sector \\!br Ay: \\!br and \\!br Sector \\!br B:. \\!br \\!sf500 \\!br ",
+        "voxtalk": "Sector \\!br Ay: \\!br and \\!br Sector \\!br B:. \\!br \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Sector A and Sector B.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Sector \\!br Ay: \\!br and \\!br Sector \\!br B:. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Sector \\!br Ay: \\!br and \\!br Sector \\!br B:. \\!br \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Sector \\!br Ay: \\!br and \\!br Sector \\!br B:. \\!br \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "One, two; three: four.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "One, \\!br two; \\!br three: four.\\!sf500 \\!br ",
+        "nettts": "One, \\!br two; \\!br three: four. \\!sf500 \\!br ",
+        "voxtalk": "One, \\!br two; \\!br three: four. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "One, two; three: four.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 One, \\!br two; \\!br three: four.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 One, \\!br two; \\!br three: four. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 One, \\!br two; \\!br three: four. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Stop! Wait? Go.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Stop!\\!sf500 \\!br  Wait?\\!sf500 \\!br  Go.\\!sf500 \\!br ",
+        "nettts": "Stop! \\!sf500 \\!br Wait? \\!sf500 \\!br Go. \\!sf500 \\!br ",
+        "voxtalk": "Stop! \\!sf500 \\!br Wait? \\!sf500 \\!br Go. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Stop! Wait? Go.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Stop!\\!sf500 \\!br  Wait?\\!sf500 \\!br  Go.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Stop! \\!sf500 \\!br Wait? \\!sf500 \\!br Go. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Stop! \\!sf500 \\!br Wait? \\!sf500 \\!br Go. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "He said \"Hello.\" Then left.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "He said\"Hello.\"\\!sf500 \\!br  Then left.\\!sf500 \\!br ",
+        "nettts": "He said\"Hello.\" \\!sf500 \\!br Then left. \\!sf500 \\!br ",
+        "voxtalk": "He said\"Hello.\" \\!sf500 \\!br Then left. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "He said \"Hello.\" Then left.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 He said\"Hello.\"\\!sf500 \\!br  Then left.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 He said\"Hello.\" \\!sf500 \\!br Then left. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 He said\"Hello.\" \\!sf500 \\!br Then left. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Wait -- please stand by.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Wait -- please stand \\!br by. \\!br\\!sf500 \\!br ",
+        "nettts": "Wait -- please stand \\!br by. \\!br \\!sf500 \\!br ",
+        "voxtalk": "Wait -- please stand \\!br by. \\!br \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Wait -- please stand by.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Wait -- please stand \\!br by. \\!br\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Wait -- please stand \\!br by. \\!br \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Wait -- please stand \\!br by. \\!br \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "Alpha - beta and gamma or delta.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "Alpha \\!br beta \\!br and \\!br gamma or delta.\\!sf500 \\!br ",
+        "nettts": "Alpha \\!br beta \\!br and \\!br gamma or delta. \\!sf500 \\!br ",
+        "voxtalk": "Alpha \\!br beta \\!br and \\!br gamma or delta. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "Alpha - beta and gamma or delta.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 Alpha \\!br beta \\!br and \\!br gamma or delta.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 Alpha \\!br beta \\!br and \\!br gamma or delta. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 Alpha \\!br beta \\!br and \\!br gamma or delta. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "This is a test of the emergency broadcast system.",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "This is a test \\!br of \\!br thee emergency \\!br broadcast \\!br system.\\!sf500 \\!br ",
+        "nettts": "This is a test \\!br of \\!br thee \\!br emergency \\!br broadcast system. \\!sf500 \\!br ",
+        "voxtalk": "This is a test \\!br of \\!br thee \\!br emergency \\!br broadcast system. \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "This is a test of the emergency broadcast system.",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 This is a test \\!br of \\!br thee emergency \\!br broadcast \\!br system.\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 This is a test \\!br of \\!br thee \\!br emergency \\!br broadcast system. \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 This is a test \\!br of \\!br thee \\!br emergency \\!br broadcast system. \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "one\ttwo\nthree",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "one two three\\!sf500 \\!br ",
+        "nettts": "one two three \\!sf500 \\!br ",
+        "voxtalk": "one two three \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "one\ttwo\nthree",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 one two three\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 one two three \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 one two three \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "...",
+      "wrap": 0,
+      "outputs": {
+        "macvox": ".\\!sf500 \\!br  .\\!sf500 \\!br  .\\!sf500 \\!br ",
+        "nettts": ". \\!sf500 \\!br . \\!sf500 \\!br . \\!sf500 \\!br ",
+        "voxtalk": ". \\!sf500 \\!br . \\!sf500 \\!br . \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "...",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 .\\!sf500 \\!br  .\\!sf500 \\!br  .\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 . \\!sf500 \\!br . \\!sf500 \\!br . \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 . \\!sf500 \\!br . \\!sf500 \\!br . \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "?!",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "?\\!sf500 \\!br  !\\!sf500 \\!br ",
+        "nettts": "? \\!sf500 \\!br ! \\!sf500 \\!br ",
+        "voxtalk": "? \\!sf500 \\!br ! \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "?!",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 ?\\!sf500 \\!br  !\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 ? \\!sf500 \\!br ! \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 ? \\!sf500 \\!br ! \\!sf500 \\!br \\!wH0 "
+      }
+    },
+    {
+      "input": "don't can't won't",
+      "wrap": 0,
+      "outputs": {
+        "macvox": "don't can't won't\\!sf500 \\!br ",
+        "nettts": "don't can't won't \\!sf500 \\!br ",
+        "voxtalk": "don't can't won't \\!sf500 \\!br "
+      }
+    },
+    {
+      "input": "don't can't won't",
+      "wrap": 1,
+      "outputs": {
+        "macvox": "\\!wH1 don't can't won't\\!sf500 \\!br \\!wH0 ",
+        "nettts": "\\!wH1 don't can't won't \\!sf500 \\!br \\!wH0 ",
+        "voxtalk": "\\!wH1 don't can't won't \\!sf500 \\!br \\!wH0 "
+      }
+    }
+  ],
+  "comparisons": 68,
+  "matching": 0,
+  "references": {
+    "nettts": {
+      "root": "/home/harri/nettts-release",
+      "head": "239f10f3ad603d410bba2b45e7e56463177ce3db",
+      "parser_commit": "4512a913b6968815bac73f02f6094a1b743a8ebc"
+    },
+    "voxtalk": {
+      "root": "/home/harri/voxtalk",
+      "head": "6b67cc9487ac0ab08e64dc706afa56c5bafb6d81",
+      "parser_commit": "1979492b8b31a86ab68745c536b5fc894a9d0088"
+    }
+  }
+}

@@ -5,7 +5,7 @@ The networking stack is split into two layers so we can reuse the low-level plum
 ## High-level facade (`network.c` / `network.h`)
 - Exposes a minimal API used by the UI and event loop (`network_start_server`, `network_stop_server`, `network_poll`, `network_is_running`).
 - Accepts UI callbacks for inbound data and log lines through `network_set_handlers`.
-- Owns backend selection: currently routes everything to the Open Transport backend returned by `network_backend_ot()`.
+- Owns backend selection: selects Open Transport when detected, otherwise the classic-networking refusal backend (which does not implement MacTCP).
 
 ## Backend contract (`network_backend.h`)
 - `NetworkBackend` provides function pointers for init/shutdown, start/stop, run-state query, and polling.

@@ -1,5 +1,11 @@
 # VOX prosody parser porting notes (FlexTalk to Speech Manager)
 
+**Audit update (2026-11-14):** use both local NetTTS and VoxTalk parser sources
+as behavioral references. Their outputs agree on the current 68-case ASCII
+comparison; MacVox differs on every case. The plan below is historical intent,
+not proof that the implemented port matches it. See [the audit](audit_2026-11-14.md)
+and `tests/compare_parser_references.py` before relying on these claims.
+
 This note captures how to carry the existing VOX text-normalization/prosody pipeline over to classic Macintosh Speech Manager output. It assumes the C++ parser used in NetTTS (excerpt below) remains the behavioral reference while we redirect its emissions from FlexTalk escape sequences to Speech Manager embedded commands.
 
 ## Reference implementation snapshot

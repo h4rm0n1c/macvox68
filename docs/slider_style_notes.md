@@ -1,5 +1,10 @@
 # Classic slider style notes (Speech CP look)
 
+**Audit correction (2026-11-14):** proc 48 is an Appearance slider. The
+blanket System 7.5.3 compatibility claims below are unverified without the
+Appearance Manager installed. Resource inspection alone did not establish
+the Speech control panel's implementation. See [the audit](audit_2026-11-14.md).
+
 These notes capture what we learned while inspecting the System 7.5.3 Speech control panel slider and comparing it to MacVox68.
 
 ## Key takeaways
