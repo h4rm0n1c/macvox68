@@ -18,7 +18,7 @@ Validation from the workspace root:
 cc -DVOX_PARSER_STANDALONE -g -O1 -Wall -Wextra \
   -fsanitize=address,undefined -fno-omit-frame-pointer \
   Retro68Projects/MacVox68/tests/vox_parser_host_checks.c \
-  Retro68Projects/MacVox68/vox_parser.c -o /tmp/macvox-parser-sanitized
+  Retro68Projects/MacVox68/src/vox_parser.c -o /tmp/macvox-parser-sanitized
 ASAN_OPTIONS=detect_leaks=1 /tmp/macvox-parser-sanitized
 ```
 

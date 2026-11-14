@@ -1,5 +1,7 @@
 # MacVox68 project, repository and reusable-code assessment — 2026-11-15
 
+This is the pre-integration assessment. See [subsequent integration](integration_2026-11-15.md) for the current branch, fixes and verification.
+
 ## Checked state
 
 Fetched origin with prune and queried GitHub repository, open PRs/issues and

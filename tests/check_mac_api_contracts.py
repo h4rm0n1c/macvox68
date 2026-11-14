@@ -6,7 +6,7 @@ These checks do not emulate Open Transport or validate the 68k ABI.
 """
 from pathlib import Path
 import subprocess, tempfile
-root=Path(__file__).resolve().parents[1]
+root=Path(__file__).resolve().parents[1] / "src"
 with tempfile.TemporaryDirectory(prefix='macvox-contracts-') as tmp:
  p=Path(tmp)
  (p/'Types.h').write_text('''#include <stddef.h>

@@ -34,13 +34,32 @@ Retro68 Rez is invoked through the shell, so include paths that contain special 
 ## Reference caches
 The container provides lookup-only classic Mac references sourced from the projects above along with *develop* magazine content and sample code. For details on what is available in the container and how to use it, consult the local documentation in the `docs/` folder.
 
-## Current UI
-All UI is currently code-driven from the `ui_app` and `main_window` pair:
-- [`window_ui.c`](window_ui.c) initializes the Toolbox (`InitGraf`, `InitWindows`, menus, dialogs, cursor) and runs the main event pump.
-- [`main_window.c`](main_window.c) owns the main document window, draws its placeholder chrome, and builds all controls/pop-up menus in code.
-- [`ui_app.h`](ui_app.h) and [`main_window.h`](main_window.h) keep the declarations together so each window can live in its own source file as the project grows.
+## Source layout and reusable components
 
-Because the project ships **no Toolbox resources** (no Rez `.r` menus, DITLs, etc.), every menu and control is created programmatically. Avoid adding references to resource IDs that are not constructed in code; if a control or menu is needed, define and build it explicitly at runtime.
+- `src/vox_parser.c`: text preprocessing and FlexTalk-marker to Mac speech-command translation; standalone host checks need no Toolbox headers.
+- `src/speech.c`: owned asynchronous Speech Manager channel and text lifetime.
+- `src/network*.c`: transport facade and Open Transport backend. The classic backend reports unsupported operation; it is not a MacTCP implementation.
+- `src/ui/`: TextEdit fields/scrolling, input dispatch, layouts, windows, radio groups, sliders and theme helpers. `main_window.c` binds these to this application; `window_ui.c` owns startup and the event loop.
+- `macvox68_icon.r`: application icon resources. Menus and controls are created in code; the legacy sample dialogs are not built.
 
-## Legacy dialog resources
-The Retro68 sample dialog files now live in [`legacy/dialog.c`](legacy/dialog.c) and [`legacy/dialog.r`](legacy/dialog.r). They are not referenced by the CMake target (which only builds `main.c`, `window_ui.c`, and `main_window.c`) and remain in the tree purely for historical reference.
+These are reusable components inside one application target, not an independently packaged library. Keep the parser independent of UI, speech ownership separate from transport, and app policy out of the generic UI helpers. A stable exported API and standalone Toolbox harness still need an audit before a library release. ThreadLib documentation records an option, not an implemented dependency.
+
+## Host verification
+
+From the repository root (ordinary Linux compiler, CMake and Python):
+
+```sh
+cmake -S . -B /tmp/macvox-host
+cmake --build /tmp/macvox-host
+ctest --test-dir /tmp/macvox-host --output-on-failure
+python3 tests/check_mac_api_contracts.py
+cc -g -O1 -fsanitize=address,undefined -DVOX_PARSER_STANDALONE -Isrc \
+  src/vox_parser.c tests/vox_parser_host_checks.c -o /tmp/macvox-parser-check
+/tmp/macvox-parser-check
+```
+
+The contract checks compile the actual speech/network source with fake APIs. They verify ownership and receive-status behavior, not the 68k ABI or real OS scheduling. A Retro68 build and guest verification remain separate requirements.
+
+## Current status
+
+See [integration status](docs/integration_2026-11-15.md) for tested builds, repository reconciliation and remaining work, and [project assessment](docs/project_status_2026-11-15.md) for the historical audit. Clean and HLVOX editor speech use owned asynchronous channels. VOX timing still needs work against the external NetTTS and VoxTalk references; the network receive path does not yet implement a complete framed automatic-speech protocol. UI sliders are not yet connected to synthesizer settings.

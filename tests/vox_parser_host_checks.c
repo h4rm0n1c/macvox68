@@ -1,4 +1,4 @@
-#include "../vox_parser.h"
+#include "vox_parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

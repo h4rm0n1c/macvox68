@@ -17,6 +17,10 @@ When we achieve a major fix or discovery, record it in the `docs/` folder so it 
 
 ---
 
+## Current workspace override (2026-11-15)
+
+Sources are in `src/` and UI helpers in `src/ui/`. This workspace has a working host Retro68 toolchain; host builds and checks are permitted. The parent OldMacStuff MCP and disk-safety rules apply. Stage new application copies through `.mac-lab/Shared`; do not rewrite mounted images. The environment descriptions below preserve older workflow context.
+
 ## Environments
 
 ### Codex container

@@ -43,7 +43,7 @@ def main():
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
-    sources = {"macvox": root / "vox_parser.c",
+    sources = {"macvox": root / "src/vox_parser.c",
                "nettts": args.nettts / "src/vox_parser.cpp",
                "voxtalk": args.voxtalk / "src/vox_parser.cpp"}
     report = {"scope": "ASCII preprocessing only, both wrapper settings",
