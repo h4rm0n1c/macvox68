@@ -91,6 +91,23 @@ int main(void)
 {
     int errors = 0;
     errors += check_reference_cadence();
+    {
+        const char *times[] = {"The time is 08:45 AM.", "The time is 08:45 PM."};
+        const char *letters[] = {"ay em", "pee em"};
+        size_t i;
+        for (i = 0; i < 2; ++i) {
+            Handle time = vox_format_text(times[i], true);
+            if (!time || !*time) ++errors;
+            else {
+                const char *text = (char *)*time;
+                errors += assert_contains("meridiem-letter-pair", text, letters[i]);
+                if (strstr(text, "Ay:") || strstr(text, "P:") || strstr(text, "M:")) ++errors;
+                errors += assert_contains("meridiem-final-silence", text, "[[slnc 500]]");
+            }
+            if (time) { free(*time); free(time); }
+        }
+    }
+
     errors += check_process_pipeline();
     errors += check_thee_and_breaks();
     errors += check_speech_manager_translation();

@@ -1180,6 +1180,26 @@ static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *s
     return true;
 }
 
+/* FlexTalk letter colons are pronunciation metadata, not Mac punctuation.
+   Recognize only the meridiem pair; leave ordinary colons and other text alone. */
+static const char *meridiem_pair_end(const char *p, const char **spoken)
+{
+    size_t first;
+    if (strncmp(p, "Ay:", 3) == 0) { first = 3; *spoken = "ay em"; }
+    else if (strncmp(p, "P:", 2) == 0) { first = 2; *spoken = "pee em"; }
+    else return NULL;
+    p += first;
+    if (!isspace((unsigned char)*p)) return NULL;
+    while (isspace((unsigned char)*p)) ++p;
+    if (strncmp(p, "\\!br", 4) == 0 && isspace((unsigned char)p[4])) {
+        p += 4;
+        while (isspace((unsigned char)*p)) ++p;
+    }
+    if (strncmp(p, "M:", 2) != 0 ||
+        (p[2] && !isspace((unsigned char)p[2]))) return NULL;
+    return p + 2;
+}
+
 static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_version)
 {
     Handle h = NULL;
@@ -1194,6 +1214,16 @@ static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_versi
     Boolean phrase_has_text = false;
     const char *p = text;
     while (*p) {
+        const char *spoken = NULL;
+        const char *pair_end = NULL;
+        if (p == text || isspace((unsigned char)p[-1]))
+            pair_end = meridiem_pair_end(p, &spoken);
+        if (pair_end) {
+            if (!sb_append_str(&sb, spoken)) goto done;
+            phrase_has_text = true;
+            p = pair_end;
+            continue;
+        }
         if (p[0] == '\\' && p[1] == '!') {
             const char *start = p;
             p += 2;
