@@ -87,10 +87,53 @@ static int check_reference_cadence(void)
     return errors;
 }
 
+
+static int native_calls, native_failure, native_bad;
+static char native_input[32][256];
+static char *native_convert(const char *beat, void *context)
+{
+    const char *phonemes = native_bad ? "[[volm 0]]" : "_t1EHst.%";
+    char *result;
+    (void)context;
+    if (native_failure) return NULL;
+    if (native_calls < 32) snprintf(native_input[native_calls], 256, "%s", beat);
+    ++native_calls;
+    result = malloc(strlen(phonemes) + 1);
+    if (result) strcpy(result, phonemes);
+    return result;
+}
+static int check_native_renderer(void)
+{
+    int errors = 0;
+    Handle h;
+    native_calls = 0;
+    h = vox_format_native_text("Good morning and welcome to the Black Mesa Transit System.", native_convert, NULL);
+    if (!h) return 1;
+    if (native_calls != 8 || strcmp(native_input[0], "Good morning.") ||
+        strcmp(native_input[7], "System.")) ++errors;
+    errors += assert_contains("native-mode-boundary", (char *)*h, "[[inpt PHON]] _t1EHst.% [[inpt TEXT]] [[slnc 100]]");
+    errors += assert_contains("native-final-silence", (char *)*h, "[[slnc 500]]");
+    if (strstr((char *)*h, "[[slnc 100]] [[slnc 500]]")) ++errors;
+    free(*h); free(h);
+    native_calls = 0;
+    h = vox_format_native_text("The time is 8:47 AM.", native_convert, NULL);
+    if (!h || native_calls != 5 || strcmp(native_input[4], "ay em.")) ++errors;
+    if (h) { free(*h); free(h); }
+    native_failure = 1;
+    h = vox_format_native_text("Hello.", native_convert, NULL);
+    if (h) { ++errors; free(*h); free(h); }
+    native_failure = 0; native_bad = 1;
+    h = vox_format_native_text("Hello.", native_convert, NULL);
+    if (h) { ++errors; free(*h); free(h); }
+    native_bad = 0;
+    return errors;
+}
+
 int main(void)
 {
     int errors = 0;
     errors += check_reference_cadence();
+    errors += check_native_renderer();
     {
         const char *times[] = {"The time is 08:45 AM.", "The time is 08:45 PM."};
         const char *letters[] = {"ay em", "pee em"};

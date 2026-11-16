@@ -1,3 +1,7 @@
+> Current measured implementation: [native VOX renderer](native_vox_renderer_2026-11-17.md).
+> MacInTalk 3 uses native pronunciation per encoder beat. The general conversion
+> proposals below remain historical and do not establish equivalent voice quality.
+
 > Cadence correction (2026-11-15): the vendor manual defines br as forced
 > sentence termination, not fixed silence; wH controls aspiration, not word
 > emphasis. The adapter now uses deduplicated sentence boundaries and retains

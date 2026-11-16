@@ -19,6 +19,7 @@ typedef unsigned short UInt16;
 typedef unsigned long UInt32;
 typedef int32_t OSStatus;
 typedef int32_t OSErr;
+typedef uint32_t OSType;
 #define true 1
 #define false 0
 #define noErr 0
@@ -101,6 +102,7 @@ typedef char *Ptr;
 Ptr NewPtr(long);
 void DisposePtr(Ptr);
 Handle NewHandle(long);
+long GetHandleSize(Handle);
 void DisposeHandle(Handle);
 void HLock(Handle);
 void HUnlock(Handle);
@@ -114,6 +116,12 @@ typedef struct {Boolean outputBusy,outputPaused;long inputBytesLeft;short phonem
 #define soStatus 1
 #define soCommandDelimiter 2
 #define soVolume 3
+#define soInputMode 4
+#define soSynthType 5
+#define modeText 0x54455854
+#define modePhonemes 0x50484f4e
+ typedef struct {long synthManufacturer;} SpeechVersionInfo;
+OSErr TextToPhonemes(SpeechChannel,const void *,long,Handle,long *);
 OSErr GetSpeechRate(SpeechChannel,Fixed *);
 OSErr GetSpeechPitch(SpeechChannel,Fixed *);
 OSErr SetSpeechRate(SpeechChannel,Fixed);
@@ -131,7 +139,9 @@ OSErr DisposeSpeechChannel(SpeechChannel);
 static int present=1,allocs,busy,allocationFail;
 static OSErr statusError,stopError,speakError,newError,setError,disposeError;
 static const void *borrowed;
-static int commands;
+static int commands, activeCommands, nativeProvider, conversions;
+static OSType inputMode;
+static OSErr conversionError, modeError;
 static Fixed volumeValue, rateValue, pitchValue;
 static OSErr rateError, pitchError, defaultError;
 OSErr GetSpeechRate(SpeechChannel c,Fixed *v) {*v=180*65536;return defaultError;}
@@ -144,15 +154,28 @@ Ptr NewPtr(long n) {if(allocationFail)return NULL;++allocs;return malloc(n);}
 void DisposePtr(Ptr p) {assert(p);assert(p!=borrowed||!busy);--allocs;free(p);}
 Handle NewHandle(long n) {Handle h=malloc(sizeof(*h));*h=malloc(n);return h;}
 void DisposeHandle(Handle h) {free(*h);free(h);}
+long GetHandleSize(Handle h) {return 16384;}
 void HLock(Handle h) {}
 void HUnlock(Handle h) {}
 OSErr NewSpeechChannel(void *v,SpeechChannel *c) {if(newError)return newError;*c=(void *)1;return 0;}
 OSErr SetSpeechInfo(SpeechChannel c,long selector,const void *v) {
+ if(selector==soInputMode){inputMode=*(const OSType*)v;return modeError;}
  if(selector==soVolume){volumeValue=*(const Fixed*)v;return setError;}
- const DelimiterInfo *d=v;assert(selector==soCommandDelimiter);assert(d->startDelimiter[0]==(commands?'[':0)&&d->startDelimiter[1]==(commands?'[':0)&&d->endDelimiter[0]==(commands?']':0)&&d->endDelimiter[1]==(commands?']':0));return setError;
+ const DelimiterInfo *d=v;assert(selector==soCommandDelimiter);
+ activeCommands=d->startDelimiter[0]=='[';
+ assert(d->startDelimiter[0]==(activeCommands?'[':0)&&d->startDelimiter[1]==(activeCommands?'[':0)&&d->endDelimiter[0]==(activeCommands?']':0)&&d->endDelimiter[1]==(activeCommands?']':0));return setError;
 }
-OSErr GetSpeechInfo(SpeechChannel c,long selector,void *v) {assert(c&&selector==soStatus);((SpeechStatusInfo *)v)->outputBusy=busy;return statusError;}
-OSErr SpeakText(SpeechChannel c,const void *p,long n) {assert(c&&p&&n>0);assert(n<sizeof(observed));memcpy(observed,p,n);observed[n]=0;borrowed=p;busy=1;return speakError;}
+OSErr GetSpeechInfo(SpeechChannel c,long selector,void *v) {
+ assert(c);
+ if(selector==soSynthType){((SpeechVersionInfo*)v)->synthManufacturer=nativeProvider?'mtk3':0;return 0;}
+ assert(selector==soStatus);((SpeechStatusInfo *)v)->outputBusy=busy;return statusError;
+}
+OSErr TextToPhonemes(SpeechChannel c,const void *text,long n,Handle phon,long *count) {
+ assert(c&&n>0&&!activeCommands&&inputMode==modeText);++conversions;
+ if(conversionError)return conversionError;
+ memcpy(*phon,"_t1EHst.%",9);*count=9;return 0;
+}
+OSErr SpeakText(SpeechChannel c,const void *p,long n) {assert(c&&p&&n>0);assert(activeCommands==commands&&inputMode==modeText);assert(n<sizeof(observed));memcpy(observed,p,n);observed[n]=0;borrowed=p;busy=1;return speakError;}
 OSErr StopSpeech(SpeechChannel c) {assert(c);if(!stopError)busy=0;return stopError;}
 OSErr DisposeSpeechChannel(SpeechChannel c) {assert(c);if(!disposeError)busy=0;return disposeError;}
 int main(void) {
@@ -189,6 +212,18 @@ int main(void) {
  assert(allocs==1);assert(speech_stop()==0&&!allocs);
  assert(speech_speak_vox("  ",2)==0&&!allocs);assert(speech_speak_vox(NULL,1)==paramErr);
  assert(speech_speak_vox("x",32768)==paramErr);assert(speech_speak_vox("x\0x",3)==paramErr);
+ nativeProvider=1;commands=1;conversions=0;
+ assert(speech_speak_vox("Good morning and welcome to the Black Mesa Transit System.",57)==0);
+ assert(conversions==8&&strstr(observed,"[[inpt PHON]] _t1EHst.% [[inpt TEXT]] [[slnc 100]]"));
+ assert(strstr(observed,"[[slnc 500]]"));assert(speech_stop()==0&&!allocs);
+ conversions=0;assert(speech_speak_vox("The time is 8:47 AM.",19)==0);
+ assert(conversions==5);assert(speech_stop()==0&&!allocs); /* AM is one spoken beat. */
+ conversionError=-22;assert(speech_speak_vox("Hello.",6)==-22&&!allocs);conversionError=0;
+ modeError=-23;assert(speech_speak_vox("Hello.",6)==-23&&!allocs);modeError=0;
+ /* Stop before trailing TEXT was parsed: Clean must reset PHON directly. */
+ inputMode=modePhonemes;
+ commands=0;assert(speech_speak_text(input,1024)==0&&inputMode==modeText);
+ assert(speech_stop()==0&&!allocs);
  commands=0;assert(speech_speak_text(input,1024)==0);assert(speech_speak_text(NULL,0)==0&&!allocs);assert(speech_shutdown()==0&&!gChannel);
  return 0;
 }

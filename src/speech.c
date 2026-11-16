@@ -2,6 +2,7 @@
 #include "vox_parser.h"
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include <Gestalt.h>
 #include <Memory.h>
@@ -105,22 +106,13 @@ OSErr speech_shutdown(void)
     return gLastError = err;
 }
 
-static OSErr speech_submit(const void *text, long length, Boolean commands)
+static OSErr speech_prepare_channel(void)
 {
     OSErr err;
-    DelimiterInfo delimiters = {{0, 0}, {0, 0}};
-    if (commands)
-    {
-        delimiters.startDelimiter[0] = delimiters.startDelimiter[1] = '[';
-        delimiters.endDelimiter[0] = delimiters.endDelimiter[1] = ']';
-    }
-    if (length < 0 || (length > 0 && !text))
-        return gLastError = paramErr;
-    if (!gSpeechPresent)
-        return gLastError = unimpErr;
+    OSType mode = modeText;
+    if (!gSpeechPresent) return gLastError = unimpErr;
     err = speech_stop();
-    if (err != noErr || length == 0)
-        return err;
+    if (err != noErr) return err;
     if (!gChannel)
     {
         err = NewSpeechChannel(NULL, &gChannel);
@@ -145,6 +137,28 @@ static OSErr speech_submit(const void *text, long length, Boolean commands)
             return gLastError = err;
         }
     }
+    /* A cancelled phoneme utterance may never reach its trailing TEXT command.
+       Set the mode directly before every new conversion/utterance (corpus 23628). */
+    err = SetSpeechInfo(gChannel, soInputMode, &mode);
+    return gLastError = err;
+}
+
+static OSErr speech_submit(const void *text, long length, Boolean commands)
+{
+    OSErr err;
+    DelimiterInfo delimiters = {{0, 0}, {0, 0}};
+    if (commands)
+    {
+        delimiters.startDelimiter[0] = delimiters.startDelimiter[1] = '[';
+        delimiters.endDelimiter[0] = delimiters.endDelimiter[1] = ']';
+    }
+    if (length < 0 || (length > 0 && !text))
+        return gLastError = paramErr;
+    if (!gSpeechPresent)
+        return gLastError = unimpErr;
+    if (length == 0) return speech_stop();
+    err = speech_prepare_channel();
+    if (err != noErr) return err;
     /* Only generated HL VOX output enables embedded commands. Clean is literal.
        Zero delimiters disable command processing (corpus 23640).
        Retry configuration even if a previous disposal attempt failed. */
@@ -176,6 +190,37 @@ OSErr speech_speak_text(const void *text, long length)
     return speech_submit(text, length, false);
 }
 
+/* TextToPhonemes runs with command delimiters disabled, using this channel's
+   voice and current settings. Return malloc ownership to the renderer. */
+static char *speech_convert_beat(const char *beat, void *context)
+{
+    OSErr *error = (OSErr *)context;
+    Handle phonemes = NewHandle(16384);
+    char *copy = NULL;
+    long count = 0;
+    if (!phonemes) { *error = memFullErr; return NULL; }
+    *error = TextToPhonemes(gChannel, beat, (long)strlen(beat), phonemes, &count);
+    if (*error == noErr) {
+        if (count <= 0 || count > 16384 || count > GetHandleSize(phonemes))
+            *error = paramErr;
+        else {
+            copy = (char *)malloc((size_t)count + 1);
+            if (!copy) *error = memFullErr;
+            else {
+                HLock(phonemes);
+                BlockMoveData(*phonemes, copy, count);
+                HUnlock(phonemes);
+                copy[count] = 0;
+                if (memchr(copy, 0, (size_t)count)) {
+                    free(copy); copy = NULL; *error = paramErr;
+                }
+            }
+        }
+    }
+    DisposeHandle(phonemes);
+    return copy;
+}
+
 OSErr speech_speak_vox(const void *text, long length)
 {
     Ptr input;
@@ -199,8 +244,23 @@ OSErr speech_speak_vox(const void *text, long length)
     if (!input) return gLastError = memFullErr;
     BlockMoveData(text, input, length);
     input[length] = 0;
-    formatted = vox_format_text(input, true);
+    err = speech_prepare_channel();
+    if (err == noErr) {
+        SpeechVersionInfo version = {0};
+        /* Only the measured MacInTalk 3 provider uses this native alphabet.
+           Other synthesizers retain the existing text adapter. */
+        if (GetSpeechInfo(gChannel, soSynthType, &version) == noErr &&
+            version.synthManufacturer == 'mtk3') {
+            DelimiterInfo disabled = {{0, 0}, {0, 0}};
+            err = SetSpeechInfo(gChannel, soCommandDelimiter, &disabled);
+            formatted = err == noErr ? vox_format_native_text(input, speech_convert_beat, &err) : NULL;
+        } else formatted = vox_format_text(input, true);
+    } else formatted = NULL;
     DisposePtr(input);
+    if (err != noErr) {
+        if (formatted) DisposeHandle(formatted);
+        return gLastError = err;
+    }
     if (!formatted) return gLastError = memFullErr;
     HLock(formatted);
     err = speech_submit(*formatted, (long)strlen(*formatted), true);

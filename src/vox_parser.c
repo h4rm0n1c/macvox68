@@ -1264,3 +1264,107 @@ Handle vox_format_text(const char *text, Boolean wrap_with_version)
     return h;
 }
 
+
+/* Keep the reference encoder separate from its synthesizer adapter. MacInTalk 3
+   text periods over-pause, while spaces discard the independent VOX phrasing.
+   Native pronunciation per beat preserves articulation without a text parser
+   inventing additional sentence timing. Corpus 23624, 23674. */
+static Boolean emit_native_beat(StringBuilder *out, StringBuilder *beat,
+                               long pause, VoxPhonemeConverter convert, void *context)
+{
+    char *phonemes;
+    size_t i;
+    Boolean ok;
+    char command[40];
+    while (beat->len && isspace((unsigned char)beat->data[beat->len - 1]))
+        beat->data[--beat->len] = 0;
+    if (!beat->len) return true;
+    if (!strcmp(beat->data, "Ay:")) {
+        strcpy(beat->data, "ay"); beat->len = 2;
+    } else if (!strcmp(beat->data, "P:")) {
+        strcpy(beat->data, "pee"); beat->len = 3;
+    } else if (!strcmp(beat->data, "M:")) {
+        strcpy(beat->data, "em"); beat->len = 2;
+    }
+    if (!strchr(".!?", beat->data[beat->len - 1]) && !sb_append_char(beat, '.'))
+        return false;
+    phonemes = convert(beat->data, context);
+    if (!phonemes) return false;
+    /* Never allow callback output to inject commands; phonemes are ASCII.
+       Bound aggregate expansion independently of the 32767-byte editor limit. */
+    for (i = 0; phonemes[i]; ++i) {
+        unsigned char c = (unsigned char)phonemes[i];
+        if (i >= 16384 || c < 32 || c > 126 || c == '[' || c == ']') {
+            free(phonemes);
+            return false;
+        }
+    }
+    if (!i || out->len + i + 80 > 262144) { free(phonemes); return false; }
+    snprintf(command, sizeof(command), " [[inpt TEXT]] [[slnc %ld]] ", pause);
+    ok = sb_append_str(out, "[[inpt PHON]] ") && sb_append_str(out, phonemes) &&
+         sb_append_str(out, command);
+    free(phonemes);
+    beat->len = 0;
+    beat->data[0] = 0;
+    return ok;
+}
+
+Handle vox_format_native_text(const char *text, VoxPhonemeConverter convert, void *context)
+{
+    char *vox;
+    const char *p;
+    StringBuilder out, beat;
+    Handle h = NULL;
+    if (!text || !convert) return NULL;
+    vox = vox_process_buffer(text, true);
+    if (!vox) return NULL;
+    sb_init(&out); sb_init(&beat);
+    if (!emit_version_prefix(&out)) goto done;
+    p = vox;
+    while (*p) {
+        const char *spoken = NULL, *end = NULL;
+        if (p == vox || isspace((unsigned char)p[-1]))
+            end = meridiem_pair_end(p, &spoken);
+        if (end) {
+            if (!sb_append_str(&beat, spoken)) goto done;
+            p = end;
+        } else if (p[0] == '\\' && p[1] == '!') {
+            const char *token = p;
+            size_t n;
+            p += 2;
+            while (*p && !isspace((unsigned char)*p)) ++p;
+            n = (size_t)(p - token);
+            if ((n == 4 && !strncmp(token, "\\!br", 4)) ||
+                (n >= 4 && !strncmp(token, "\\!sf", 4))) {
+                long pause = 100; /* Measured native/reference internal gap difference. */
+                if (token[2] == 'b') {
+                    const char *next = p;
+                    while (isspace((unsigned char)*next)) ++next;
+                    /* The reference can emit br immediately before sf. That is
+                       one boundary, whose explicit silence replaces the join. */
+                    if (!strncmp(next, "\\!sf", 4)) continue;
+                }
+                if (token[2] == 's') {
+                    const char *digit = token + 4;
+                    pause = 0;
+                    while (digit < p && isdigit((unsigned char)*digit)) {
+                        if (pause < 1000) pause = pause * 10 + (*digit - '0');
+                        if (pause > 1000) pause = 1000;
+                        ++digit;
+                    }
+                }
+                if (!emit_native_beat(&out, &beat, pause, convert, context)) goto done;
+            }
+        } else {
+            /* Collapse leading whitespace, retaining ordinary punctuation. */
+            if ((beat.len || !isspace((unsigned char)*p)) && !sb_append_char(&beat, *p)) goto done;
+            ++p;
+        }
+    }
+    if (!emit_native_beat(&out, &beat, 0, convert, context)) goto done;
+    h = NewHandle(out.len + 1);
+    if (h && *h) BlockMoveData(out.data ? out.data : "", *h, out.len + 1);
+done:
+    free(vox); free(out.data); free(beat.data);
+    return h;
+}
