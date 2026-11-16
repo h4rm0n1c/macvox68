@@ -98,3 +98,10 @@ not perceptual quality. The full announcement was then played without Stop.
 preprocessing matrix to 68/68 exact matches. The earlier 68-difference result is
 historical. Editor sliders are also now connected; see the slider implementation
 note. Listening and synthesizer-specific cadence mapping remain open.
+
+## November 17 listening correction
+
+The listener rejected the full-sentence mapping above. Internal br now maps to
+a word boundary with no added punctuation or silence; real sentence endings
+and sf remain. Commas and short explicit silences both made this guest voice
+slower. See [the measurements and limitations](cadence_2026-11-17.md).

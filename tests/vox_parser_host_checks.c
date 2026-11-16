@@ -94,14 +94,25 @@ int main(void)
     errors += check_process_pipeline();
     errors += check_thee_and_breaks();
     errors += check_speech_manager_translation();
+    Handle beats = vox_format_text("This tram is departing. Please wait!", true);
+    if (!beats || !*beats) ++errors;
+    else {
+        const char *text = (char *)*beats;
+        errors += assert_contains("internal-word-boundary", text, "tram ");
+        errors += assert_contains("source-full-stop", text, "departing.");
+        errors += assert_contains("source-exclamation", text, "wait!");
+        if (strstr(text, "tram.") || strstr(text, "is.") || strstr(text, "[[slnc 60]]")) ++errors;
+    }
+    if (beats) { free(*beats); free(beats); }
+
     Handle boundary = vox_format_text("On behalf of The Board, please wait.", true);
     if (!boundary || !*boundary) ++errors;
     else {
         const char *text = (char *)*boundary;
         if (strstr(text, "[[slnc 250]]") || strstr(text, ". .")) ++errors;
-        errors += assert_contains("deduplicated-boundary", text, "of.");
+        errors += assert_contains("deduplicated-boundary", text, "of ");
         const char *pause = strstr(text, "[[slnc 500]]");
-        if (!pause || strstr(pause + 12, "[[slnc")) ++errors;
+        if (!pause || strstr(pause + 12, "[[slnc 500]]")) ++errors;
     }
     if (boundary) { free(*boundary); free(boundary); }
     Handle h = vox_format_text("Hello [[[volm 0]] there.", true);

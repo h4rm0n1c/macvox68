@@ -1109,17 +1109,21 @@ char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
     return result;
 }
 
-static Boolean emit_break(StringBuilder *sb)
+static Boolean emit_break(StringBuilder *sb, Boolean sentence_end)
 {
-    /* FlexTalk br forces sentence termination, not a timed silence.
-       Let the Mac voice supply phrase-final lengthening and intonation. */
+    /* Internal VOX beats need lighter Mac phrasing than sentence ends.
+       Keep internal beats as word boundaries: this voice adds substantial
+       pauses even for short slnc commands. Preserve real sentence endings. */
     while (sb->len && isspace((unsigned char)sb->data[sb->len - 1]))
         sb->data[--sb->len] = '\0';
     if (!sb->len) return true;
     char last = sb->data[sb->len - 1];
-    if (last == ',' || last == ';' || last == ':') {
+    if (!sentence_end && last != '.' && last != '!' && last != '?')
+        return sb_append_char(sb, ' ');
+    if (sentence_end && (last == ',' || last == ';' || last == ':')) {
         sb->data[sb->len - 1] = '.';
-    } else if (last != '.' && last != '!' && last != '?') {
+    } else if (last != '.' && last != '!' && last != '?' &&
+               last != ',' && last != ';' && last != ':') {
         if (!sb_append_char(sb, '.')) return false;
     }
     return sb_append_char(sb, ' ');
@@ -1143,7 +1147,7 @@ static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *s
         return true;
 
     if (tok_len == 4 && strncmp(tok, "\\!br", 4) == 0) {
-        Boolean ok = !*phrase_has_text || emit_break(sb);
+        Boolean ok = !*phrase_has_text || emit_break(sb, false);
         *phrase_has_text = false;
         return ok;
     }
@@ -1151,7 +1155,7 @@ static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *s
     if (tok_len >= 4 && strncmp(tok, "\\!sf", 4) == 0) {
         /* End the spoken phrase before applying its explicit final silence.
            A following br must not create a second boundary or extra pause. */
-        if (*phrase_has_text && !emit_break(sb)) return false;
+        if (*phrase_has_text && !emit_break(sb, true)) return false;
         *phrase_has_text = false;
         long millis = 0;
         const char *p = tok + 4;
