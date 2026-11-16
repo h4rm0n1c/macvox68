@@ -492,7 +492,7 @@ static char *apply_time_numbers_degrees(char *s)
                 if (meridiem_token(after, &mdig, &is_pm)) {
                     const char *ap1 = is_pm ? "P:" : "Ay:";
                     char tmp[64];
-                    snprintf(tmp, sizeof(tmp), "%d \\!br %d \\!br %s \\!br M:", hh, mm, ap1);
+                    snprintf(tmp, sizeof(tmp), "%d \\!br %02d \\!br %s \\!br M:", hh, mm, ap1);
                     sb_append_str(&sb, tmp);
                     p = after + mdig;
                     while (*p == '.')
@@ -511,12 +511,12 @@ static char *apply_time_numbers_degrees(char *s)
         }
 
         if (isdigit((unsigned char)p[0]) && isdigit((unsigned char)p[1]) &&
-            isdigit((unsigned char)p[2]) && p[3] == '0' && p[4] == '0' &&
-            strncasecmp(p + 5, " hours", 6) == 0) {
+            p[2] == '0' && p[3] == '0' &&
+            strncasecmp(p + 4, " hours", 6) == 0) {
             char tmp[64];
             snprintf(tmp, sizeof(tmp), "%c%c \\!br hundred \\!br hours", p[0], p[1]);
             sb_append_str(&sb, tmp);
-            p += 11; /* 5 digits + space + hours */
+            p += 10; /* 4 digits + space + hours */
             continue;
         }
 
@@ -848,24 +848,6 @@ static char *build_beats(const char *sentence)
             free(lower);
         }
 
-        /* append token */
-        if (out.len > 0 && !starts_with_punct(v.items[i]) && !is_open_punct(v.items[i]))
-            sb_append_char(&out, ' ');
-        sb_append_str(&out, v.items[i]);
-
-        /* punctuation boundary */
-        size_t len_tok = strlen(v.items[i]);
-        if (len_tok > 0) {
-            char last = v.items[i][len_tok - 1];
-            if ((last == ',' || last == ';') && !ends_with_br(out.data)) {
-                sb_append_str(&out, " \\!br");
-                RESET_AFTER_BREAK();
-                ++i;
-                free(bare);
-                continue;
-            }
-        }
-
         Weight w_eff = weight_token(v.items[i]);
         Boolean in_head = (i < 2);
         if (i == 0 && is_titlecase_word(v.items[i])) {
@@ -905,6 +887,24 @@ static char *build_beats(const char *sentence)
             if (!ends_with_br(out.data))
                 sb_append_str(&out, " \\!br");
             RESET_AFTER_BREAK();
+        }
+
+        /* append token */
+        if (out.len > 0 && !starts_with_punct(v.items[i]) && !is_open_punct(v.items[i]))
+            sb_append_char(&out, ' ');
+        sb_append_str(&out, v.items[i]);
+
+        /* punctuation boundary */
+        size_t len_tok = strlen(v.items[i]);
+        if (len_tok > 0) {
+            char last = v.items[i][len_tok - 1];
+            if ((last == ',' || last == ';') && !ends_with_br(out.data)) {
+                sb_append_str(&out, " \\!br");
+                RESET_AFTER_BREAK();
+                ++i;
+                free(bare);
+                continue;
+            }
         }
 
         if (w_eff == WT_LIGHT) {
@@ -948,13 +948,17 @@ static char *tidy(char *s)
     char *mid = sb_steal(&sb);
     free(s);
 
-    /* normalize tag spacing */
+    /* Reference tidy collapses repeated boundaries and punctuation spacing. */
     StringVec tok = tokenize_ws(mid);
     sb_init(&sb);
+    Boolean previous_break = false;
     for (size_t i = 0; i < tok.count; ++i) {
-        if (i > 0)
+        Boolean boundary = strcmp(tok.items[i], "\\!br") == 0;
+        if (boundary && previous_break) continue;
+        if (sb.len && !strchr(".,!?;:", tok.items[i][0]))
             sb_append_char(&sb, ' ');
         sb_append_str(&sb, tok.items[i]);
+        previous_break = boundary;
     }
     vec_free(&tok);
     free(mid);
@@ -1055,6 +1059,10 @@ static char *apply_leadin_and_thee_and_numbers(char *sent)
 
 char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
 {
+    if (!text) return NULL;
+    const char *nonblank = text;
+    while (isspace((unsigned char)*nonblank)) ++nonblank;
+    if (!*nonblank) return strdup("");
     StringVec sents = split_sentences(text);
     StringBuilder out;
     sb_init(&out);
@@ -1069,11 +1077,8 @@ char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
         free(sent);
         beats = normalize_letter_tokens(beats);
         beats = tidy(beats);
-        size_t len = strlen(beats);
-        if (len > 0 && beats[len - 1] != ' ')
-            sb_append_char(&out, ' ');
         sb_append_str(&out, beats);
-        sb_append_str(&out, "\\!sf500 \\!br");
+        sb_append_str(&out, " \\!sf500 \\!br");
         free(beats);
         if (i + 1 < sents.count)
             sb_append_char(&out, ' ');
@@ -1206,7 +1211,7 @@ static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_versi
     }
     h = NewHandle(sb.len + 1);
     if (h && *h)
-        BlockMoveData(sb.data, *h, sb.len + 1);
+        BlockMoveData(sb.data ? sb.data : "", *h, sb.len + 1);
 
 done:
     free(sb.data);

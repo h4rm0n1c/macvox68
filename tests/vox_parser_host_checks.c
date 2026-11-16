@@ -33,7 +33,7 @@ static int check_thee_and_breaks(void)
     if (!out)
         return 1;
     errors += assert_contains("thee", out, "thee Board");
-    errors += assert_contains("breaks", out, "\\!br of \\!br \\!br");
+    errors += assert_contains("breaks", out, "\\!br of \\!br thee Board");
     free(out);
     return errors;
 }
@@ -60,9 +60,37 @@ static int check_speech_manager_translation(void)
     return errors;
 }
 
+static int check_reference_cadence(void)
+{
+    static const struct { const char *input, *expected; } cases[] = {
+        {"A reminder to all personnel.", "Ay: reminder \\!br to \\!br all \\!br personnel. \\!sf500 \\!br "},
+        {"This tram is departing.", "This tram \\!br is \\!br departing. \\!sf500 \\!br "},
+        {"The time is 12:05 PM.", "The time \\!br is \\!br 12 \\!br 05 \\!br P: \\!br M: \\!sf500 \\!br "},
+        {"It is 1300 hours.", "It is \\!br 13 \\!br hundred \\!br hours. \\!sf500 \\!br "},
+        {"", ""}, {" ", ""}
+    };
+    int errors = 0;
+    size_t i;
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        char *out = vox_process_buffer(cases[i].input, false);
+        if (!out || strcmp(out, cases[i].expected)) {
+            fprintf(stderr, "cadence '%s': got '%s'\n", cases[i].input, out ? out : "(null)");
+            ++errors;
+        }
+        free(out);
+    }
+    for (i = 0; i < 2; ++i) {
+        Handle blank = vox_format_text(" ", (Boolean)i);
+        if (!blank || !*blank || (!i && **blank)) ++errors;
+        if (blank) { free(*blank); free(blank); }
+    }
+    return errors;
+}
+
 int main(void)
 {
     int errors = 0;
+    errors += check_reference_cadence();
     errors += check_process_pipeline();
     errors += check_thee_and_breaks();
     errors += check_speech_manager_translation();

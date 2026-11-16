@@ -91,3 +91,10 @@ errors. The same Hello. Hello. sample took 2.96, 4.15, 2.71 seconds.
 Earlier audio/evidence is retained in .mac-lab/cadence-before; current evidence
 is .mac-lab/macvox-audio-modes-proof.json. These measurements establish playback,
 not perceptual quality. The full announcement was then played without Stop.
+
+## November 16 follow-up
+
+[Reference boundary corrections](cadence_2026-11-16.md) bring the existing
+preprocessing matrix to 68/68 exact matches. The earlier 68-difference result is
+historical. Editor sliders are also now connected; see the slider implementation
+note. Listening and synthesizer-specific cadence mapping remain open.
