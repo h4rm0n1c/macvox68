@@ -45,7 +45,14 @@ runtime. The older assessment lists the substantial UI/resource work to preserve
 
 Next functional work: reconcile preprocessing and cadence against the two
 Windows references, validate in the guest when audio hardware is available,
-connect sliders to speech settings, define the network framing/queue/stop
+define the network framing/queue/stop
 contract and exercise real Open Transport lifecycle behavior. Audit Appearance
 availability and UI focus/activation before claiming broad System 7 compatibility.
 No claim is made that all historical code has now been exhaustively audited.
+
+## Follow-up: November 16
+
+[Slider repairs and speech settings](sliders_2026-11-16.md) now have guest
+verification on the integrated layout, using virtual audio only. The earlier
+no-guest-test statement records the November 15 integration checkpoint.
+Listening and the broader compatibility audit remain outstanding.

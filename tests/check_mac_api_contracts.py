@@ -107,11 +107,17 @@ void HUnlock(Handle);
 #define BlockMoveData(s,d,n) memcpy(d,s,n)
 """)
  (p/'Speech.h').write_text("""#include <Types.h>
+typedef int32_t Fixed;
 typedef void *SpeechChannel;
 typedef struct {char startDelimiter[2],endDelimiter[2];} DelimiterInfo;
 typedef struct {Boolean outputBusy,outputPaused;long inputBytesLeft;short phonemeCode;} SpeechStatusInfo;
 #define soStatus 1
 #define soCommandDelimiter 2
+#define soVolume 3
+OSErr GetSpeechRate(SpeechChannel,Fixed *);
+OSErr GetSpeechPitch(SpeechChannel,Fixed *);
+OSErr SetSpeechRate(SpeechChannel,Fixed);
+OSErr SetSpeechPitch(SpeechChannel,Fixed);
 OSErr NewSpeechChannel(void *,SpeechChannel *);
 OSErr SetSpeechInfo(SpeechChannel,long,const void *);
 OSErr GetSpeechInfo(SpeechChannel,long,void *);
@@ -126,6 +132,12 @@ static int present=1,allocs,busy,allocationFail;
 static OSErr statusError,stopError,speakError,newError,setError,disposeError;
 static const void *borrowed;
 static int commands;
+static Fixed volumeValue, rateValue, pitchValue;
+static OSErr rateError, pitchError, defaultError;
+OSErr GetSpeechRate(SpeechChannel c,Fixed *v) {*v=180*65536;return defaultError;}
+OSErr GetSpeechPitch(SpeechChannel c,Fixed *v) {*v=45*65536;return defaultError;}
+OSErr SetSpeechRate(SpeechChannel c,Fixed v) {rateValue=v;return rateError;}
+OSErr SetSpeechPitch(SpeechChannel c,Fixed v) {pitchValue=v;return pitchError;}
 static char observed[4096];
 OSErr Gestalt(long s,long *r) {*r=present;return noErr;}
 Ptr NewPtr(long n) {if(allocationFail)return NULL;++allocs;return malloc(n);}
@@ -136,6 +148,7 @@ void HLock(Handle h) {}
 void HUnlock(Handle h) {}
 OSErr NewSpeechChannel(void *v,SpeechChannel *c) {if(newError)return newError;*c=(void *)1;return 0;}
 OSErr SetSpeechInfo(SpeechChannel c,long selector,const void *v) {
+ if(selector==soVolume){volumeValue=*(const Fixed*)v;return setError;}
  const DelimiterInfo *d=v;assert(selector==soCommandDelimiter);assert(d->startDelimiter[0]==(commands?'[':0)&&d->startDelimiter[1]==(commands?'[':0)&&d->endDelimiter[0]==(commands?']':0)&&d->endDelimiter[1]==(commands?']':0));return setError;
 }
 OSErr GetSpeechInfo(SpeechChannel c,long selector,void *v) {assert(c&&selector==soStatus);((SpeechStatusInfo *)v)->outputBusy=busy;return statusError;}
@@ -156,6 +169,21 @@ int main(void) {
  assert(speech_speak_text(input,1024)==0);disposeError=-4;assert(speech_shutdown()==-4&&allocs==1);disposeError=0;assert(speech_shutdown()==0&&!allocs&&!gChannel);
  newError=-5;assert(speech_speak_text(input,1)==-5&&!gChannel&&!allocs);newError=0;
  setError=-6;assert(speech_speak_text(input,1)==-6&&!gChannel&&!allocs);setError=0;
+ assert(speech_set_settings(-1,100,0)==paramErr);
+ assert(speech_set_settings(100,0,0)==paramErr);
+ assert(speech_set_settings(100,100,13)==paramErr);
+ assert(speech_set_settings(25,150,7)==0);
+ assert(speech_speak_text(input,1)==0);
+ assert(volumeValue==16384&&rateValue==270*65536&&pitchValue==52*65536);
+ assert(speech_stop()==0);
+ /* Percentages always use original voice defaults, never compound. */
+ assert(speech_speak_text(input,1)==0&&rateValue==270*65536&&pitchValue==52*65536);
+ assert(speech_stop()==0);
+ rateError=-7;assert(speech_speak_text(input,1)==-7&&!allocs);rateError=0;
+ pitchError=-8;assert(speech_speak_text(input,1)==-8&&!allocs);pitchError=0;
+ assert(speech_shutdown()==0);
+ defaultError=-9;assert(speech_speak_text(input,1)==-9&&!gChannel&&!allocs);defaultError=0;
+ assert(speech_set_settings(100,100,0)==0);
  commands=1;assert(speech_speak_vox("Hello there.",12)==0);
  assert(strstr(observed,"[[vers 1]]")&&strstr(observed,"[[slnc 500]]")&&!strstr(observed,"[[slnc 5000]]"));
  assert(allocs==1);assert(speech_stop()==0&&!allocs);

@@ -2,6 +2,8 @@
 #define SPEECH_H
 #include <Types.h>
 void speech_init(void);
+/* Applied at next utterance: amplitude 0..100%, rate 50..200% of voice default, pitch -12..12 semitones. */
+OSErr speech_set_settings(short volume, short rate, short pitch);
 Boolean speech_available(void);
 /* Polls only our channel; reclaims completed input on the application thread. */
 Boolean speech_is_busy(void);

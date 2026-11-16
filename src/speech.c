@@ -18,6 +18,23 @@ static Boolean gSpeechPresent = false;
 static SpeechChannel gChannel = NULL;
 static Ptr gText = NULL;
 static OSErr gLastError = noErr;
+static short gVolume = 100, gRate = 100, gPitch = 0;
+static Fixed gDefaultRate, gDefaultPitch;
+
+OSErr speech_set_settings(short volume, short rate, short pitch)
+{
+    if (volume < 0 || volume > 100 || rate < 50 || rate > 200 || pitch < -12 || pitch > 12)
+        return gLastError = paramErr;
+    gVolume = volume; gRate = rate; gPitch = pitch;
+    return noErr;
+}
+
+static Fixed speech_scale(Fixed value, short percent)
+{
+    /* Avoid overflowing 32-bit Fixed when multiplying a normal WPM value. */
+    return (value / 100) * percent + ((value % 100) * percent) / 100;
+}
+
 
 static void speech_release_text(void)
 {
@@ -109,6 +126,24 @@ static OSErr speech_submit(const void *text, long length, Boolean commands)
         err = NewSpeechChannel(NULL, &gChannel);
         if (err != noErr)
             return gLastError = err;
+        err = GetSpeechRate(gChannel, &gDefaultRate);
+        if (err == noErr) err = GetSpeechPitch(gChannel, &gDefaultPitch);
+        if (err != noErr)
+        {
+            (void)speech_shutdown();
+            return gLastError = err;
+        }
+    }
+    {
+        Fixed volume = speech_scale(0x10000L, gVolume);
+        err = SetSpeechInfo(gChannel, soVolume, &volume);
+        if (err == noErr) err = SetSpeechRate(gChannel, speech_scale(gDefaultRate, gRate));
+        if (err == noErr) err = SetSpeechPitch(gChannel, gDefaultPitch + (long)gPitch * 65536L);
+        if (err != noErr)
+        {
+            (void)speech_shutdown();
+            return gLastError = err;
+        }
     }
     /* Only generated HL VOX output enables embedded commands. Clean is literal.
        Zero delimiters disable command processing (corpus 23640).

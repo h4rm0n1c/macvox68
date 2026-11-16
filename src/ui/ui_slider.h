@@ -14,14 +14,17 @@ typedef enum UISliderValueFormat
 {
     kUISliderValueNone = 0,
     kUISliderValuePercent,
-    kUISliderValueFixed2
+    kUISliderValueFixed2,
+    kUISliderValueSemitones
 } UISliderValueFormat;
 
 typedef struct UISlider
 {
     ControlHandle       control;
+    ControlActionUPP    action;
     Rect                frame;
     Rect                valueRect;
+    short               minCenter, maxCenter;
     Str255              label;
     UISliderValueFormat valueFormat;
     short               fixedScale;
@@ -33,6 +36,9 @@ void ui_slider_init(UISlider *slider, WindowPtr window, const Rect *frame,
 
 void ui_slider_draw(const UISlider *slider, const UITheme *theme);
 
+/* Shared native tracking callback; label is redrawn while TrackControl runs. */
+Boolean ui_slider_track(UISlider *slider, Point local);
+ControlActionUPP ui_slider_get_action(const UISlider *slider);
 ControlHandle ui_slider_get_handle(const UISlider *slider);
 
 short ui_slider_get_value(const UISlider *slider);
