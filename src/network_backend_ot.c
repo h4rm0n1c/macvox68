@@ -271,13 +271,14 @@ static void network_accept_pending(void)
 static void network_poll_client(NetworkClient *client)
 {
     char buffer[NETWORK_READ_BUFFER];
-    OSStatus err = kOTNoError;
-    long readCount;
+    OTFlags flags = 0;
+    OTResult readCount;
 
     if (!client || !client->active || !client->endpoint)
         return;
 
-    readCount = OTRcv(client->endpoint, buffer, (long)(NETWORK_READ_BUFFER - 1), &err);
+    /* OTRcv returns a byte count or a negative error; flags are not status. */
+    readCount = OTRcv(client->endpoint, buffer, (long)(NETWORK_READ_BUFFER - 1), &flags);
     if (readCount > 0)
     {
         buffer[readCount] = '\0';
@@ -285,13 +286,13 @@ static void network_poll_client(NetworkClient *client)
             gCallbacks->onData(buffer, readCount);
     }
 
-    if (err == kOTLookErr)
+    if (readCount == kOTLookErr)
     {
         OTResult look = OTLook(client->endpoint);
         if (look == T_DISCONNECT)
             (void)network_handle_disconnect(client);
     }
-    else if (err != kOTNoError && err != kOTNoDataErr)
+    else if (readCount < 0 && readCount != kOTNoDataErr)
     {
         network_clear_client(client);
     }

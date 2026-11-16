@@ -24,6 +24,16 @@
 cmake_minimum_required(VERSION 3.16)
 project(MacVox68 C)
 
+# Host checks need no Retro68 tools or classic Mac headers.
+if(NOT CMAKE_SYSTEM_NAME MATCHES Retro68)
+    enable_testing()
+    add_executable(vox_parser_host_checks tests/vox_parser_host_checks.c src/vox_parser.c)
+    target_compile_definitions(vox_parser_host_checks PRIVATE VOX_PARSER_STANDALONE)
+    target_include_directories(vox_parser_host_checks PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME vox_parser_host_checks COMMAND vox_parser_host_checks)
+    return()
+endif()
+
 set(APPEARANCE_SDK_ROOT "" CACHE PATH "Path to Appearance SDK headers root (contains CIncludes and RIncludes)")
 
 add_application(MacVox68
@@ -48,13 +58,6 @@ add_application(MacVox68
     CREATOR MV68
     )
 
-if(NOT CMAKE_SYSTEM_NAME MATCHES Retro68)
-    add_executable(vox_parser_host_checks
-        tests/vox_parser_host_checks.c
-        src/vox_parser.c)
-    target_compile_definitions(vox_parser_host_checks PRIVATE VOX_PARSER_STANDALONE)
-endif()
-
 if(CMAKE_SYSTEM_NAME MATCHES Retro68)
     target_link_libraries(MacVox68 -lOpenTransport -lOpenTransportApp -lOpenTptInet)
 endif()
@@ -67,12 +70,6 @@ if(APPEARANCE_SDK_ROOT)
     )
 else()
     target_include_directories(MacVox68 PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/src"
-    )
-endif()
-
-if(NOT CMAKE_SYSTEM_NAME MATCHES Retro68)
-    target_include_directories(vox_parser_host_checks PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
     )
 endif()

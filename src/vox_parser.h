@@ -18,7 +18,7 @@ extern "C" {
 #endif
 
 /*
- * Format a UTF-8/ASCII text buffer into a Speech Manager-ready Handle.
+ * Format a NUL-terminated MacRoman/ASCII text buffer into a Speech Manager-ready Handle.
  * The VOX prosody pipeline (sentence split, “thee” heuristic, lead-in
  * breaks, time/number expansion, beat construction, letter normalization,
  * tidy/wrap) runs first, then FlexTalk markers are translated into
@@ -26,6 +26,12 @@ extern "C" {
  * exposed; only Speech Manager metadata is returned.
  */
 Handle vox_format_text(const char *text, Boolean wrap_with_version);
+
+/* Convert one independently phrased beat. The callback returns a malloc-owned,
+ * NUL-terminated native phoneme string, or NULL on failure. No user text is
+ * submitted as embedded commands. The caller selects a compatible synthesizer. */
+typedef char *(*VoxPhonemeConverter)(const char *beat, void *context);
+Handle vox_format_native_text(const char *text, VoxPhonemeConverter convert, void *context);
 
 #ifdef VOX_PARSER_STANDALONE
 /* Convenience for host-side checks: returns a heap string that must be freed. */

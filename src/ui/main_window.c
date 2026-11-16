@@ -439,29 +439,46 @@ static void main_window_update_control_enabling(SpeechUIState state)
 
 static void main_window_handle_speak_toggle(void)
 {
+    OSErr err;
+    Handle text;
+    SignedByte state;
+    long length;
+    char message[80];
+
     if (!speech_available())
     {
         main_window_append_line("Speech Manager is unavailable.");
-        main_window_set_speech_state(kSpeechIdleState);
         return;
     }
-
     if (speech_is_busy())
     {
-        speech_stop();
-        main_window_set_speech_state(kSpeechIdleState);
-        return;
-    }
-
-    if (speech_speak_test_phrase())
-    {
-        main_window_set_speech_state(kSpeechSpeakingState);
+        err = speech_stop();
     }
     else
     {
-        main_window_append_line("SpeakString trap failed.");
-        main_window_set_speech_state(kSpeechIdleState);
+        if (!gTextArea.field.handle)
+            return;
+        length = (**gTextArea.field.handle).teLength;
+        text = TEGetText(gTextArea.field.handle);
+        if (!text)
+            return;
+        state = HGetState(text);
+        HLock(text);
+        err = speech_set_settings(ui_slider_get_handle(&gVolumeSlider) ? ui_slider_get_value(&gVolumeSlider) : 100,
+                                  ui_slider_get_handle(&gRateSlider) ? ui_slider_get_value(&gRateSlider) : 100,
+                                  ui_slider_get_value(&gPitchSlider));
+        if (err == noErr)
+            err = GetControlValue(gProsodyLQ)
+            ? speech_speak_vox(*text, length)
+            : speech_speak_text(*text, length);
+        HSetState(text, state);
     }
+    if (err != noErr)
+    {
+        sprintf(message, "Speech error: %d", (int)err);
+        main_window_append_line(message);
+    }
+    main_window_set_speech_state(speech_is_busy() ? kSpeechSpeakingState : kSpeechIdleState);
 }
 
 static void main_window_set_speech_state(SpeechUIState state)
@@ -504,10 +521,10 @@ static void main_window_create_controls(void)
 
     ui_slider_init(&gVolumeSlider, gMainWin, &gLayout.volumeSlider, "\pVolume", 100, 0, 100,
                    kUISliderValuePercent, 100);
-    ui_slider_init(&gRateSlider, gMainWin, &gLayout.rateSlider, "\pRate", 100, 0, 200,
+    ui_slider_init(&gRateSlider, gMainWin, &gLayout.rateSlider, "\pRate", 100, 50, 200,
                    kUISliderValueFixed2, 100);
-    ui_slider_init(&gPitchSlider, gMainWin, &gLayout.pitchSlider, "\pPitch", 100, 0, 200,
-                   kUISliderValueFixed2, 100);
+    ui_slider_init(&gPitchSlider, gMainWin, &gLayout.pitchSlider, "\pPitch", 0, -12, 12,
+                   kUISliderValueSemitones, 1);
 
     gStartBtn = ui_windows_new_button(gMainWin, &gLayout.startButton, "\pStart Server", true, 0);
 
@@ -767,15 +784,19 @@ Boolean main_window_handle_mouse_down(const InputEvent *ev, Boolean *outQuit)
             else
             {
                 SetPort(w);
+                if (ui_slider_track(&gVolumeSlider, local) ||
+                    ui_slider_track(&gRateSlider, local) ||
+                    ui_slider_track(&gPitchSlider, local))
+                    return true;
 
                 {
                     const RGBColor *sliderBg = sTheme ? &sTheme->colors.groupFill : &ui_theme_get()->colors.groupFill;
                     UIControlTrackingSpec specs[] = {
                         { gTextArea.scroll, (ControlActionUPP)ui_text_scrolling_track, NULL },
                         { gSpeakBtn, NULL, NULL },
-                        { ui_slider_get_handle(&gVolumeSlider), NULL, sliderBg },
-                        { ui_slider_get_handle(&gRateSlider), NULL, sliderBg },
-                        { ui_slider_get_handle(&gPitchSlider), NULL, sliderBg },
+                        { ui_slider_get_handle(&gVolumeSlider), ui_slider_get_action(&gVolumeSlider), sliderBg },
+                        { ui_slider_get_handle(&gRateSlider), ui_slider_get_action(&gRateSlider), sliderBg },
+                        { ui_slider_get_handle(&gPitchSlider), ui_slider_get_action(&gPitchSlider), sliderBg },
                         { gStartBtn, NULL, NULL },
                         { gQuitBtn, NULL, NULL },
                         { gProsodyClean, NULL, NULL },

@@ -1,0 +1,11 @@
+{
+  "scope": "ASCII preprocessing only, both wrapper settings",
+  "sha256": {
+    "macvox": "782f313ba05f5a16600a35f441829fba5c836565323e9c833d2477d071f174c0",
+    "nettts": "620ca06bab5bea153b9f27fb43893d15dd9bd8251ca6b20bb1c300fcd02d7d2b",
+    "voxtalk": "7d51b258a66d78a024b36ed93530e1d0e66efa2701edf9a67a4e9893ca93bf88"
+  },
+  "differences": [],
+  "comparisons": 68,
+  "matching": 68
+}

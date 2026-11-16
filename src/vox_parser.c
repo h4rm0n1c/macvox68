@@ -111,6 +111,14 @@ static char *str_trim(const char *s)
     return dup_slice(a, (size_t)(b - a));
 }
 
+/* Consume a heap buffer, including when allocating the trimmed copy fails. */
+static char *str_trim_owned(char *s)
+{
+    char *trimmed = str_trim(s);
+    free(s);
+    return trimmed;
+}
+
 static void str_to_lower(char *s)
 {
     if (!s)
@@ -484,7 +492,7 @@ static char *apply_time_numbers_degrees(char *s)
                 if (meridiem_token(after, &mdig, &is_pm)) {
                     const char *ap1 = is_pm ? "P:" : "Ay:";
                     char tmp[64];
-                    snprintf(tmp, sizeof(tmp), "%d \\!br %d \\!br %s \\!br M:", hh, mm, ap1);
+                    snprintf(tmp, sizeof(tmp), "%d \\!br %02d \\!br %s \\!br M:", hh, mm, ap1);
                     sb_append_str(&sb, tmp);
                     p = after + mdig;
                     while (*p == '.')
@@ -503,12 +511,12 @@ static char *apply_time_numbers_degrees(char *s)
         }
 
         if (isdigit((unsigned char)p[0]) && isdigit((unsigned char)p[1]) &&
-            isdigit((unsigned char)p[2]) && p[3] == '0' && p[4] == '0' &&
-            strncasecmp(p + 5, " hours", 6) == 0) {
+            p[2] == '0' && p[3] == '0' &&
+            strncasecmp(p + 4, " hours", 6) == 0) {
             char tmp[64];
             snprintf(tmp, sizeof(tmp), "%c%c \\!br hundred \\!br hours", p[0], p[1]);
             sb_append_str(&sb, tmp);
-            p += 11; /* 5 digits + space + hours */
+            p += 10; /* 4 digits + space + hours */
             continue;
         }
 
@@ -840,24 +848,6 @@ static char *build_beats(const char *sentence)
             free(lower);
         }
 
-        /* append token */
-        if (out.len > 0 && !starts_with_punct(v.items[i]) && !is_open_punct(v.items[i]))
-            sb_append_char(&out, ' ');
-        sb_append_str(&out, v.items[i]);
-
-        /* punctuation boundary */
-        size_t len_tok = strlen(v.items[i]);
-        if (len_tok > 0) {
-            char last = v.items[i][len_tok - 1];
-            if ((last == ',' || last == ';') && !ends_with_br(out.data)) {
-                sb_append_str(&out, " \\!br");
-                RESET_AFTER_BREAK();
-                ++i;
-                free(bare);
-                continue;
-            }
-        }
-
         Weight w_eff = weight_token(v.items[i]);
         Boolean in_head = (i < 2);
         if (i == 0 && is_titlecase_word(v.items[i])) {
@@ -899,6 +889,24 @@ static char *build_beats(const char *sentence)
             RESET_AFTER_BREAK();
         }
 
+        /* append token */
+        if (out.len > 0 && !starts_with_punct(v.items[i]) && !is_open_punct(v.items[i]))
+            sb_append_char(&out, ' ');
+        sb_append_str(&out, v.items[i]);
+
+        /* punctuation boundary */
+        size_t len_tok = strlen(v.items[i]);
+        if (len_tok > 0) {
+            char last = v.items[i][len_tok - 1];
+            if ((last == ',' || last == ';') && !ends_with_br(out.data)) {
+                sb_append_str(&out, " \\!br");
+                RESET_AFTER_BREAK();
+                ++i;
+                free(bare);
+                continue;
+            }
+        }
+
         if (w_eff == WT_LIGHT) {
             /* stay */
         } else {
@@ -913,7 +921,7 @@ static char *build_beats(const char *sentence)
 #undef RESET_AFTER_BREAK
 
     vec_free(&v);
-    return str_trim(sb_steal(&out));
+    return str_trim_owned(sb_steal(&out));
 }
 
 static char *tidy(char *s)
@@ -940,17 +948,21 @@ static char *tidy(char *s)
     char *mid = sb_steal(&sb);
     free(s);
 
-    /* normalize tag spacing */
+    /* Reference tidy collapses repeated boundaries and punctuation spacing. */
     StringVec tok = tokenize_ws(mid);
     sb_init(&sb);
+    Boolean previous_break = false;
     for (size_t i = 0; i < tok.count; ++i) {
-        if (i > 0)
+        Boolean boundary = strcmp(tok.items[i], "\\!br") == 0;
+        if (boundary && previous_break) continue;
+        if (sb.len && !strchr(".,!?;:", tok.items[i][0]))
             sb_append_char(&sb, ' ');
         sb_append_str(&sb, tok.items[i]);
+        previous_break = boundary;
     }
     vec_free(&tok);
     free(mid);
-    return str_trim(sb_steal(&sb));
+    return str_trim_owned(sb_steal(&sb));
 }
 
 static char *normalize_letter_tokens(char *s)
@@ -1047,6 +1059,10 @@ static char *apply_leadin_and_thee_and_numbers(char *sent)
 
 char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
 {
+    if (!text) return NULL;
+    const char *nonblank = text;
+    while (isspace((unsigned char)*nonblank)) ++nonblank;
+    if (!*nonblank) return strdup("");
     StringVec sents = split_sentences(text);
     StringBuilder out;
     sb_init(&out);
@@ -1061,11 +1077,8 @@ char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
         free(sent);
         beats = normalize_letter_tokens(beats);
         beats = tidy(beats);
-        size_t len = strlen(beats);
-        if (len > 0 && beats[len - 1] != ' ')
-            sb_append_char(&out, ' ');
         sb_append_str(&out, beats);
-        sb_append_str(&out, "\\!sf500 \\!br");
+        sb_append_str(&out, " \\!sf500 \\!br");
         free(beats);
         if (i + 1 < sents.count)
             sb_append_char(&out, ' ');
@@ -1073,7 +1086,7 @@ char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
 
     vec_free(&sents);
 
-    char *result = str_trim(sb_steal(&out));
+    char *result = str_trim_owned(sb_steal(&out));
     if (result && *result) {
         if (wrap_vox_tags) {
             StringBuilder wrapped;
@@ -1096,9 +1109,24 @@ char *vox_process_buffer(const char *text, Boolean wrap_vox_tags)
     return result;
 }
 
-static Boolean emit_break(StringBuilder *sb)
+static Boolean emit_break(StringBuilder *sb, Boolean sentence_end)
 {
-    return sb_append_str(sb, "[[slnc 250]] ");
+    /* Internal VOX beats need lighter Mac phrasing than sentence ends.
+       Keep internal beats as word boundaries: this voice adds substantial
+       pauses even for short slnc commands. Preserve real sentence endings. */
+    while (sb->len && isspace((unsigned char)sb->data[sb->len - 1]))
+        sb->data[--sb->len] = '\0';
+    if (!sb->len) return true;
+    char last = sb->data[sb->len - 1];
+    if (!sentence_end && last != '.' && last != '!' && last != '?')
+        return sb_append_char(sb, ' ');
+    if (sentence_end && (last == ',' || last == ';' || last == ':')) {
+        sb->data[sb->len - 1] = '.';
+    } else if (last != '.' && last != '!' && last != '?' &&
+               last != ',' && last != ';' && last != ':') {
+        if (!sb_append_char(sb, '.')) return false;
+    }
+    return sb_append_char(sb, ' ');
 }
 
 static Boolean emit_version_prefix(StringBuilder *sb)
@@ -1113,34 +1141,63 @@ static Boolean emit_comment(StringBuilder *sb, const char *tag)
     return sb_append_str(sb, "[[cmnt ") && sb_append_str(sb, tag) && sb_append_str(sb, "]] ");
 }
 
-static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *sb)
+static Boolean translate_token(const char *tok, size_t tok_len, StringBuilder *sb, Boolean *phrase_has_text)
 {
     if (tok_len == 0)
         return true;
 
-    if (tok_len == 4 && strncmp(tok, "\\!br", 4) == 0)
-        return emit_break(sb);
+    if (tok_len == 4 && strncmp(tok, "\\!br", 4) == 0) {
+        Boolean ok = !*phrase_has_text || emit_break(sb, false);
+        *phrase_has_text = false;
+        return ok;
+    }
 
     if (tok_len >= 4 && strncmp(tok, "\\!sf", 4) == 0) {
+        /* End the spoken phrase before applying its explicit final silence.
+           A following br must not create a second boundary or extra pause. */
+        if (*phrase_has_text && !emit_break(sb, true)) return false;
+        *phrase_has_text = false;
         long millis = 0;
         const char *p = tok + 4;
-        while (*p >= '0' && *p <= '9') {
-            millis = (millis * 10) + (*p - '0');
+        while (p < tok + tok_len && *p >= '0' && *p <= '9') {
+            /* Match the reference field's 1000 ms cap; avoid integer overflow. */
+            if (millis < 1000) millis = (millis * 10) + (*p - '0');
+            if (millis > 1000) millis = 1000;
             ++p;
         }
-        millis *= 10;
+        /* Reference engine uses plain milliseconds for the final-silence field. */
         char tmp[32];
         snprintf(tmp, sizeof(tmp), "[[slnc %ld]] ", millis);
         return sb_append_str(sb, tmp);
     }
 
-    if (tok_len == 4 && strncmp(tok, "\\!wH1", 4) == 0)
+    if (tok_len == 5 && strncmp(tok, "\\!wH1", 5) == 0)
         return emit_comment(sb, "vox-start");
-    if (tok_len == 4 && strncmp(tok, "\\!wH0", 4) == 0)
+    if (tok_len == 5 && strncmp(tok, "\\!wH0", 5) == 0)
         return emit_comment(sb, "vox-end");
 
     /* Unknown FlexTalk escape: drop it so only Speech Manager metadata remains. */
     return true;
+}
+
+/* FlexTalk letter colons are pronunciation metadata, not Mac punctuation.
+   Recognize only the meridiem pair; leave ordinary colons and other text alone. */
+static const char *meridiem_pair_end(const char *p, const char **spoken)
+{
+    size_t first;
+    if (strncmp(p, "Ay:", 3) == 0) { first = 3; *spoken = "ay em"; }
+    else if (strncmp(p, "P:", 2) == 0) { first = 2; *spoken = "pee em"; }
+    else return NULL;
+    p += first;
+    if (!isspace((unsigned char)*p)) return NULL;
+    while (isspace((unsigned char)*p)) ++p;
+    if (strncmp(p, "\\!br", 4) == 0 && isspace((unsigned char)p[4])) {
+        p += 4;
+        while (isspace((unsigned char)*p)) ++p;
+    }
+    if (strncmp(p, "M:", 2) != 0 ||
+        (p[2] && !isspace((unsigned char)p[2]))) return NULL;
+    return p + 2;
 }
 
 static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_version)
@@ -1154,25 +1211,41 @@ static Handle emit_speech_manager_text(const char *text, Boolean wrap_with_versi
             goto done;
     }
 
+    Boolean phrase_has_text = false;
     const char *p = text;
     while (*p) {
+        const char *spoken = NULL;
+        const char *pair_end = NULL;
+        if (p == text || isspace((unsigned char)p[-1]))
+            pair_end = meridiem_pair_end(p, &spoken);
+        if (pair_end) {
+            if (!sb_append_str(&sb, spoken)) goto done;
+            phrase_has_text = true;
+            p = pair_end;
+            continue;
+        }
         if (p[0] == '\\' && p[1] == '!') {
             const char *start = p;
             p += 2;
             while (*p && *p != ' ' && *p != '\t' && *p != '\n' && *p != '\r')
                 ++p;
-            if (!translate_token(start, (size_t)(p - start), &sb))
+            if (!translate_token(start, (size_t)(p - start), &sb, &phrase_has_text))
                 goto done;
             continue;
         }
-        sb_append_char(&sb, *p);
+        if (!isspace((unsigned char)*p)) phrase_has_text = true;
+        /* User text must not inject Speech Manager commands into generated markup. */
+        if (*p == '[') {
+            if (!sb_append_str(&sb, "[ ")) goto done;
+            ++p;
+            continue;
+        }
+        if (!sb_append_char(&sb, *p)) goto done;
         ++p;
     }
-    emit_break(&sb);
-
     h = NewHandle(sb.len + 1);
     if (h && *h)
-        BlockMoveData(sb.data, *h, sb.len + 1);
+        BlockMoveData(sb.data ? sb.data : "", *h, sb.len + 1);
 
 done:
     free(sb.data);
@@ -1191,3 +1264,107 @@ Handle vox_format_text(const char *text, Boolean wrap_with_version)
     return h;
 }
 
+
+/* Keep the reference encoder separate from its synthesizer adapter. MacInTalk 3
+   text periods over-pause, while spaces discard the independent VOX phrasing.
+   Native pronunciation per beat preserves articulation without a text parser
+   inventing additional sentence timing. Corpus 23624, 23674. */
+static Boolean emit_native_beat(StringBuilder *out, StringBuilder *beat,
+                               long pause, VoxPhonemeConverter convert, void *context)
+{
+    char *phonemes;
+    size_t i;
+    Boolean ok;
+    char command[40];
+    while (beat->len && isspace((unsigned char)beat->data[beat->len - 1]))
+        beat->data[--beat->len] = 0;
+    if (!beat->len) return true;
+    if (!strcmp(beat->data, "Ay:")) {
+        strcpy(beat->data, "ay"); beat->len = 2;
+    } else if (!strcmp(beat->data, "P:")) {
+        strcpy(beat->data, "pee"); beat->len = 3;
+    } else if (!strcmp(beat->data, "M:")) {
+        strcpy(beat->data, "em"); beat->len = 2;
+    }
+    if (!strchr(".!?", beat->data[beat->len - 1]) && !sb_append_char(beat, '.'))
+        return false;
+    phonemes = convert(beat->data, context);
+    if (!phonemes) return false;
+    /* Never allow callback output to inject commands; phonemes are ASCII.
+       Bound aggregate expansion independently of the 32767-byte editor limit. */
+    for (i = 0; phonemes[i]; ++i) {
+        unsigned char c = (unsigned char)phonemes[i];
+        if (i >= 16384 || c < 32 || c > 126 || c == '[' || c == ']') {
+            free(phonemes);
+            return false;
+        }
+    }
+    if (!i || out->len + i + 80 > 262144) { free(phonemes); return false; }
+    snprintf(command, sizeof(command), " [[inpt TEXT]] [[slnc %ld]] ", pause);
+    ok = sb_append_str(out, "[[inpt PHON]] ") && sb_append_str(out, phonemes) &&
+         sb_append_str(out, command);
+    free(phonemes);
+    beat->len = 0;
+    beat->data[0] = 0;
+    return ok;
+}
+
+Handle vox_format_native_text(const char *text, VoxPhonemeConverter convert, void *context)
+{
+    char *vox;
+    const char *p;
+    StringBuilder out, beat;
+    Handle h = NULL;
+    if (!text || !convert) return NULL;
+    vox = vox_process_buffer(text, true);
+    if (!vox) return NULL;
+    sb_init(&out); sb_init(&beat);
+    if (!emit_version_prefix(&out)) goto done;
+    p = vox;
+    while (*p) {
+        const char *spoken = NULL, *end = NULL;
+        if (p == vox || isspace((unsigned char)p[-1]))
+            end = meridiem_pair_end(p, &spoken);
+        if (end) {
+            if (!sb_append_str(&beat, spoken)) goto done;
+            p = end;
+        } else if (p[0] == '\\' && p[1] == '!') {
+            const char *token = p;
+            size_t n;
+            p += 2;
+            while (*p && !isspace((unsigned char)*p)) ++p;
+            n = (size_t)(p - token);
+            if ((n == 4 && !strncmp(token, "\\!br", 4)) ||
+                (n >= 4 && !strncmp(token, "\\!sf", 4))) {
+                long pause = 100; /* Measured native/reference internal gap difference. */
+                if (token[2] == 'b') {
+                    const char *next = p;
+                    while (isspace((unsigned char)*next)) ++next;
+                    /* The reference can emit br immediately before sf. That is
+                       one boundary, whose explicit silence replaces the join. */
+                    if (!strncmp(next, "\\!sf", 4)) continue;
+                }
+                if (token[2] == 's') {
+                    const char *digit = token + 4;
+                    pause = 0;
+                    while (digit < p && isdigit((unsigned char)*digit)) {
+                        if (pause < 1000) pause = pause * 10 + (*digit - '0');
+                        if (pause > 1000) pause = 1000;
+                        ++digit;
+                    }
+                }
+                if (!emit_native_beat(&out, &beat, pause, convert, context)) goto done;
+            }
+        } else {
+            /* Collapse leading whitespace, retaining ordinary punctuation. */
+            if ((beat.len || !isspace((unsigned char)*p)) && !sb_append_char(&beat, *p)) goto done;
+            ++p;
+        }
+    }
+    if (!emit_native_beat(&out, &beat, 0, convert, context)) goto done;
+    h = NewHandle(out.len + 1);
+    if (h && *h) BlockMoveData(out.data ? out.data : "", *h, out.len + 1);
+done:
+    free(vox); free(out.data); free(beat.data);
+    return h;
+}

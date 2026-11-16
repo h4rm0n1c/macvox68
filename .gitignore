@@ -18,3 +18,7 @@ CTestTestfile.cmake
 *.gdb
 .rsrc/
 .finf/
+
+# Python host-check bytecode
+__pycache__/
+*.pyc
